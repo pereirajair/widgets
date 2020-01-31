@@ -1,0 +1,370 @@
+<!--
+### ELEMENTO 
+
+`ew-header`
+
+Exibe o cabecalho de um widget, este e um elemento obrigatorio para todos os widgets. 
+
+Este componente ira se preocupar automaticamente em exibir o botao VOLTAR quando o widget for aberto atraves de outro. Tambem ira exibir automaticamente o icone MENU para dispositivos moveis. 
+
+### HTML:
+  
+    
+    <ew-header background-color="indigo tall">
+      <div slot='title'>Titulo do seu Widget</div>
+      <div slot='toolbar-buttons'>
+        <paper-icon-button icon="refresh"></paper-icon-button>
+      </div>
+      <div slot='content'>
+          
+      </div>
+    </ew-header>
+
+### CORES:
+  
+Nome | RGB 
+----------------|-------------
+amber | #ff8e01;
+blue-grey | #36474f;
+cyan | #00828f;
+brown | #4d342f;
+deep-orange | #d74315;
+deep-purple | #45289f;
+indigo | #283593;
+pink | #ad1457;
+purple | #6a1b9a;
+red | #c62827;
+teal | #00695b;
+
+### Tamanhos:
+  
+Nome | Pixels 
+----------------|-------------
+(Sem Nome) | 70px
+tall | 148px;
+big | 212px;
+
+
+-->
+<dom-module id="ew-header">
+  <template>
+    <style>
+
+        :host {
+            height: 100%;
+        }
+
+        app-header.amber {
+          color: #FFF;
+          background: #FFB200 ;
+          background: -moz-linear-gradient(left, #FFB200 0%, #FF8E01 100%) ;
+          background: -webkit-linear-gradient(left, #FFB200 0%,#FF8E01 100%) ;
+          background: linear-gradient(to right, #FFB200 0%,#FF8E01 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#FFB200', endColorstr='#FF8E01',GradientType=1 ) ;
+        }
+
+        app-header.blue-grey {
+          color: #FFF;
+          background: #546F7A ;
+          background: -moz-linear-gradient(left, #546F7A 0%, #36474F 100%) ;
+          background: -webkit-linear-gradient(left, #546F7A 0%,#36474F 100%) ;background: linear-gradient(to right, #546F7A 0%,#36474F 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#546F7A', endColorstr='#36474F',GradientType=1 ) ;
+        }
+
+        app-header.cyan {
+          color: #FFF;
+          background: #00ACC2 ;
+          background: -moz-linear-gradient(left, #00ACC2 0%, #00828F 100%) ;
+          background: -webkit-linear-gradient(left, #00ACC2 0%,#00828F 100%) ;
+          background: linear-gradient(to right, #00ACC2 0%,#00828F 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ACC2', endColorstr='#00828F',GradientType=1 ) ;
+        }
+
+        app-header.brown {
+          color: #FFF;
+          background: #6D4D42 ;
+          background: -moz-linear-gradient(left, #6D4D42 0%, #4D342F 100%) ;
+          background: -webkit-linear-gradient(left, #6D4D42 0%,#4D342F 100%) ;
+          background: linear-gradient(to right, #6D4D42 0%,#4D342F 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#6D4D42', endColorstr='#4D342F',GradientType=1 ) ;
+        }
+
+        app-header.deep-orange {
+          color: #FFF;
+          background: #F5511E ;
+          background: -moz-linear-gradient(left, #F5511E 0%, #D74315 100%) ;
+          background: -webkit-linear-gradient(left, #F5511E 0%,#D74315 100%) ;
+          background: linear-gradient(to right, #F5511E 0%,#D74315 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#F5511E', endColorstr='#D74315',GradientType=1 ) ;
+        }
+
+        app-header.deep-purple {
+          color: #FFF;
+          background: #5D35B0 ;
+          background: -moz-linear-gradient(left, #5D35B0 0%, #45289F 100%) ;
+          background: -webkit-linear-gradient(left, #5D35B0 0%,#45289F 100%) ;
+          background: linear-gradient(to right, #5D35B0 0%,#45289F 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#5D35B0', endColorstr='#45289F',GradientType=1 ) ;
+        }
+
+        app-header.indigo {
+          color: #FFF;
+          background: #3949ab ;
+          background: -moz-linear-gradient(left, #3949ab 0%, #283593 100%);
+          background: -webkit-linear-gradient(left, #3949ab 0%,#283593 100%);
+          background: linear-gradient(to right, #3949ab 0%,#283593 100%);
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3949ab', endColorstr='#283593',GradientType=1 );
+        }
+
+        app-header.pink {
+          color: #FFF;
+          background: #D81A60 ;
+          background: -moz-linear-gradient(left, #D81A60 0%, #AD1457 100%) ;
+          background: -webkit-linear-gradient(left, #D81A60 0%,#AD1457 100%) ;
+          background: linear-gradient(to right, #D81A60 0%,#AD1457 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#D81A60', endColorstr='#AD1457',GradientType=1 ) ;
+        }
+
+        app-header.green {
+          color: #FFF;
+          background: #43A047;
+          background: -moz-linear-gradient(left, #43A047 0%, #2F7D32 100%) ;
+          background: -webkit-linear-gradient(left, #43A047 0%,#2F7D32 100%) ;
+          background: linear-gradient(to right, #43A047 0%,#2F7D32 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#43A047', endColorstr='#2F7D32',GradientType=1 ) ;
+        }
+
+        app-header.purple {
+          color: #FFF;
+          background: #8E24AA ;
+          background: -moz-linear-gradient(left, #8E24AA 0%, #6A1B9A 100%) ;
+          background: -webkit-linear-gradient(left, #8E24AA 0%,#6A1B9A 100%) ;
+          background: linear-gradient(to right, #8E24AA 0%,#6A1B9A 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8E24AA', endColorstr='#6A1B9A',GradientType=1 ) ;
+        }
+
+        app-header.red {
+          color: #FFF;
+          background: #E53935 ;
+          background: -moz-linear-gradient(left, #E53935 0%, #C62827 100%) ;
+          background: -webkit-linear-gradient(left, #E53935 0%,#C62827 100%) ;
+          background: linear-gradient(to right, #E53935 0%,#C62827 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#E53935', endColorstr='#C62827',GradientType=1 ) ;
+        }
+
+        app-header.teal {
+          color: #FFF;
+          background: #4d8ea4 ;
+          background: -moz-linear-gradient(left, #4d8ea4 0%, #00695b 100%) ;
+          background: -webkit-linear-gradient(left, #4d8ea4 0%,#00695b 100%) ;
+          background: linear-gradient(to right, #4d8ea4 0%,#00695b 100%) ;
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4d8ea4', endColorstr='#00695b',GradientType=1 ) ;
+        }
+
+        app-header {
+          width: 100%;
+          /*height: 212px;*/
+          height: 51px;
+          background-color: var(--paper-toolbar-background);
+          color: var(--paper-toolbar-color);
+        }
+
+        paper-icon-button {
+          --paper-icon-button-ink-color: white;
+        }
+
+        app-toolbar {
+          height: 51px;
+        }
+
+        app-toolbar.tall {
+          height: 148px;
+        }
+
+        app-header.tall {
+          height: 148px;
+        } 
+
+        app-header.big {
+          height: 212px;
+        }
+
+        app-header.hidden {
+          display: none;
+        }
+
+        [main-title] {
+          font-weight: lighter;
+          margin-left: 0px;
+          font-size: 20px;
+          max-width: 100%;
+          text-overflow: ellipsis;
+          width: 100%;
+          overflow: hidden;
+        }
+
+        [condensed-title] {
+          font-weight: lighter;
+          margin-left: 30px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        [condensed-title] i {
+          font-weight: 100;
+          font-style: normal;
+        }
+
+        @media (max-width: 639px) {
+          [main-title] {
+            margin-left: 0px;
+            font-size: 18px;
+            max-width: 100%;
+            text-overflow: ellipsis;
+            width: 100%;
+            overflow: hidden;
+          }
+          [condensed-title] {
+            font-size: 15px;
+          }
+        }
+
+        @media (min-width: 641px) {
+          #menu {
+            display: none;
+          }
+        }
+
+        .myTabs {
+          position: relative;
+          margin-top: -99px;
+        }
+
+        /* .content {
+          height: calc(100% - 51px);
+        }*/
+        .pageContent {
+          height: calc(100% - 51px);
+          overflow: hidden;
+        } 
+
+        app-drawer-layout {
+          display: inline;
+        }
+
+    </style> 
+    <app-drawer-layout>
+      <app-header-layout fullbleed>
+        <template is="dom-if" if="{{showHeader}}">
+          <app-header condenses reveals effects="" class$="{{_cssHeaderStyle}}" hidden="{{!showHeader}}">
+              <app-toolbar class="small">
+                  <template is="dom-if" if="{{isMobile}}">
+                    <paper-icon-button id="menu" icon="menu" on-tap="openDrawer"></paper-icon-button>
+                  </template>
+                  <template is="dom-if" if="{{backButtonEnabled}}">
+                    <paper-icon-button id="backButton" icon="arrow-back" on-tap="closeWidget"></paper-icon-button>
+                  </template>
+                  <slot name='header-icon'></slot>
+                  <paper-tooltip for="backButton" position="bottom">Voltar</paper-tooltip>
+                  <div main-title style="white-space: nowrap;"><slot name="title"></slot>{{title}}</div>
+                  <slot name="toolbar-buttons"></slot>
+              </app-toolbar>
+          </app-header>
+        </template>
+        <slot name="content" class="pageContent"></slot>
+      </app-header-layout>
+    </app-drawer-layout> 
+  </template>
+  <script>
+
+    class EWHeader extends Polymer.mixinBehaviors([EWBehaviorWidgetBehavior], Polymer.Element)  {
+      static get is() {
+        return 'ew-header';
+      }
+      static get listeners() {
+        return { 
+          'ew-header-back-button': 'backButton',
+        }
+      }
+      static get properties() {
+        return {
+            showHeader: {
+              type: Boolean,
+              value: true,
+              notify: true,
+              reflectToAttribute: true,
+            },
+            backButtonEnabled: {
+              type: Boolean,
+              value: false,
+              notify: true,
+              reflectToAttribute: true,
+            },
+            backgroundColor: {
+              type: String,
+              value: '',
+              notify: true,
+              reflectToAttribute: true,
+            },
+            title: {
+              type: String,
+              value: '',
+              notify: true,
+              reflectToAttribute: true,
+            },
+            _cssHeaderStyle: {
+              type: String,
+              notify: true,
+              reflectToAttribute: true,
+              computed: '_computeHeaderBackground(backgroundColor)',
+            },
+          }
+      }
+      attached(){ 
+        this.isMobile = ewidgets.isMobile;
+      }
+      openDrawer() {
+        this.fire('iron-signal', {name: "ew-toggle-drawer", data: {}});
+      }
+      backButton(evt) {
+        this.set('backButtonEnabled',evt.detail);
+      }
+      closeWidget(evt) {
+        var retData = { canceled: true }; 
+        this.ew_closeWidget(retData);
+      }
+      _getAvailableColors() {
+        var availableColors = ['amber','blue-grey','brown','cyan','deep-orange','deep-purple', 'green','indigo','pink','purple','red','teal'];
+        return availableColors;
+      }
+      _computeHeaderBackground(_backgroundColor) {
+        this.isMobile = ewidgets.isMobile;
+        var availableColors = this._getAvailableColors();
+        var _useAnimations = true;
+        var _globalParams = localStorage.getItem('globalParams');
+        if (_globalParams != undefined) {
+          var globalParams = JSON.parse(_globalParams);
+          if ((globalParams.theme != 'celepar-theme') && (globalParams.theme != 'ice')) {
+            for (var i in availableColors) {
+              var currentColor = availableColors[i];
+              _backgroundColor = _backgroundColor.replace(currentColor,'');
+            } 
+          }
+          if (globalParams.showAnimations == false) {
+            _useAnimations = false;
+          }
+        } 
+        if (_backgroundColor != undefined) {
+          if (_useAnimations) {
+            return _backgroundColor + '';
+          } else {
+            return _backgroundColor + '';
+          }
+        }
+        
+      }
+    };
+
+  customElements.define(EWHeader.is, EWHeader);
+  </script>
+</dom-module>

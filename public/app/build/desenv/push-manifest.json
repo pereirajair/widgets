@@ -1,0 +1,20 @@
+{
+  "src/ew-home/bundle-0.html": {},
+  "src/ew-home/bundle-1.html": {
+    "src/ew-home/bundle-0.html": {
+      "type": "document",
+      "weight": 1
+    }
+  },
+  "src/ew-home/bundle-2.html": {},
+  "index.html": {
+    "bower_components/webcomponentsjs/custom-elements-es5-adapter.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "bower_components/webcomponentsjs/webcomponents-loader.js": {
+      "type": "script",
+      "weight": 1
+    }
+  }
+}

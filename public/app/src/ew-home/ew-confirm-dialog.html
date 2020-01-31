@@ -1,0 +1,96 @@
+<!--
+### WIDGET
+
+`ew-confirm-dialog`
+
+Exibe uma DIALOG para o usuario, solicitando que ele tome uma acao, ou de Confirmar ou de Cancelar.
+
+As funções abaixo estão implementadas no 'ew-behavior'.
+
+### JAVASCRIPT:
+  
+    var title = 'Confirmar';
+    var message = 'Deseja realmente realizar esta acao?';
+    var onConfirmed = function(event) {
+      alert(event.confirmed);
+    };
+    this.ew_showDialog(title,message,onConfirmed); 
+
+Caso necessario, o titulo dos botoes tambem pode ser alterado nas propriedades buttonConfirm e buttonCancel.
+
+    this.ew_showDialog(title,message,onConfirmed,'SIM','NAO'); 
+
+-->
+<dom-module id="ew-confirm-dialog">
+    <template>
+        <style>
+
+            paper-dialog {
+                color: var(--paper-menu-color);
+                background-color: var(--paper-menu-background-color);
+            }
+
+            paper-button {
+                background-color: var(--paper-progress-active-color);
+                  color: white;
+                  font-size: 12px;
+
+                  padding: 0.5em 0.57em;
+
+                  --paper-button-ink-color: var(--paper-progress-active-color);
+                  /* These could also be individually defined for each of the
+                    specific css classes, but we'll just do it once as an example */
+                  --paper-button-flat-keyboard-focus: {
+                    background-color: var(--paper-progress-active-color);
+                    color: white !important;
+                  };
+                  --paper-button-raised-keyboard-focus: {
+                    background-color: var(--paper-progress-active-color) !important;
+                    color: white !important;
+                  };
+            }
+            
+        </style> 
+        <iron-signals on-iron-signal-ew-confirm-dialog="showConfirmDialog"></iron-signals>
+        <paper-dialog id="confirmDialog" on-iron-overlay-closed="_confirmDialog">
+          <h2>{{dialogData.title}}</h2>
+          <div>{{dialogData.message}}</div>
+          <div class="buttons">
+            <paper-button dialog-dismiss>{{dialogData.buttonCancel}}</paper-button>
+            <paper-button class="custom indigo ok" dialog-confirm autofocus>{{dialogData.buttonConfirm}}</paper-button>
+          </div>
+        </paper-dialog>
+    </template>
+    <script>
+    class EWConfirmDialog extends Polymer.mixinBehaviors([EWBehaviorWidgetBehavior], Polymer.Element) {
+        static get is() {
+          return 'ew-confirm-dialog';
+        }
+        static get properties() {
+          return {
+                dialogData: {
+                  type: Object,
+                  value: { 
+                    title: 'Confirmação',
+                    message: 'Por favor confirme essa operação.',
+                    cancelButton: 'Cancelar',
+                    confirmButton: 'Confirmar',
+                    onConfirmed: 'evt-confirmed',
+                  },
+                  notify: true,
+                  reflectToAttribute: true,
+                },
+            }
+        }
+        _confirmDialog(event) {
+            this.dialogData.onConfirmed(event.detail);
+        }
+        showConfirmDialog(event) {
+            this.dialogData = event.detail;
+            this.$.confirmDialog.open();
+        }
+    };
+    customElements.define(EWConfirmDialog.is, EWConfirmDialog);
+
+    </script>
+</dom-module>

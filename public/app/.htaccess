@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+        Header set Access-Control-Allow-Origin *
+        DirectoryIndex index.php index.html
+        Redirect "/bower_components/ew-funcel-cardapio/img/icon.png" "/bower_components/ew-redeparana/img/icon_funcel.png"
+        Redirect "/bower_components/ew-funcel-cardapio/img/icon.png" "/bower_components/ew-redeparana/img/icon_funcel.png"
+        Redirect "/bower_components/ew-trecebe/img/icon.png" "/bower_components/ew-redeparana/img/icon_trecebe.png"
+        Redirect "/bower_components/ew-redeparana-classificados/img/icon.png" "/bower_components/ew-redeparana/img/icon_classificados.png"
+        Redirect "/widgets/bower_components/ew-funcel-cardapio/img/icon.png" "/widgets/bower_components/ew-redeparana/img/icon_funcel.png"
+        Redirect "/widgets/bower_components/ew-trecebe/img/icon.png" "/widgets/bower_components/ew-redeparana/img/icon_trecebe.png"
+        Redirect "/widgets/bower_components/ew-redeparana-classificados/img/icon.png" "/widgets/bower_components/ew-redeparana/img/icon_classificados.png"
+</IfModule>

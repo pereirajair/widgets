@@ -1,0 +1,117 @@
+<!--
+### ELEMENTO 
+
+`ew-fab`
+
+Exibe um FAB button, botao de acao principal para uma tela de um widget.
+
+### HTML:
+  
+    <ew-fab icon="done" tooltip="Texto de Ajuda" on-tap="tapAction"></ew-fab>
+
+-->
+<dom-module id="ew-fab">
+  <template>
+    <style>
+      :host {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+      }
+      .grow:hover { 
+        transform: scale(1.2); 
+        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+      }
+    </style>
+    <paper-fab id='fabButton' icon="{{icon}}" hidden="{{hidden}}" class$='{{cssAnimation}}'></paper-fab>
+    <paper-tooltip for='fabButton' position="left">{{tooltip}}</paper-tooltip>
+  </template>
+  <script>
+      class EWFab extends Polymer.mixinBehaviors([EWBehaviorWidgetBehavior], Polymer.Element) {
+        static get is() {
+          return 'ew-fab';
+        }
+        static get listeners() {
+          return {
+            'tap': 'tapFabButton',
+          }
+        }
+        static get properties() {
+          return {
+            icon: {
+                  type: String, 
+                  value: '',
+                  notify: true,
+                  reflectToAttribute: true,
+              },
+              tooltip: {
+                  type: String,
+                  value: '',
+                  notify: true,
+                  reflectToAttribute: true,
+              },
+              hidden: {
+                  type: Boolean,
+                  value: false,
+                  notify: true,
+                  reflectToAttribute: true,
+              },
+              userTap: {
+                  type: Boolean,
+                  value: false,
+                  notify: true,
+                  reflectToAttribute: true,
+              },
+              isReady: {
+                  type: Boolean,
+                  value: false,
+                  notify: true,
+                  reflectToAttribute: true,
+              },
+              cssAnimation: {
+                  type: String,
+                  value: 'animated slideInUp',
+                  notify: true,
+                  reflectToAttribute: true,
+                  computed: '_computeAnimation(isReady,userTap)',
+              },
+            
+          }
+        }
+        _computeShowLoadingStyle(isLoadingActive) {
+          if (isLoadingActive) {
+            return '';
+          } else {
+            return 'display: none;';
+          }
+        }
+        attached() {
+          var that = this;
+          this.async( function()  { 
+            that.isReady = true;
+          },1000);
+        }
+        _computeAnimation(_isReady,_userTap) {
+          var retVal = 'animated bounceIn';
+          if (_isReady) {
+            if (_userTap) {
+              retVal = 'animated flip';
+            } else {
+              retVal = 'animated grow';
+            }
+          }
+          return retVal;
+        }
+        tapFabButton() {
+          this.userTap = true;
+          var that = this;
+          this.async( function()  { 
+            that.userTap = false;
+          },1000);
+        }
+      };
+
+      customElements.define(EWFab.is, EWFab);
+  </script>
+</dom-module>

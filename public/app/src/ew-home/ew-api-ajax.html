@@ -1,0 +1,409 @@
+<!--
+### ELEMENTO
+
+`ew-api-ajax`
+
+Elemento utilizado para executar um metodo da API por ajax.
+
+### HTML:
+
+    <ew-api-ajax
+      id="ajax"
+      params="{{params}}"
+      loading="{{isLoading}}"
+      url="./api/rest/ew-elemento/MetodoDaAPI"
+      on-response="ew_handleResponseTo">
+    </ew-api-ajax>
+
+### JAVASCRIPT:
+
+    this.params = { param1: 'value' };
+    this.$.ajax.generateRequest();
+
+    ew_handleResponseTo: function(event) {
+      var response = event.detail.response;
+      var result = {};
+      if (response != undefined) {
+        if (response.result != undefined) {
+          result = response.result;
+        }
+      } else {
+        result = event.detail;
+      }
+    }
+
+-->
+<dom-module id="ew-api-ajax">
+    <template>
+      <style></style>
+      <!-- <iron-localstorage id="expressoLocalStorage" name="expresso"
+          value="{{_expresso}}" on-iron-localstorage-load-empty="_initializeDefaultExpresso">
+      </iron-localstorage> -->
+    </template>
+    <script>
+      Polymer({
+        is: 'ew-api-ajax',
+        behaviors: [Polymer.IronResizableBehavior],
+        listeners: {
+          'ew-api-ajax-response': '_handleResponse',
+        },
+        properties: {
+  
+          /**
+           * URL do recurso da API. Sempre deve começar com: "./api/rest/" (Ex: ./api/rest/ew-meu-widget/MeuRecurso)
+           */
+          url: {
+            type: String,
+            value: './api/rest/External',
+            reflectToAttribute: true,
+            notify: true
+          },
+          /**
+           * Somente use o Resource se for um metodo da API do Expresso. (Ex: Mail/Messages)
+           */
+          resource: {
+            type: String,
+            value: '',
+            reflectToAttribute: true,
+            notify: true
+          },
+          /**
+           * Se true, inicia automaticamente uma requisicao ajax.
+           */
+          auto: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            reflectToAttribute: true,
+          },
+          /**
+           * Se true, inicia automaticamente uma requisicao ajax.
+           */
+           hasLoaded: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            reflectToAttribute: true,
+          },
+          /**
+           * Utilize essa propriedade para saber se a api esta carregando ou nao.
+           */
+          loading: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            observer: '_loadingChanged'
+          },
+          /**
+           * Utilize essa propriedade para saber se a api esta carregando ou nao.
+           */
+           isasync: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            reflectToAttribute: true,
+          },
+          /**
+           * Parametros passados para a API.
+           */
+          params: {
+            type: Object,
+            value: {},
+            notify: true,
+            reflectToAttribute: false,
+          },
+          /**
+           * Arquivos enviados por upload.
+           */
+          files: {
+            type: Array,
+            value: [],
+            notify: true,
+            reflectToAttribute: true
+          },
+          /**
+           * Dados de formulario gerado automaticamente.
+           */
+          _formData: {
+            type: Object,
+            value: {},
+            notify: true,
+          },
+          /**
+           * Contem o token de autenticacao do usuario.
+           */
+          _expresso: {
+            type: Object,
+            value: {},
+            notify: true,
+            reflectToAttribute: false
+          },
+          /**
+           * Parametros do formulario gerado automaticamente.
+           */
+          // _computedParams: { type: Object, value: {}, computed: '_computeParams(params,resource)' },
+          /**
+           * XHR gerado automaticamente.
+           */
+          _computedXhr: { type: Object, value: {}, notify: true, computed: '_computeXhr(params,resource,url,files)' },
+        },
+        _initializeDefaultExpresso: function() {
+          // this.log('ew-api-ajax._initializeDefaultExpresso');
+          this._expresso = { auth: "" };
+        },
+        ready: function() {
+          if (this.auto == true) {
+            if (this.hasLoaded == false) {
+              this.hasLoaded = true;
+              this.generateRequest();
+            }
+          }
+        },
+        /**
+        Realiza a requisicao ajax.
+        */
+        generateRequest: function(_xhr) {
+          this.loading = true;
+          var that = this;
+          
+          if (this.isasync == true) {
+            return new Promise(function(resolve, reject) {
+              var _token = that.getMeta('csrf-token');
+              if (_xhr == undefined) {
+                var xhr = that._computeXhr(that.params,that.resource,that.url,that.files,resolve,reject);
+                xhr.setRequestHeader('X-CSRF-TOKEN', _token);
+                xhr.send(that._formData);
+              } else {
+                // console.log(this.params);
+                // var _tempResource = this.resource;
+                // this.resource = '';
+                // this.resource = _tempResource;
+              
+                var _computedXhr = that._computeXhr(that.params,that.resource,that.url,that.files,resolve,reject);
+                _computedXhr.setRequestHeader('X-CSRF-TOKEN', _token);
+                _computedXhr.send(that._formData);
+              }
+            });
+          } else {
+             var _token = this.getMeta('csrf-token');
+            if (_xhr == undefined) {
+                this._computedXhr = that._computeXhr(that.params,that.resource,that.url,that.files);
+                this._computedXhr.setRequestHeader('X-CSRF-TOKEN', _token);
+                this._computedXhr.send(that._formData);
+              } else {
+                // console.log(this.params);
+                var _tempResource = this.resource;
+                this.resource = '';
+                this.resource = _tempResource;
+              
+                this._computedXhr = that._computeXhr(that.params,that.resource,that.url,that.files);
+                this._computedXhr.setRequestHeader('X-CSRF-TOKEN', _token);
+                this._computedXhr.send(that._formData);
+              }
+          }
+          
+        },
+        _handleResponseError: function(response) {
+          var foundError = false;
+          if (response != undefined) {
+            if (response.error != undefined) {
+              logoutErrorCodes = ["1", "2", "3","4","5","6","7","10","98","99","200"];
+  
+              otherErrorCodes = ["-1", "100", "500"];
+  
+              if (logoutErrorCodes.indexOf(response.error.code) >= 0) {
+                foundError = true;
+                console.error('auth-invalid:' + response.error.code);
+                this.fire('iron-signal', {name: "ew-auth-invalid", data: response});
+                return foundError;
+              }
+  
+              if (otherErrorCodes.indexOf(response.error.code) >= 0) {
+                foundError = true;
+                console.error('error:' + response.error.code);
+                // this.fire('ew-api-ajax-error',response);
+                return foundError;
+              }
+            }
+          }
+          return foundError;
+  
+        },
+        _handleDatabaseError: function(response) {
+          var foundError = false;
+          if (response != undefined) {
+            if (response.error != undefined) {
+              logoutErrorCodes = ["1000"];
+  
+              if (logoutErrorCodes.indexOf(response.error.code) >= 0) {
+                foundError = true;
+                console.error('auth-invalid:' + response.error.code);
+                this.fire('iron-signal', {name: "ew-database-offline", data: response});
+                return foundError;
+              }
+            }
+          }
+          return foundError;
+        },
+        _handleResponse: function(event) {
+            var request = event.detail;
+  
+            if (request.response != undefined)  {
+  
+              if (request.response.error != undefined) {
+  
+                var foundError = this._handleResponseError(request.response);
+  
+                this.fire('response',request.response);
+  
+              } else {
+                this.fire('response', request, {});
+              }
+            } else {
+              this.fire('response', request, {});
+            }
+        },
+        _loadingChanged: function(val) {
+          this.fire('ew-api-ajax-loading',{"value": val });
+        },
+        getMeta: function(metaName) {
+            const metas = document.getElementsByTagName('meta');
+  
+            for (let i = 0; i < metas.length; i++) {
+              if (metas[i].getAttribute('name') === metaName) {
+                return metas[i].getAttribute('content');
+              }
+            }
+  
+            return '';
+          },
+        _computeXhr: function(_params,_resource,_url,_files,resolve,reject) {
+          this._formData = new FormData();
+  
+          var _expresso = JSON.parse(window.localStorage.getItem('expresso'));
+          
+          if ((_expresso == undefined) || (_expresso == null)) {
+            _expresso = this._initializeDefaultExpresso();
+          }
+          // console.error(_expresso);
+          this._expresso = _expresso;
+          // this.$.expressoLocalStorage.reload();
+          if (this._expresso != undefined) {
+  
+            _params.auth = this._expresso.auth;
+            // _params.auth = _auth;
+            // console.warn(_params);
+  
+            if ((this._expresso != null) && (this._expresso != undefined)) {
+              if ((this._expresso.externalAPI != '') && (this._expresso.externalAPI != undefined)) {
+                _params.externalAPI = this._expresso.externalAPI;
+              }
+              if ((this._expresso.profile != '') && (this._expresso.profile != undefined)) {
+                if (this._expresso.profile[0] != undefined) {
+                  if (this._expresso.profile[0].contactUIDNumber != undefined) {
+                    _params.user_id = this._expresso.profile[0].contactUIDNumber;
+                  }
+                }
+                
+              }
+            }
+  
+          }
+  
+          if (this.resource != '') {
+            _params.resource = this.resource;
+          }
+  
+          var obj = _params;
+          var keys = Object.keys(obj);
+          var keyValues = Object.keys(obj).map(function(k) { return obj[k] });
+          var i = 0;
+  
+          for(var keyName in keys){
+            this._formData.append('' + keys[keyName] + '',keyValues[i]);
+            // this._formData.append('params[' + keys[keyName] + ']',keyValues[i]);
+            i++;
+          }
+  
+          for (var i in _files) {
+            var file = _files[i];
+            this._formData.append('file_' + i,file,file.name);
+          }
+  
+          // this._formData.append('id','1');
+  
+          var that = this;
+          var xhr = new XMLHttpRequest;
+  
+          xhr.onload = function() {
+            if (xhr.status == 200) {
+              var _responseData = {};
+              try {
+                _responseData = { response : JSON.parse(xhr.responseText)};
+              }
+              catch(err) {
+                _responseData = xhr.responseText;
+              }
+              if (that.isasync == false) {
+                
+              } 
+              that.loading = false;
+              if (resolve != undefined) {
+                resolve(_responseData);
+              } else {
+                that.fire('ew-api-ajax-response',_responseData);
+              }
+              
+            }
+            else {
+              if (reject != undefined) {
+                reject(Error(xhr.statusText));
+              } 
+              
+            }
+          };
+  
+          xhr.onerror = function() {
+            if (reject != undefined) {
+               reject(Error("Network Error"));
+            }
+            that.fire('ew-show-message',
+              { 'message': 'Verifique sua conexão com a internet.' }
+            );
+            
+          };
+  
+       /*   xhr.onreadystatechange = function () {
+              if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                var _responseData = {};
+                try {
+                  _responseData = { response : JSON.parse(xhr.responseText)};
+                }
+                catch(err) {
+                  _responseData = xhr.responseText;
+                }
+                that.fire('ew-api-ajax-response',_responseData);
+                that.loading = false;
+              } 
+              // else {
+              //   console.warn(xhr.status);
+              // }
+          }; */
+  
+          
+          
+          xhr.ontimeout = function(e) {
+            that.fire('ew-show-message',
+              { 'message': 'Tempo Esgotado: Verifique sua conexão com a internet.' }
+            );
+          }
+          xhr.timeout = 30000;
+          xhr.open('POST',_url, true);
+          // var _token = this.getMeta('csrf-token');
+          // xhr.setRequestHeader('X-CSRF-TOKEN', _token);
+          return xhr;
+  
+        },
+      });
+    </script>
+  </dom-module>

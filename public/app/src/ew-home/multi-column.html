@@ -1,0 +1,1158 @@
+<!--
+### multi-column
+
+`multi-column`
+
+Elemento utilizado pela plataforma para exibir um Widget em formato de visualização para tablets/desktops (multi-column).
+
+--> 
+<dom-module id="multi-column">
+  <template>
+  <style>
+
+        :host {
+            display:block;
+            min-width:100px;
+            height:50%;
+            min-height: 150px;
+            position: absolute !important;
+            z-index: 0 !important;
+            
+        }
+
+        #holder0 {
+          background-color: var(--paper-menu-background-color);
+        }
+
+        app-toolbar.indigo {
+          color: #FFF;
+          background: #3949ab ;
+          background: -moz-linear-gradient(left, #3949ab 0%, #283593 100%);
+          background: -webkit-linear-gradient(left, #3949ab 0%,#283593 100%);
+          background: linear-gradient(to right, #3949ab 0%,#283593 100%);
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3949ab', endColorstr='#283593',GradientType=1 );
+        }
+
+        paper-tabs.indigo {
+          color: #FFF;
+          background:  #3949ab ;
+          background: -moz-linear-gradient(left, #3949ab 0%, #283593 100%);
+          background: -webkit-linear-gradient(left, #3949ab 0%,#283593 100%);
+          background: linear-gradient(to right, #3949ab 0%,#283593 100%);
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3949ab', endColorstr='#283593',GradientType=1 );
+        }
+
+        paper-tabs {
+          width: 100%;
+          /*height: 212px;*/
+          height: 50px;
+          background-color: var(--paper-toolbar-background);
+          color: var(--paper-toolbar-color);
+        }
+
+
+        paper-header-panel {
+          --paper-header-panel-shadow: {
+              height: 0px;
+          };
+        }
+
+        .card {
+            background: var(--paper-menu-background-color);
+            margin: 10px;
+            height: calc(100% - 20px);
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        paper-icon-button {
+            background-size: cover;
+        }
+
+        paper-progress {
+            position:absolute;
+            top:64px;
+            width:100%;
+            opacity: 0;
+            transition:500ms opacity;
+            z-index: 1;
+        }
+
+        paper-toolbar {
+            width: 100%;
+            top: 0;
+            left: 0;
+            --paper-toolbar-height: 34px;
+            --paper-toolbar-title: {
+                margin-left: 5px;
+            };
+        }
+
+        paper-toolbar .drag { 
+            cursor: move;
+            cursor: -webkit-grabbing;
+        }
+
+        .holder {
+            height:100%;
+            width:100%;
+            /*padding: 0px 10px 0px 0px;*/
+            box-sizing: border-box;
+            overflow-y:auto; 
+            overflow-x:hidden;
+
+            overflow-x: auto; height: 100%;
+            overflow-y: hidden;
+        }
+
+        .holder > * {
+            width:100%;
+            display:block;
+            height: 100% !important;
+        }
+
+        .holder.flex {
+            display:flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        .holder .hack {
+            height: 0;
+            border: none;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .handle {
+            position: absolute;
+            bottom:0;
+            right:0;
+            width: 17px; 
+            height: 0px;
+            cursor:se-resize;
+            visibility: hidden;
+        }
+        
+        paper-toolbar {
+            --paper-toolbar-title {
+                font-size: 8px;
+                font-weight: bold;
+            }
+
+            --paper-toolbar-height { 20px; }
+
+        }
+        
+
+        .rotate {
+            transform: rotate(-45deg);
+        }
+
+        .error {
+            font-family: Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            text-align: center;
+            color:#646464;
+            font-size: .7em;
+            transition:500ms opacity;
+            display:flex;
+            text-align: center;
+            height: 100%;
+        }
+
+        .error div {
+            margin:auto;
+        }
+
+        .error p {
+            margin: 0.2em 0 0;
+        }
+
+        .error paper-icon {
+            width:32px;
+            height:32px;
+        }
+
+        .logo {
+            color:#fff;
+        }
+
+        .logoTabImage {
+          position: absolute;
+          left: -10px;
+        }
+
+        .title a {
+            color:#fff;
+            text-decoration: none;
+        }
+
+        .ew-toolbar {
+          padding: 0px;
+        }
+        paper-drawer-panel {
+          position: relative;
+        }
+        #mainPageContent {
+          height: 100%;
+          position: absolute;
+          width: 100%;
+        }
+        .ironPages {
+          overflow: auto; 
+          height: 100%;
+        }
+
+        .displayNone {
+          display: none;
+        }
+
+        .holderIcon {
+           color: #F60;
+        }
+
+        html {
+          --app-drawer-width: 350px;
+        }
+
+        app-header {
+          top: 51px !important;
+        }
+
+        app-header[isMobile] {
+          top: 0px;
+        }
+
+        app-drawer {
+          margin-top: 50px;
+          overflow: hidden;
+        }
+
+        app-drawer[isMobile] {
+          margin-top: 0px !important;
+        }
+
+        .removeButton {
+          height: 30px;
+          position: absolute;
+          right: -20px;
+          top: -1px;
+        }
+        </style>
+        <iron-signals on-iron-signal-columnschange="columnsChange"></iron-signals>
+        <iron-signals on-iron-signal-multi-column-remove-tabid="_signal_removeTabID"></iron-signals>
+        <iron-signals on-iron-signal-multi-column-open-tabid="_signal_openTabID"></iron-signals>
+        <iron-signals on-iron-signal-ew-open-drawer="openDrawer"></iron-signals>
+        <iron-signals on-iron-signal-ew-toggle-drawer="toggleDrawer"></iron-signals>
+        <iron-signals on-iron-signal-ew-open-right-drawer="toggleRightDrawer"></iron-signals>
+        <iron-signals on-iron-signal-ew-close-drawer="closeDrawer"></iron-signals>
+
+        <paper-material id="widgetCard" class="card" elevation="2" style$="{{_computePaperMaterialStyle(column,withMargin,hasLoaded,loading)}}">
+            <div id="widgetToolBar" class="ew-toolbar" class$="{{_computeDisplayNoneCssClass('ew-toolbar',editMode)}}"> 
+                <template is="dom-if" if="{{column.thumb}}">
+                  <paper-icon-button class="logo" style$="{{_computeStyle(column)}}"></paper-icon-button>
+                </template> 
+                <span class="title" style="margin-left: 0px;">{{column.widgetTitle}}</span>
+                <paper-icon-button id="dragIcon" icon="open-with" class="editable drag"></paper-icon-button>
+                <paper-icon-button id="deleteWidget" on-click="_delete" icon="delete" class="editable"></paper-icon-button>
+                <paper-icon-button id="refreshWidget" on-click="refresh" icon="refresh"></paper-icon-button>
+
+                <paper-tooltip for="dragIcon" position="bottom">Mover Widget.</paper-tooltip>
+                <paper-tooltip for="deleteWidget" position="bottom">Excluir Widget.</paper-tooltip>
+                <paper-tooltip for="refreshWidget" position="bottom">Atualizar Widget.</paper-tooltip>
+              </div> 
+
+              <app-drawer-layout fullbleed>
+                <app-drawer id="drawer" slot="drawer" is-mobile="{{isMobile}}" style="{{_computeAppDrawerStyle()}}" swipe-open>
+                    <div id="holder0" class="holder" style="{{_computeAppHolderStyle()}}"></div>
+                </app-drawer> 
+                <app-header-layout>
+                  <app-header slot="header" style="{{_computeAppHeaderStyle()}}">
+                        <template id="tabViewTemplate" is="dom-if" if="{{tabView}}">
+                          <paper-tabs id="paperTabs" class$="{{_cssHeaderStyle}}" selected="{{selPage}}" scrollable hidden="{{!tabView}}">
+                             
+                            <template id="tabPages" is="dom-repeat" items="{{pages}}">
+                              <paper-tab on-tap="switchPage" hidden="{{!item.visible}}" data-item="{{item}}"><iron-icon icon="{{item.icon}}"></iron-icon>
+                                <template is="dom-if" if="{{item.image}}"><paper-icon-button  class="logo logoTabImage" style$="{{_computeStyleIcon(item.image)}}"></paper-icon-button></template>{{item.title}}
+                                <paper-icon-button icon="icons:close" data-item="{{item}}" on-tap="removePage" class="removeButton" hidden="{{!item.enableRemove}}"></paper-icon-button>
+                              </paper-tab>
+                            </template>
+                            <template is="dom-if" if="{{showRemovePages}}">
+                              <paper-tab id="removeAllPages" on-tap="removeAllPages"><iron-icon icon="close"></iron-icon></paper-tab>
+                              <paper-tooltip for="removeAllPages" position="bottom">Fechar todas as abas.</paper-tooltip>
+                            </template>
+                          </paper-tabs>
+                        </template>
+                  </app-header>
+                  <iron-pages id="holders" selected="{{selPage}}" style$="{{_computeTabViewStyle(tabView)}}">
+                    <template id="holderPagesTemplate" is="dom-repeat" items="{{pages}}">
+                      <ew-view  id="holder{{item.id}}" element="{{item.element}}" enable-push="{{item.enablePush}}" height="{{height}}" params="{{item.params}}" parent="{{item.parent}}" style$="{{_computeTabViewStyle(tabView)}}"></ew-view>
+                    </template>
+                  </iron-pages>
+              </app-header-layout>
+            </app-drawer-layout> 
+
+            <template is="dom-if" if="{{hasError}}">
+              <div class="error" style="overflow: auto; height: 100%;">
+                  <div>
+                      <iron-icon icon="cloud-off"></iron-icon>
+                      <p>Não foi possível atualizar o widget "<span>{{column.name}}</span>".<br>Você está conectado a internet?</p>
+                      <p>{{errorMessage}}</p>
+                      <p><paper-button raised class="custom indigo" on-tap="refresh"><iron-icon icon="refresh"></iron-icon>Atualizar</paper-button></p>
+                  </div> 
+              </div>
+            </template>
+            <div id="columnHandle" class="handle horizontal end-justified layout editable" hidden="{{!editMode}}" style=" background-color: none; display: none; ">
+                <iron-icon icon="icons:arrow-drop-down-circle" class="rotate horizontal end-justified layout holderIcon" style="margin-top: -23px; top: 5px; margin-right: -5px; transform: rotate(-45deg); "></iron-icon>
+            </div>
+            <paper-tooltip for="columnHandle" position="left">Clique e arraste para redimensionar o widget.</paper-tooltip>
+        </paper-material>
+    </template>
+  <script>
+    Polymer({
+      is: 'multi-column',
+      behaviors: [ Polymer.IronResizableBehavior],
+
+      listeners: {
+        'ew-push-widget': 'pushWidget',
+        'ew-api-ajax-loading' : '_setIsLoading',
+        'ew-api-ajax-error': 'errorLoading',
+        'ew-close-widget' : 'backOnePage',
+        'ew-save-params' : 'saveParams',
+        'ew-response' : 'responseFromWidget',
+        'ew-update-tab' : '_updateTab',
+        'ew-refresh' : 'refresh',
+        'ew-get-column' : 'getThisElement'
+      },
+
+      properties: {
+        column: {
+          notify: true
+        },
+        pages: {
+          type: Array,
+          value: [],
+          notify: true,
+          reflectToAttribute: true,
+        },
+        usedColumns: {
+          type: Object,
+          value: {},
+          notify: true
+        },
+        height: { type: String, value: '100%', notify: true, reflectToAttribute: true },
+        enablePush: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+
+        debug: {
+          type: Boolean,
+          value: false,
+        },
+        tabView: {
+          type: Boolean,
+          value: true,
+          notify: true, 
+          reflectToAttribute: true
+        },
+        editMode: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          reflectToAttribute: true
+        },
+        hasError: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        hasLoaded: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        errorMessage: {
+          type: String,
+          value: '',
+          notify: true,
+        },
+        loading: {
+          type: Boolean,
+          value: true,
+          notify: true,
+          reflectToAttribute: true,
+        },
+        lastPage: {
+          tyep: Number,
+          notify: true,
+          reflectToAttribute: true,
+          value: 0,
+        },
+        selPage: {
+          tyep: Number,
+          notify: true,
+          reflectToAttribute: true,
+          value: 0,
+        },
+        selectedPage: {
+          tyep: Number,
+          notify: true,
+          reflectToAttribute: true,
+          value: 0,
+        },
+        multiColumn: {
+          type: Boolean,
+          value: false,
+          notify: true, 
+        },
+        fullScreen: {
+          type: Boolean,
+          value: false,
+          notify: true, 
+        },
+        withMargin: {
+          type: Boolean,
+          value: true,
+          notify: true, 
+        },
+        fullScreenEnabled: {
+          type: Boolean,
+          value: null,
+          notify: true,
+        },
+        showRemovePages: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          reflectToAttribute: true, 
+        },
+        backgroundColor: {
+            type: String,
+            value: 'indigo',
+            notify: true,
+            reflectToAttribute: true,
+        },
+        _cssHeaderStyle: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true,
+          computed: '_computeHeaderBackground(backgroundColor)',
+        }
+      },
+      log: function(message) {
+        if (this.debug) {
+          console.log(message);
+        }   
+      },
+      setColumnDialog: function(_value) {
+        this.set('dialog',_value);
+      },
+      openDrawer: function() {
+        this.log('multi-column.openDrawer');
+        this.$.drawer.open();
+      },
+      toggleDrawer: function() {
+        this.log('multi-column.toggleDrawer');
+        this.$.drawer.toggle();
+      },
+      toggleRightDrawer: function() {
+        this.log('multi-column.toggleRightDrawer');
+        this.$.drawerRight.toggle();
+      },
+      closeDrawer: function() {
+        this.log('multi-column.closeDrawer');
+        this.$.drawer.close();
+      },
+      drawPage: function(pageId,_page) {
+        this.log('item-column.drawPage:' + pageId);
+        var page = this.pages[pageId - 1];
+        if (_page != undefined) {
+          var page = _page;
+        }
+        // console.log(page);
+        var elClass = page.column;
+        this.log('#holder' + this.selectedPage);
+        var holderEl = this.getHolder(this.selectedPage);
+        // var holderEl = Polymer.dom(this).querySelectorAll('#holder' + this.selectedPage)[0];
+        var parentFirstChild = undefined;
+        var parentEl = this.getHolder(this.selPage - 1);
+        if (parentEl != undefined) {
+          parentFirstChild = parentEl.firstChild;
+        }
+
+        if (holderEl != undefined) {
+          if (elClass != undefined) {
+
+            var isBlocked = false;
+
+            if (!isBlocked) {
+              var element = document.createElement(elClass.element);
+              element.params = page.params;
+              element.parent = parentFirstChild;
+              holderEl.innerHTML = '';
+              holderEl.appendChild(element);
+              if (element.load != undefined) {
+                element.load();
+              }
+              
+              this.loading = true;
+            } else {
+              var element = document.createElement('ew-blocked');
+              element.params = page.params;
+              holderEl.innerHTML = '';
+              if (element.load != undefined) {
+                element.load();
+              }
+              holderEl.appendChild(element);
+              this.loading = true;
+            }
+
+            
+          } else {
+            console.warn('elClass undefined');
+            // console.log(this.pages);
+          }
+        } else {
+          console.warn('holderEl undefined');
+          // console.log(this.pages);
+        }
+
+        this._enableBackButton(true); 
+      },
+      _getOptions() {
+        var _options = JSON.parse(window.localStorage.getItem("options"));
+        if (_options != undefined) {
+          return _options;
+        } else {
+          return { top: "", "builtIn" : false };
+        }
+      },
+      _computeAppDrawerStyle() {
+        var retVal = "";
+        if (this.isMobile) {
+          retVal = "margin-top: 0px;";
+        }
+        return retVal;
+      },
+      _computeAppHolderStyle() {
+        var _options = this._getOptions();
+        var retVal = "";
+        if (_options.builtIn == true) {
+          var _top = _options.top;
+          retVal = "padding-top: " + _top+ "px;";
+        }
+        return retVal;
+      },
+      _computeAppHeaderStyle() {
+        var _options = this._getOptions();
+        var retVal = "";
+        if (_options.builtIn == true) {
+          var _top = _options.top;
+          retVal = "margin-top: " + _top+ "px;";
+        }
+        return retVal;
+      },
+      _enableBackButton: function(value) {
+        this.enableBackButton = value;
+        for (var x in this.pages) {
+          var pageID = x;
+          var holderEl = this.getHolder(x);
+          if (holderEl) {
+            var childNode = holderEl.firstChild;
+            if (childNode) {
+              if (childNode.ew_headerBackButton) {
+                childNode.ew_headerBackButton(value);
+              } 
+            }
+          }
+        }
+        
+      },
+      _enableDrawerToggle: function(value) {
+        this.enableDrawerToggle = value;
+        for (var x in this.pages) {
+          var pageID = x;
+          var holderEl = this.getHolder(x);
+          if (holderEl) {
+            var childNode = holderEl.firstChild;
+            // console.log(childNode);
+            if (childNode) {
+              if (childNode.ew_headerDrawerToggle) {
+                childNode.ew_headerDrawerToggle(value);
+              }
+              
+            }
+          }
+        }
+        
+      },
+
+      _showRemovePages: function(_pages) {
+        if (_pages.length >= 2) {
+          return true;
+        } else {
+          return false;
+        }
+      },
+
+      _computeHeaderBackground: function (_backgroundColor) {
+        this.isMobile = ewidgets.isMobile;
+        var availableColors = ["indigo"];
+        var _globalParams = localStorage.getItem('globalParams');
+        if (_globalParams != undefined) {
+          var globalParams = JSON.parse(_globalParams);
+          if ((globalParams.theme != 'celepar-theme') && (globalParams.theme != 'ice')) {
+            if (!this.isMobile) {
+              for (var i in availableColors) {
+                var currentColor = availableColors[i];
+                _backgroundColor = _backgroundColor.replace(currentColor,'');
+              } 
+            }
+          }
+        } 
+        if (_backgroundColor != undefined) {
+          return _backgroundColor;
+        }
+        
+      },
+
+      switchPage: function(e) {
+        // this.entryAnimation = 'fade-in-animation';
+        // this.exitAnimation = 'fade-out-animation';
+      },
+      _computePageContentStyle: function(_tabView) {
+        //this.log('multi-column._computeTabViewStyle');
+        var retVal = '';
+        if (!_tabView) {
+          // retVal = 'position: absolute; width: 100%; height: calc(100%); ';
+        } else {
+          // retVal = 'position: absolute; width: 100%; height: calc(100%); ';
+        }
+        return retVal;
+      },
+
+      _computeTabViewStyle: function(_tabView) {
+        var _options = this._getOptions();
+        //this.log('multi-column._computeTabViewStyle');
+        var retVal = '';
+        if (!_tabView) {
+          retVal = 'overflow: auto; height: calc(100vh); ';
+          var _top = 0;
+          if (_options.builtIn != false) {
+            _top = _top + parseInt(_options.top);
+            retVal = 'overflow: hidden; height: calc(100vh - ' + _top + 'px); margin-top: ' + _top + 'px; ';
+          }
+          
+        } else {
+          var _top = 153;
+          if (_options.builtIn != false) {
+            var _top = _top + parseInt(_options.top);
+          }
+          retVal = 'overflow: hidden; height: calc(100vh - ' + _top + 'px); ';
+        }
+        return retVal;
+      },
+      _computePaperMaterialStyle: function(column,withMargin,hasLoaded,loading) {
+        //this.log('multi-column._computePaperMaterialStyle');
+        var retVal = '';
+        if (!withMargin) {
+          retVal = 'margin: 0px; height: 100%; ';
+        }
+        if (hasLoaded == false) { 
+          if (loading) {
+            retVal = 'display: none;'
+          } else {
+            this.hasLoaded = true;
+          }
+        }
+        return retVal;
+      },
+      _computeStyleIcon: function (url) {
+        return 'background-image: url(' + url + '); background-size: 30px 30px; background-repeat: no-repeat; background-position: 0px 5px;'; 
+      },
+      _computeStyle: function (column) {
+        var _url = './api/rest/Icon?id=' + column.widgetId;
+        return this._computeStyleIcon(_url);
+        
+        // 'background-image: url( + '); background-size: 30px 30px; background-repeat: no-repeat; background-position: 0px 5px;'; 
+      },
+      _computeDisplayNoneCssClass: function(_baseCssClass,editMode) {
+        var addClass = '';
+        // if (!editMode) {
+          addClass = ' displayNone';
+        // }
+        return _baseCssClass + addClass;
+      },
+
+      fullScreenChange: function(_fullScreen) {
+        this.log('multi-column.fullScreenChange');
+
+        var columnEl = Polymer.dom(this).node;
+        var column = this.column;
+
+        this.fullScreen = _fullScreen;
+        this.column.fullScreen = _fullScreen;
+
+        if (!this.fullScreen) {
+          this.withMargin = true;
+          columnEl.style.width = (10 * column.width)+"%";
+          columnEl.style.height = (100 * column.height)+"px";
+          columnEl.style.position = 'absolute';
+        }
+        if (this.fullScreen) {
+          this.withMargin = false;
+          columnEl.style.top = "0px";
+          columnEl.style.left = "0px";
+          columnEl.style.width = "100%";
+          columnEl.style.height = "100%";
+          columnEl.style.position = 'absolute';
+        }
+
+        if (this.autoload) {
+
+          if (!this.userLoaded) {
+            columnEl.style.width = "20%";
+            columnEl.style.height = "80px";
+          }
+
+        }
+
+        this.fire('column-fullscreen', this.column );
+      }, 
+
+      getDragIcon: function() {
+        return this.$.dragIcon;
+      },
+      getHandle: function() {
+        return this.$.columnHandle;
+      },
+      getToolbar: function() {
+        return this.$.widgetToolBar;
+      },
+      columnsChange: function(event) {
+        this.log('multi-column.columnsChange');
+        this.log(event.detail);
+        this.usedColumns = event.detail;
+      },
+
+      _delete: function (e) {
+        this.log('multi-column._delete');
+        this.fire('column-delete', this.column);// e.target.templateInstance.model.column);
+      },
+     
+      renderHolderPages: function() {
+        // this.log('multi-column.renderHolderPages');
+        //this.$.holderPages.render();
+      },
+      getHolder0: function() {
+        var holderEl =  this.$.holder0;
+        var childNode = holderEl.firstChild;
+        var retVal = false;
+        if (childNode) {
+          var retVal = childNode;
+        }
+        return retVal;
+      },
+      getHolder: function(Pid) {
+        var retVal = false;
+        if (Pid == undefined) {
+          Pid = 0;
+        }
+        if (Pid == 0) { 
+          if (POLYMER == 2) {
+            retVal = this.shadowRoot.querySelector("#holder0");
+          } else {
+            retVal = this.$.holder0;
+          }
+          
+        } else {
+          // this.renderHolderPages();
+          var holder = Polymer.dom(this.$.holders).querySelectorAll('#holder' + Pid);
+          // console.warn(holder);
+          if (holder) {
+            retVal = holder[0];
+          } else {
+            retVal = false;
+          }
+        }
+        if (retVal != false) {
+          this.log('multi-column.getHolder:' + Pid);
+          this.log(retVal);
+        } else {
+          this.log('multi-column.getHolder:' + Pid);
+        }
+        
+        return retVal;
+      },
+
+      _formatTabTitle: function(_title) {
+        var retVal = '';
+        if (_title != undefined) {
+          if (_title.length >= 20) {
+            retVal = _title.substr(0,20) + '...';
+          } else {
+            retVal = _title;
+          }
+        }
+        retVal = this._decodeHTMLEntities(retVal);
+        return retVal;
+      },
+      _decodeHTMLEntities: function(val) {
+        var t = document.createElement('textarea');
+        if (val != undefined) {
+          t.innerHTML = val;
+          return t.textContent;
+        } else {
+          return '';
+        }
+      },
+
+      _signal_removeTabID: function(e) {
+        this.log('multi-column._signal_removeTabID');
+        e.stopPropagation();
+        var tab = e.detail.tabID;
+        this.removePageByTabId(tab);
+        var _newPages = [...this.pages];
+        this.set('pages',_newPages);
+        this.set('selPage',this.selPage - 1);
+      },
+      _signal_openTabID: function(e) {
+        this.log('multi-column._signal_removeTabID');
+        var tab = e.detail;
+        this.removePageByTabId(tab);
+      },
+
+      removeAllPages: function(e) {
+        e.stopPropagation();
+        this.set('selPage',0);
+        this.selPage = 0;
+        this.splice('pages', 1, this.pages.length);
+        this.set('showRemovePages',this._showRemovePages(this.pages));
+      },
+
+      getPageIndexByTabId: function(_tabID) {
+        var pageIndex = -1;
+        for (var i in this.pages) {
+          if (this.pages[i].params.tabID == _tabID) {
+            pageIndex = i;
+          }
+        }
+        return pageIndex;
+      },
+
+      getPageByTabId: function(_tabID) {
+        var pageID = -1;
+        for (var i in this.pages) {
+          if (this.pages[i].params.tabID == _tabID) {
+            pageID = this.pages[i].id;
+          }
+        }
+        return pageID;
+      },
+
+      getThisElement: function(event) {
+        event.stopPropagation();
+        if (event.detail != undefined) {
+          event.detail(this);
+        }
+      },
+
+      _updateTab: function(event) {
+        this.log('multi-column.updateTab');
+        this.log(event.detail);
+        var _params = event.detail;
+        this.updatePageByTabId(_params.tabID,_params.params);
+      },
+
+
+      updatePageByTabId: function(_tabID,_newParams) {
+        var pageIndex = this.getPageIndexByTabId(_tabID);
+        var newPageIndex = this.getPageIndexByTabId(_newParams.tabID);
+        if (newPageIndex == -1) {
+          if (pageIndex != -1) {
+            this.pages[pageIndex].params = _newParams;
+            this.pages[pageIndex].title = this._formatTabTitle(_newParams.tabTitle);
+
+            // console.log(this.pages);
+
+            // for (var i in this.pages) {
+            //   this.pages[i].parent = null;
+            // }
+
+            this.pages = JSON.parse(JSON.stringify(this.pages));
+            //console.warn(this.pages);
+          }
+        } else {
+          this.removePageByTabId(_tabID);
+          this.selPage = newPageIndex;
+          this.set('selPage',newPageIndex);
+          console.warn('PAGE ALREADY FOUND');
+        }
+      },
+
+      removePageByTabId: function(_tabID) {
+        console.warn(_tabID);
+        var pageID = this.getPageByTabId(_tabID);
+        if (pageID != -1) {
+          this.removePageById(pageID);
+        }
+      },
+
+      removePageById: function(_pageID) {
+
+        var pageIndex = -1;
+        for (var i in this.pages) {
+          if (this.pages[i].id == _pageID) {
+            pageIndex = i;
+          }
+        }
+
+        if (pageIndex != -1) {
+          this.splice('pages', pageIndex, 1);
+        }
+
+        this.set('selPage',pageIndex - 1);
+        this.selPage = pageIndex - 1;
+
+        this.set('showRemovePages',this._showRemovePages(this.pages));
+
+        this.shadowRoot.querySelector("#tabPages").render();
+        
+        Polymer.RenderStatus.afterNextRender(this, function() {
+
+          this.shadowRoot.querySelector("#holderPagesTemplate").render();
+
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            for (var i in this.pages) {
+              if (i >= pageIndex) {
+                var _holder = this.shadowRoot.querySelector('#holders').querySelector("#holder" + this.pages[i].id);
+                if (_holder != undefined) {
+                  if (_holder.render != undefined) {
+                    _holder.render();
+                  }
+                }
+              }
+            }
+          });
+          
+        });
+
+        this.log('multi-column.removePageById:' + _pageID);
+        this.log(this.pages);
+      },
+
+      removePage: function(event) {
+        event.stopPropagation();
+        var pageToRemove = event.model.item;
+        this.removePageById(pageToRemove.id);
+      },
+      
+      backOnePage: function(event) {
+        event.stopPropagation();
+        this.log('multi-column.backOnePage');
+
+        if (this.tabView) {
+          // console.warn(this.pages);
+          // console.warn(this.selPage);
+          var currentPage =  this.pages[this.selPage];
+          this.selPage = this.selPage - 1;
+          this.removePageById(currentPage.id);
+        } else {
+
+          this.selectedPage = this.selectedPage - 1;
+          this.loading = false;
+          // this.pop('pages');
+          if (this.selectedPage <= 1) {
+            this.enableBackButton = false;
+          }
+          // this.refresh();
+        } 
+        
+      },
+      responseFromWidget: function(event) {
+        this.log('multi-column.responseFromWidget');
+        var holderEl = this.querySelector('#holder' + (this.selectedPage - 1 ));
+        var childNode = holderEl.firstChild;        
+        childNode.fire(event.detail.fire,event.detail.response);
+      },
+      getQtdColumnsInPage: function(_page) {
+        var columns = this.usedColumns;
+        var qtdInPage = 0;
+        for (var i = 0; i < columns.length; i++) {
+          if (columns[i].page == _page) {
+            qtdInPage = qtdInPage + 1;
+          }
+        }
+        this.log('multi-column.getQtdColumnsInPage:' + _page + " - " + qtdInPage);
+        return qtdInPage;
+      }, 
+      findPage: function(element,params) {
+        var found = '-1';
+        if (params == undefined) {
+          params = {};
+        }
+        for (var i = 0; i < this.pages.length; i++) {
+          if (this.pages[i].element == element) {
+            if (this.pages[i].params != undefined) {
+              if (this.pages[i].params.tabID == params.tabID) {
+                 found = i;
+              }
+            }
+            
+          }
+        }
+        this.log('multi-column.findPage:' + element + ' - result: ' + found );
+        if (found == '-1') {
+           this.log(params);
+           this.log(this.pages);
+        }
+        return found;
+      },
+      pushWidget: function(event) {
+        event.stopPropagation();
+        this.log('multi-column.pushWidget:');
+
+        var pageToAdd = event.detail;
+
+        // if (pageToAdd) {
+        //   console.warn(pageToAdd);
+        // }
+
+        var foundPage = this.findPage(pageToAdd.element,pageToAdd.params);
+
+        // console.log(foundPage);
+
+        if (foundPage == '-1') {
+          this.lastPage = parseInt(this.lastPage) + 1;
+
+          var enableRemovePage = true;
+          if (this.lastPage == 1) {
+            enableRemovePage = false;
+          }
+
+          if (pageToAdd.params == undefined) {
+            pageToAdd.params = { };
+          }
+
+          var _enablePush = false;
+          if (pageToAdd.params.enablePush != undefined) {
+            _enablePush = pageToAdd.params.enablePush;
+          }
+
+          var parentFirstChild = undefined;
+          var parentEl = this.getHolder(this.selPage + 1);
+          if (parentEl != undefined) {
+            parentFirstChild = parentEl.firstChild;
+          }
+
+          var _parent = null;
+          if (pageToAdd.parent != null) {
+            _parent = pageToAdd.parent;
+          }
+
+          pageToAdd.params.isMobile = this.isMobile;
+
+          // console.log("parent:");
+          // console.log(_parent);
+
+          var newPage = { 
+            id: this.lastPage, 
+            element: pageToAdd.element, 
+            params: pageToAdd.params, 
+            parent: _parent,
+            visible: true, 
+            enableRemove: enableRemovePage,
+            icon: pageToAdd.params.tabIcon, 
+            image: pageToAdd.params.tabImage,
+            enablePush: true, // _enablePush,
+            title: this._formatTabTitle(pageToAdd.params.tabTitle) 
+          };
+
+          this.push('pages',newPage);
+          this.log(this.pages.length - 1);
+          this.selPage = 0;
+          this.set('selPage',this.pages.length - 1);
+
+        } else {
+          this.log('multi-column.pushWidget.foundPage');
+          this.pages[foundPage].params = pageToAdd.params;
+
+          var foundPageId = this.pages[foundPage].id;
+
+          var holderPage = this.getHolder(foundPageId);
+
+          if (holderPage != undefined) {
+            holderPage.params = pageToAdd.params;
+            if (holderPage.render != undefined) {
+              holderPage.render();  
+            }
+          }
+          
+
+          this.selPage = foundPage;
+          this.set('selPage',foundPage);
+        }
+
+        this.set('showRemovePages',this._showRemovePages(this.pages));
+      
+      },
+      
+      saveParams: function(e) {
+        e.stopPropagation();
+        this.log('multi-column.saveParams:');
+        this.log(e.detail);
+        this.column.params = e.detail;
+        this.refreshSelectedPage();
+        if (!this.isMobile) {
+          this.fire('ew-settings-column-saved', this);
+        }
+        
+      },
+
+      getSelectedPage: function( ){
+        var currentPage = this.pages[this.selPage];
+        return currentPage;
+      },
+
+      refreshSelectedPage: function() {
+        var currentPage = this.pages[this.selPage];
+        if (currentPage != undefined) {
+          var holderPage = this.getHolder(currentPage.id);
+          if (holderPage != undefined) {
+            if (holderPage.render != undefined) {
+              this.log('multi-column.refreshSelectedPage:');
+              holderPage.render();
+            }
+          }
+        }
+
+      },
+      
+      refresh: function (e) {
+        this.hasError =  !navigator.onLine;
+
+        this.refreshSelectedPage();
+      },
+      
+      openLink: function(column) { 
+        if (column.link != undefined) {
+            window.open(column.link);
+        }
+      },
+      _setIsLoading: function(event) {
+        this.loading = event.detail.value;
+        if (this.loading) {
+          this.hasError = false;
+        }
+      },
+      errorLoading: function(event) {
+        this.errorMessage = event.detail.error.message;
+        this.hasError = true;
+        this.loading = false;
+      },
+      
+      
+    });
+
+  </script>
+</dom-module>

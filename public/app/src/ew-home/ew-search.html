@@ -1,0 +1,131 @@
+<!--
+### ELEMENTO 
+
+`ew-search`
+
+Elemento padrao, para adicionar um campo de busca nos widgets.
+
+Utilize a propriedade `searchEnabled` para esconder outros campos quando a busca for ativada.
+
+### Exemplo de utilização:
+  
+    <ew-header background-color="indigo tall">
+      <div slot='title' hidden="{{searchEnabled}}">Titulo do seu Widget</div>
+      <div slot='toolbar-buttons'>
+        <ew-search search-value="{{searchValue}}" search-enabled="{{searchEnabled}}"></ew-search>
+        <paper-icon-button icon="refresh" hidden="{{searchEnabled}}"></paper-icon-button>
+      </div>
+      <div slot='content'>
+          
+      </div>
+    </ew-header>
+
+-->
+<dom-module id="ew-search">
+    <template>
+        <style>
+            :host {
+                float: right;
+            }
+            .search-overlay{
+                display:inline-block;
+                /*background-color:var(--primary-color-light);*/
+            }
+            .f-left {
+                float: left;
+            }
+            .search-form, .search-overlay{
+                width:100%;
+                position:absolute;
+                left:0em;
+                top:-0.1em;
+                padding:0em;
+                padding-left: 6.5em;
+                padding-right: 2.5em;
+                height: 100%;
+                box-sizing:border-box;
+            }
+            .search-hidden .search-form{
+                display:none;
+            }
+            .close-btn{
+                position:absolute;
+                right:0.5em;
+                top:22%;
+            }
+            .search-overlay .search-btn{
+                left:4.5em;
+                top:22%;
+                position:absolute;
+            }
+            .search-input{
+                width: 100%;
+                top: 20%;
+                position: relative;
+                color: #FFF;
+            }
+            paper-input {
+                --paper-input-container-color: white;
+                --paper-input-container-input-color: white;
+            }
+        </style> 
+        <iron-a11y-keys target="{{searchForm}}" keys="enter" on-keys-pressed="_searchAction"></iron-a11y-keys>
+        <iron-a11y-keys target="{{searchForm}}" keys="esc" on-keys-pressed="close"></iron-a11y-keys>
+        <iron-signals on-iron-signal-ew-search-close="close"></iron-signals>  
+        <div class$="{{_overlayClasses}}">
+            <paper-icon-button icon="search" class="f-right search-btn" on-click="search"></paper-icon-button>
+            <div class="search-form" id="searchForm">
+                <paper-input autofocus no-label-float id="searchInput" class="search-input f-left"></paper-input>
+                <paper-icon-button class="f-right close-btn" on-click="close" icon="close"></paper-icon-button>
+            </div> 
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: "ew-search",
+            properties: {
+                searchEnabled:{
+                    type:Boolean,
+                    value:false,
+                    notify:true,
+                    reflectToAttribute: true,
+                },
+                searchValue: {
+                    type: String,
+                    value: '',
+                    notify: true,
+                    reflectToAttribute: true,
+                },
+                _overlayClasses:{
+                    type:String,
+                    value:"",
+                    computed:"_computeClasses(searchEnabled)",
+                    notify:true
+                }
+            },
+            _computeClasses:function(searchEnabled){
+                if(searchEnabled)
+                    return "search-overlay";
+                return"search-hidden";
+            },
+            updateSearchInputValue: function() {
+                this.$.searchInput.value = this.searchValue;
+            },
+            _searchAction:function(){
+                this.searchValue = this.$.searchInput.value;
+                // this.querySelector(".search-input").value;
+                this.fire("search",this.searchValue);
+            },
+            search:function(){
+                this.set("searchEnabled", true);
+                this.$.searchInput.focus();
+                this.$.searchInput.value = "";
+            },
+            close:function(){
+                this.set("searchEnabled", false);
+                // this.searchValue = '';
+                this.fire("ew-search-closed");
+            }
+        });
+    </script>
+</dom-module>

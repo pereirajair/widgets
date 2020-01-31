@@ -1,0 +1,318 @@
+/* Welcome to Compass.
+ * In this file you should write your main styles. (or centralize your imports)
+ * Import this file using the following HTML or equivalent:
+ * <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
+#divAppbox {
+  border: 0px;
+  padding: 0px;
+  margin-left: -2px;
+}
+
+#divAppboxHeader {
+  display: none;
+}
+
+#sideboxdragarea {
+  /* display: none; */
+}
+
+#hiddenButton {
+  display: none;
+}
+
+#divStatusBar {
+  display: none;
+}
+
+#toolbar {
+  z-index: 100000;
+}
+
+#chatContactsWindow {
+  width: 250px;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url("./font/Roboto-Regular-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Roboto Slab';
+  src: url("./font/RobotoSlab-Regular-webfont.ttf") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+body {
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  background-color: #eeeeee;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  background-size: 130%;
+}
+
+#homeWidgets {
+  box-sizing: border-box;
+}
+
+.ui-dialog {
+  z-index: 100000;
+}
+
+ul {
+  list-style-image: none !important; 
+}
+
+app-drawer-layout {
+  height: 100%;
+}
+
+app-header {
+  background-color: var(--paper-toolbar-background);
+  color: var(--paper-toolbar-color);
+}
+
+app-toolbar {
+  height: 51px;
+}
+
+#jsxc_roster {
+    position: absolute !important;
+    padding: 0px;
+    margin: 0px;
+    width: 250px !important;
+    height: calc(100%) !important;
+    height: 100%;
+    margin-top: 0px !important;
+    right: 0px !important;
+    /* width: 100%;
+    height: 100%; */
+    /* top: 0px !important; */
+    display: inline;
+}
+
+.jsxc_bottom  {
+  position: absolute !important;
+}
+
+#overlay {
+  z-index: 110000;
+}
+
+#jsxc_windowList {
+  z-index: 100000 !important;
+  right: 400px !important;
+}
+
+pre {
+  font-size: 12px;
+}
+
+blockquote {
+  font-style: italic;
+  border-left: 3px solid #e0e0e0;
+  padding-left: 0.6em;
+  margin-left: 2.4em;
+}
+
+
+
+
+.logo_expresso {
+  background-image: url('../img/logo_expresso.png');
+  background-size: 170px;
+  animation: scaleFadein 0.5s;
+  -moz-animation: scaleFadein 0.5s; /* Firefox */
+  -webkit-animation: scaleFadein 0.5s; /* Safari and Chrome */
+  -o-animation: scaleFadein 0.5s; /* Opera */
+}
+.navbar_butOver {
+  background-image: none !important;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 5px 5px rgba(0,0,0,0.22);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  margin-right: 10px;
+  padding-top: 0px;
+  padding-left: 4px;
+  height: 40px;
+  width: 34px;
+  display: inline-block;
+}
+.navbar_butOut {
+  background-image: none !important;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 10px 10px rgba(0,0,0,0.25), 0 5px 5px rgba(0,0,0,0.22);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  margin-right: 10px;
+  padding: 0px;
+  padding-top: 3px;
+  width: 34px;
+  display: inline-block;
+}
+.navbar_but {
+  background-image: none !important;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  margin-right: 10px;
+  padding-top: 8px;
+  padding-left: 4px;
+  height: 32px;
+  width: 34px;
+  display: inline-block;
+}
+.toolbar {
+  /* background-image: none !important; */
+  color: #777777;
+  max-height: 50px;
+  height: 50px;
+  /* background-color:  !important; */
+  background-image: linear-gradient(to bottom right, #FFF, #FFF);
+  /* border-bottom: 1px solid #e0e0e0; */
+  /* box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); */
+  animation: falling 0.3s;
+  -moz-animation: falling 0.3s; /* Firefox */
+  -webkit-animation: falling 0.3s; /* Safari and Chrome */
+  -o-animation: falling 0.3s; /* Opera */
+  /* background-image: linear-gradient#EFEFEF, #FFF); */
+}
+
+.toolbar table {
+  /* position: absolute; */
+}
+
+ /* SCALE */
+ @keyframes scaleFadein {
+  from {
+      opacity:0;
+      -ms-transform: scale(0,0); /* IE 9 */
+      -webkit-transform: scale(0,0); /* Safari */
+      transform: scale(0,0); /* Standard syntax */
+  }
+  to {
+      opacity:1;
+      -ms-transform: scale(1,1); /* IE 9 */
+      -webkit-transform: scale(1,1); /* Safari */
+      transform: scale(1,1); /* Standard syntax */
+  }
+}
+@-moz-keyframes scaleFadein { /* Firefox */
+  from {
+      opacity:0;
+      -ms-transform: scale(0,0); /* IE 9 */
+      -webkit-transform: scale(0,0); /* Safari */
+      transform: scale(0,0); /* Standard syntax */
+  }
+  to {
+      opacity:1;
+      -ms-transform: scale(1,1); /* IE 9 */
+      -webkit-transform: scale(1,1); /* Safari */
+      transform: scale(1,1); /* Standard syntax */
+  }
+}
+@-webkit-keyframes scaleFadein { /* Safari and Chrome */
+  from {
+      opacity:0;
+      -ms-transform: scale(0,0); /* IE 9 */
+      -webkit-transform: scale(0,0); /* Safari */
+      transform: scale(0,0); /* Standard syntax */
+  }
+  to {
+      opacity:1;
+      -ms-transform: scale(1,1); /* IE 9 */
+      -webkit-transform: scale(1,1); /* Safari */
+      transform: scale(1,1); /* Standard syntax */
+  }
+}
+@-o-keyframes scaleFadein { /* Opera */
+ from {
+      opacity:0;
+      -ms-transform: scale(0,0); /* IE 9 */
+      -webkit-transform: scale(0,0); /* Safari */
+      transform: scale(0,0); /* Standard syntax */
+  }
+  to {
+      opacity:1;
+      -ms-transform: scale(1,1); /* IE 9 */
+      -webkit-transform: scale(1,1); /* Safari */
+      transform: scale(1,1); /* Standard syntax */
+  }
+}
+
+
+ /* FALLING */
+ @keyframes falling {
+  from {
+      -webkit-transform: translateY(-100%);
+      -moz-transform: translateY(-100%);
+      -ms-transform: translateY(-100%);
+       -o-transform: translateY(-100%);
+          transform: translateY(-100%);
+  }
+  to {
+      -webkit-transform: translateY(0%);
+     -moz-transform: translateY(0%);
+      -ms-transform: translateY(0%);
+       -o-transform: translateY(0%);
+          transform: translateY(0%);
+  }
+}
+@-moz-keyframes falling { /* Firefox */
+  from {
+      -webkit-transform: translateY(-100%);
+      -moz-transform: translateY(-100%);
+      -ms-transform: translateY(-100%);
+       -o-transform: translateY(-100%);
+          transform: translateY(-100%);
+  }
+  to {
+      -webkit-transform: translateY(0%);
+     -moz-transform: translateY(0%);
+      -ms-transform: translateY(0%);
+       -o-transform: translateY(0%);
+          transform: translateY(0%);
+  }
+}
+@-webkit-keyframes falling { /* Safari and Chrome */
+  from {
+      -webkit-transform: translateY(-100%);
+      -moz-transform: translateY(-100%);
+      -ms-transform: translateY(-100%);
+       -o-transform: translateY(-100%);
+          transform: translateY(-100%);
+  }
+  to {
+      -webkit-transform: translateY(0%);
+     -moz-transform: translateY(0%);
+      -ms-transform: translateY(0%);
+       -o-transform: translateY(0%);
+          transform: translateY(0%);
+  }
+}
+@-o-keyframes falling { /* Opera */
+  from {
+      -webkit-transform: translateY(-100%);
+      -moz-transform: translateY(-100%);
+      -ms-transform: translateY(-100%);
+       -o-transform: translateY(-100%);
+          transform: translateY(-100%);
+  }
+  to {
+      -webkit-transform: translateY(0%);
+     -moz-transform: translateY(0%);
+      -ms-transform: translateY(0%);
+       -o-transform: translateY(0%);
+          transform: translateY(0%);
+  }
+}
+
+
+
+

@@ -1,0 +1,1671 @@
+<!--
+`ew-home`
+Elements Widgets - Home Screen
+
+@demo demo/index.html 
+-->
+<!-- <style is="custom-style">
+  
+    paper-card {
+      color: var(--paper-menu-color) !important;
+      background-color: var(--paper-menu-background-color) !important;
+    }
+  
+</style> -->
+<dom-module id="ew-home">
+  <template>
+    <style>
+      :host {
+        display: block;
+        height: 100%;
+      }
+      body {
+        margin: 0;
+      } 
+      .fullHeight {
+        height: 100%;
+      }
+      .background-image {
+        position: fixed;
+        left: 0px;
+        display: block;
+        background-size: 100% 100%;
+        min-width: 120%;
+        min-height: 100%;
+        z-index: 0;
+        background-color:#E5E5E5;
+      }
+      .ew-content {
+        left: 0;
+        right: 0;
+        z-index: 0;
+      }
+
+      .grid-sizer {
+        position: absolute;
+      }
+      .grid-sizer, 
+      .grid-item {
+          width: 10%;
+          height:10%;
+      }
+      .column-holder {
+          width: 100%; 
+          max-height: 100% !important;
+          height:calc(100vh - 51px) !important;     
+          overflow-y: auto;   
+          overflow-x: hidden; 
+      }
+      .resize-preview {
+        position: absolute;
+        z-index: 200;
+        border: 3px dotted #424242;
+        min-width: 250px;
+      }
+      app-toolbar {
+        background: var(--paper-toolbar-background);
+        color: var(--paper-toolbar-color);
+      }
+      app-drawer {
+        background: var(--paper-menu-background-color);
+        color: var(--paper-menu-color);
+      }
+
+      #mainToolbar { background-color: #FFF; color: #424540; height: 51px; box-shadow: 1px 1px 1px var(--paper-tabs-selection-bar-color); }
+      #loadingProgressBar { width: 100%; }
+      #pages { overflow-y: auto; }
+
+      @media screen and (max-width: 900px) { 
+        .pageName {
+          display: none;
+        }
+      }
+      .logo-system {
+        width: 200px;
+        top: 0px;
+        height: 50px;
+      }
+      #fabNews {
+        background-color: #F60;
+        color: white;
+      }
+      #fabAdd {
+        /* background-color: var(--paper-green-500); */
+        color: white;
+        
+      }
+      .fabButton {
+          background-color: var(--paper-progress-active-color);
+          color: white;
+          margin: 4px;
+          font-size: 12px;
+          padding: 0.5em 0.57em;
+          border-radius: 20px;
+          
+          box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+          transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+
+          --paper-button-ink-color: var(--paper-progress-active-color);
+          --paper-button-flat-keyboard-focus: {
+            background-color: var(--paper-progress-active-color);
+            color: white !important;
+          };
+          --paper-button-raised-keyboard-focus: {
+            background-color: var(--paper-progress-active-color) !important;
+            color: white !important;
+          };
+          
+      }
+      .fabButton:hover {
+          box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        }
+      .displayNone { display: none; }
+
+     
+    </style> 
+    
+    <ew-api-ajax 
+      id="ajaxSettings"
+      url="./api/Home/SaveSettings"
+      params="{{paramsSettings}}"
+      loading="{{isLoading}}"
+      on-response="handleResponseToData" >        
+    </ew-api-ajax>
+    <ew-api-ajax
+      id="ajaxGetUserWidgets"
+      url="./api/Home/UserWidgets"
+      params="{{paramsGetSettings}}" 
+      loading="{{isLoading}}"
+      on-response="handleResponseToWidgets"auto>        
+    </ew-api-ajax>
+    <ew-api-ajax
+      id="ajaxGetUserData"
+      url="./api/Home/UserData"
+      params="{{paramsGetSettings}}" 
+      loading="{{isLoading}}"
+      on-response="handleUserDataResponse">        
+    </ew-api-ajax>
+
+    <iron-signals on-iron-signal-ew-auth-invalid="logout"></iron-signals>
+    <iron-signals on-iron-signal-ew-home-settings-params-change="changeParams"></iron-signals>
+    <iron-signals on-iron-signal-ew-home-add-widget="addWidget"></iron-signals>
+    <iron-signals on-iron-signal-ew-home-reload-page="reloadPage"></iron-signals>
+
+    <iron-localstorage id="optionsLocalStorage" name="options" value="{{options}}" on-iron-localstorage-load-empty="_initializeDefaultOptions"></iron-localstorage>
+    <iron-localstorage id="expressoLocalStorage" name="expresso" value="{{loginResponse}}"></iron-localstorage>
+    <iron-localstorage id="usedColumnsLocalStorage" name="usedColumns" value="{{usedColumns}}"></iron-localstorage>
+    <iron-localstorage id="globalParamsLocalStorage" name="globalParams" value="{{params}}" on-iron-localstorage-load-empty="_initializeDefaultGlobalParams"></iron-localstorage>
+    <iron-a11y-keys target="[[target]]" keys="pagedown" on-keys-pressed="_scrollDown"></iron-a11y-keys>
+    <iron-a11y-keys target="[[target]]" keys="pageup" on-keys-pressed="_scrollUp"></iron-a11y-keys>
+
+
+    <div id="backgroundImage" class="background-image" style$="{{backgroundCssClass}}"></div>
+    <ew-login id="loginForm" login-response="{{loginResponse}}" is-logged="{{isLogged}}"></ew-login>
+    <div class="ew-content fullHeight" style$="{{_computeHomeWidgetsStyle(options)}}"> 
+      <div id="homeWidgets" class="fullHeight">
+        <app-drawer-layout fullbleed style$="{{_computeHeaderLayoutStyle(options)}}">
+          
+          <app-header-layout fullbleed>
+            <app-header slot="header" reveals style$="{{_computeHeaderStyle(options)}}">
+              <app-toolbar id="mainToolbar" sticky class$='{{_computeDisplayNoneCssClass(isMobile)}}' style="">
+                <paper-icon-button icon="menu" hidden="{{!isMobile}}" drawer-toggle></paper-icon-button>
+                <div hidden="{{!options.showLogo}}"><iron-image sizing="contain" class="logo-system" src="{{options.logoSystem}}"></iron-image></div>
+                
+                <paper-tabs id="tabPages" selected="{{selectedPage}}" class="bottom self-end" hidden="{{!showTabsAndSettings}}">
+                  <template is="dom-repeat" items="{{params.pages}}">
+                      <paper-tab data-page="{{item.id}}"><iron-icon icon="{{item.icon}}"></iron-icon><div class='pageName'>{{item.name}}</div></paper-tab>
+                  </template>
+                </paper-tabs>
+
+                <div main-title></div>
+
+                <div style="{{_computeButtonsStyle(chatVisible)}}">
+                <paper-button id="fabAdd" class="fabButton" style$="{{showAddButtonStyle}}" hidden="{{isMobile}}" on-tap="openAddWidgets"></iron-icon>Widgets</paper-button>
+                <paper-button id="fabNews" class="fabButton" style$="{{showAddButtonStyle}}" hidden="{{hideNews}}" on-tap="openNewsVersion">{{newsButtonTitle}}</paper-button>
+                <paper-icon-button id="fabEdit" icon="create" class="fab-edit" on-tap="editWidgets" style="{{showEditButtonStyle}}">Editar</paper-icon-button>
+
+                <!-- <div style="background: url('./src/ew-home/img/novo.png');     
+                    width: 40px;
+                    height: 20px;
+                    background-size: 30px 18px;
+                    background-repeat: no-repeat;
+                    position:absolute;    
+                    right: 90px;
+                    z-index: 100;
+                    top: 3px;"></div> -->
+                <!-- <paper-icon-button id="chatButton" icon="communication:forum" class="fab-edit" style="{{showChatButtonStyle}}" on-tap="chatToggle" hidden="{{!showTabsAndSettings}}">
+                    
+                </paper-icon-button> -->
+                
+                
+                <!-- <paper-icon-button id="chatButton" icon="communication:forum" class="fab-edit" style="{{showChatButtonStyle}}" on-tap="chatToggle" hidden="{{!showTabsAndSettings}}"></paper-icon-button> -->
+
+                <paper-icon-button id="settingsButton" icon="settings" class="fab-settings"  on-tap="openSettings" hidden="{{!showTabsAndSettings}}"></paper-icon-button>
+                <paper-icon-button id="fabLogout" icon="icons:exit-to-app" class="fab-exit" on-tap="logout" hidden="{{options.builtIn}}"></paper-icon-button>
+
+                <paper-tooltip for="fabAdd">Adicionar Widgets</paper-tooltip>
+                <paper-tooltip for="fabEdit">Editar Widgets</paper-tooltip>
+                <paper-tooltip for="settingsButton">Preferências</paper-tooltip>
+                <paper-tooltip for="fabLogout">Sair do Sistema</paper-tooltip>
+                </div>
+
+                <paper-progress id="loadingProgressBar" disabled="{{!isLoading}}" hidden="{{!isLoading}}" indeterminate bottom-item></paper-progress>
+              </app-toolbar>
+            </app-header>
+            <iron-pages id="pagesMobile" class="flex pages fullHeight" selected="{{selectedMobilePage}}" style$="{{_computeIronPagesLayoutStyle(options)}}">
+              <div class="pages fullHeight">
+                <iron-pages id="pages" class="flex pages fullHeight" style="{{_computePagesStyle(chatVisible)}}" selected="{{selectedPage}}">
+                  <template is="dom-repeat" items="{{params.pages}}">
+                    <div page={{item.id}} class="column-holder">
+                      <div id="page{{item.id}}" class$="{{_computeClassColumHolder(item)}}"> 
+                        <div id="gridSizer{{item.id}}" class$="{{_computeClassGridSizer(item)}}"></div>
+                      </div>
+                    </div>
+                  </template>
+                </iron-pages>
+              </div>
+            </iron-pages>
+          </app-header-layout>
+        </app-drawer-layout>
+        <ew-view id="mobileView" style="height: 100vh;" is-mobile="{{isMobile}}" params="{{menuViewParams}}" hidden="{{!isMobile}}" multi></ew-view>
+        <slot name='content'></slot>
+      </div>
+    </div>
+    <div id="backgroundTasks"></div>
+    <!-- <ew-expresso-messenger id="expressoIM"></ew-expresso-messenger> -->
+
+    <ew-column-dialog is-mobile="{{isMobile}}"></ew-column-dialog>         
+    <ew-confirm-dialog></ew-confirm-dialog>
+    <paper-toast id="messageArea" duration="5000" text="'{{messageToast}}'"></paper-toast>
+    <ew-snackbar id="snackBar"></ew-snackbar>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'ew-home', 
+      behaviors: [EWBehaviorWidgetBehavior , Polymer.IronResizableBehavior],
+      listeners: {
+        'ew-show-message' : 'showMessage',
+        'ew-column-added' : 'usedColumnsChanged',
+        // 'user-logged-in' : 'userLoggedIn',
+        'ew-settings-column-saved' : 'setSettingsColumn',
+        'ew-global-settings-save' : 'globalSettingsSave',
+        'ew-register-background-task' : 'registerBackgroundTask',
+        'ew-unregister-background-task' : 'unregisterBackgroundTask',
+      },
+      properties: {
+        debug: {
+          type: Boolean,
+          value: false,
+        },
+        menuViewParams: {
+          type: Object,
+          value: { route: './api/Home/UserWidgets', isMobile: true },
+        },
+        hideNews: {
+          type: Boolean,
+          value: true,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        options: {
+          type: Object,
+          value: { builtIn: false, top: 0 },
+          reflectToAttribute: false,
+          notify: true
+        },
+        forcePageReload: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        isLoading: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        isMobile: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true,
+          notify: true
+        },
+        isDatabaseConnected: {
+          type: Boolean,
+          value: true,
+          reflectToAttribute: true,
+          notify: true
+        },
+        showAddButton: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true,
+          notify: true,
+          computed: '_computeShowAddButton(isMobile,isDatabaseConnected)',
+        },
+        isLogged: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true,
+          notify: true
+        },
+        widgets: {
+          type: Object,
+          value: {},
+          notify: true,
+          reflectToAttribute: false, 
+        }, 
+        loginResponse: {
+          type: Object,
+          value: {},
+          notify: true,
+          reflectToAttribute: false, 
+          observer: '_loginResponseChanged',
+        }, 
+        packerys: {
+          type: Array,
+          value: [ ],
+          notify: true,
+          reflectToAttribute: false,
+        },
+        selectedPage: {
+          type: Number,
+          value: 0,
+          notify: true,
+          observer: 'selectPage',
+        },
+        selectedMobilePage: {
+          type: Number,
+          value: 0,
+          notify: true,
+        },
+        usedColumns: {
+          type: Object,
+          value: {},
+          reflectToAttribute: false,
+          notify: true
+        }, 
+        showTabsAndSettings: {
+          type: Boolean,
+          value: true,
+          computed: '_showTabsAndSettings(usedColumns,isMobile)',
+        },
+        messageToast: {
+          type: String,
+          value: ''
+        },
+        params: { 
+            type: Object, 
+            value: {}, 
+            notify: true, 
+            reflectToAttribute: false
+        },
+        data: { 
+          type: Object, 
+          value: {}, 
+          notify: true, 
+          reflectToAttribute: true 
+        },
+        paramsSettings: { 
+          type: Object, 
+          value: {}, 
+          notify: true, 
+          reflectToAttribute: true 
+        },
+        paramsGetSettings: { 
+          type: Object, 
+          value: {}, 
+          notify: true, 
+          reflectToAttribute: true 
+        },
+        editMode: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          reflectToAttribute: true
+        },
+        hasNews: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          reflectToAttribute: true,
+          computed: '_computeHasNewWidgets(widgets)',
+        },
+
+        loadedPages: {
+          type: Array,
+          value: [],
+          notify: true,
+          reflectToAttribute: true
+        },
+        chatVisible: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true,
+          notify: true
+        },
+        chatEnabled: {
+          type: Boolean,
+          value: true,
+          reflectToAttribute: true,
+          notify: true
+        },
+        backgroundCssClass: { type: String, notify: true },
+        showEditButtonStyle: { type: String, notify: true, computed: "_computeShowEditButton(usedColumns,isMobile,editMode,selectedPage)" },
+        showChatButtonStyle: { type: String, notify: true, computed: "_computeShowChatButton(isMobile,chatEnabled,chatVisible)" },
+        showAddButtonStyle: { type: String, notify: true },
+        backgroundTasks: {
+          type: Array,
+          value: function () {
+            return [];
+          },
+          notify: true,
+          reflectToAttribute: true,
+        },
+        target: {
+          type: Object,
+          value: function() {
+            return document.body;
+          }
+        },
+        loadedThemes: {
+          type: Array,
+          value: [],
+          notify: true,
+        },
+
+      },
+
+  
+      /*
+        LOGIN / LOGOUT FUNCTIONS
+      */
+      ready: function() {
+        this.log('ew-home.ready');    
+
+        ewidgets.debug = this.debug;   
+
+        // listen for online/offline
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          this.listen(window, 'online', '_notifyNetworkStatus');
+          this.listen(window, 'offline', '_notifyNetworkStatus');
+        });
+        
+        this._translateMoment();
+        this.$.optionsLocalStorage.reload();
+        this.$.expressoLocalStorage.reload();
+
+        // if (this.options != undefined) {
+        //   if (this.options.top) {
+        //     $('#widgetsApp').css('height','calc(100%)');
+        //   } 
+        // }
+
+        // this.$.drawerMessenger.close();
+
+        // console.warn(this.chatVisible);
+
+        this._checkNavigator();
+
+        this.finishedLoadingWebComponents();
+
+        // this.lazyLoadComponents();
+      }, 
+
+      // lazyLoadComponents: function() {
+        // this.async(function() {
+        //   var _components = ["./app/src/ew-home/bundle-2.html"];
+        //   ewidgets.importLazyWidgets(_components);
+        // } ,3000);
+      // },
+
+      finishedLoadingWebComponents: function() {
+        this.log('ew-home.finishedLoadingWebComponents');
+        this.$.expressoLocalStorage.reload();
+        // console.warn(this.loginResponse);
+        // this.log(this.loginResponse);
+
+        if (this.loginResponse != undefined) {
+          if (this.loginResponse.auth != "") {
+
+              this.isLogged = true;
+              var is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
+             
+              //   if (!is_chrome) {
+                 this.userLoggedIn({ detail: { auth: this.loginResponse.auth, profile: this.loginResponse.profile }});
+              //   }
+          }
+        }
+
+      },
+
+      _computeButtonsStyle: function(chatVisible) {
+        if (chatVisible) {
+          return "margin-right: 260px;"
+        } else {
+          return "";
+        }
+      },
+      _computePagesStyle: function(chatVisible) {
+        if (chatVisible) {
+          return "width: calc(100% - 250px); -webkit-transition: right 0.5s; transition: right 0.5s;"
+        } else {
+          return "";
+        }
+      },
+      _loginResponseChanged: function(_data) {
+        
+        if (this.isLogged == false) {
+          if (this.loginResponse != undefined) {
+            if (this.loginResponse.auth != "") {
+              // console.warn('ew-home._loginResponseChanged');
+              // console.warn(_data);
+
+                this.isLogged = true;
+                this.userLoggedIn({ detail: { auth: this.loginResponse.auth, profile: this.loginResponse.profile }});
+            }
+          }
+        }
+
+      },
+      userLoggedIn: function(event) {
+        this.log('ew-home.userLoggedIn');
+
+        this.paramsGetSettings = { auth: event.detail.auth };
+        this.$.ajaxGetUserData.generateRequest();
+        this.loadedPages = [];
+
+        // this.$.drawer.fire('resize');
+        this._checkNavigator();
+
+        // this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
+
+        if (!this.isMobile) {
+          // this.$.expressoIM.autoStart(event.detail.auth);
+        }
+
+      },
+
+      logout: function() {
+        this.log("ew-home.logout");
+
+        if (this.isLogged) {
+       
+          if (this.options.builtIn) {
+            //this.isLogged = false;
+            window.localStorage.clear();
+            window.location.reload();
+            this.showMessage({detail: { message: 'Sua sessão expirou!'} });
+          } else {
+
+              // if (this.isMobile) {
+              //   if (this.enabledMessenger) {
+              //     this.hasLoadedMessenger = false;
+              //     jsxc.xmpp.logout();
+              //   }
+              // }
+              this.selectedPage = 0;
+              this.loadedPages = [];
+              this.packerys = [];
+              //this.isLogged = false;
+              this.loginResponse = { "auth" : "" };
+              this._initializeDefaultGlobalParams();
+              var _tempOtions = this.options;
+              window.localStorage.clear();
+              this.options = _tempOtions;
+              this.$.optionsLocalStorage.save();
+
+              this.clearColumns();
+              this.clearBackgroundTasks();
+
+              
+              
+              window.localStorage.clear();
+              window.location.href = '/Logout';
+
+          }
+          
+           /**/
+        }
+      },
+      removeLoading: function(){ 
+        // document.body.classList.remove('loading');
+      },
+
+      /*
+        LOCAL STORAGE FUNCTIONS
+      */
+      _initializeDefaultOptions: function() {
+        this.log('ew-home._initializeDefaultOptions');
+        this.options = {}; 
+        this.options.builtIn = false; 
+        this.options.showLogo = true; 
+        this.options.logoSystem = "./img/logo_expresso.png"; 
+        this.options.top = 0; 
+      },
+      _initializeDefaultExpresso: function() {
+        this.log('ew-home._initializeDefaultExpresso');
+        this.loginResponse = { auth: "" };
+      },
+      _initializeDefaultGlobalParams: function() {
+        this.log('ew-home._initializeDefaultGlobalParams');
+
+        this.params = {
+          "forcePageReload" : false,
+          "showBackgroundImage":true, 
+          "showExpressoBanner" : true,
+          "backgroundImageUrl":"./app/src/ew-home/img/wallpapers/bg_16.jpg",
+          "theme":"celepar-theme",
+          "pages":[{"id":0,"name":"Página 1","icon":"icons:view-quilt"}],
+          "backgroundImageSource":"0",
+          "backgroundImageCategory":2,
+          "backgroundImageChange":"always",
+          "backgroundImageUrlComputed":"./app/src/ew-home/img/wallpapers/bg_16.jpg",
+          "wallpaper":"bg_16.jpg",
+        };
+
+      },
+
+      /*
+        COMPUTED PROPERTIES
+      */
+      _computeDisplayNoneCssClass: function(hidden) {
+        var addClass = '';
+        if (hidden) {
+          addClass = addClass +' displayNone';
+        }
+        return addClass;
+      },
+      _computeShowAddButton: function(isMobile,isDatabaseConnected) {
+        var retVal = true;
+        if (!isDatabaseConnected) {
+          retVal = false;
+        }
+        if (isMobile) {
+          retVal = false;
+        }
+        return retVal;
+      },
+      _computeHasNewWidgets: function(userWidgets) {
+        this.log('ew-home._computeHasNewWidgets');
+        this.log(userWidgets);
+        var retVal = false;
+        if (userWidgets != undefined) {
+          if (userWidgets.widgets != undefined) {
+            for (var x = 0; x < userWidgets.widgets.length; x++) {
+              var widget = userWidgets.widgets[x];
+              if (widget.new_widget == 't') {
+                retVal = true;
+              }
+            }
+          }
+        }
+        return retVal;
+      },
+      // _computeClassNotifications: function(notificationsHidden) {
+      //   if (notificationsHidden) {
+      //     return 'animated flipInY displayNone'; 
+      //   } else {
+      //     return 'animated flipInY';
+      //   }
+      // },
+      _computeHomeWidgetsStyle : function(options) {
+        var cssClass =  " ";
+        if (options) {
+          if (options.top != 0) {
+            cssClass = ' top:' + options.top + 'px; width: 100%;';
+          }
+        }
+        return cssClass;
+      },
+      _computeIronPagesLayoutStyle: function(options) {
+        var cssClass =  " ";
+        if (options) {
+          if (options.top != 0) {
+          //  if (options.builtIn) {
+              cssClass = ' margin-top:' + options.top + 'px';
+          //  }
+          }
+          if (options.builtIn == false) {
+            cssClass = ' height: calc(100%) !important;';
+          }
+        }
+        return cssClass;
+      }, 
+      _computeHeaderLayoutStyle: function(options) {
+        var cssClass =  " ";
+        if (options) {
+          if (options.top != 0) {
+            if (!options.builtIn) {
+              cssClass = ' top:' + options.top + 'px';
+            }
+          }
+        }
+        return cssClass;
+      },
+      _computeHeaderStyle: function(options) {
+        var cssClass =  " width: 100%; ";
+        if (options) {
+          if (options.top != 0) {
+            cssClass = cssClass + ' top:' + options.top + 'px';
+          }
+        }
+        return cssClass;
+      },
+      _computeShowChatButton: function(_isMobile,_chatEnabled,_chatVisible) {
+        var retColor = '';
+        if (_isMobile) {
+          return 'display: none;';
+        } else {
+          if (!_chatEnabled) {
+            return 'display: none;';
+          } else {
+            if (_chatVisible) {
+              return 'color: #F60;';
+            } else {
+              return '';
+            }
+          }
+        }
+      },
+      _computeShowEditButton: function(usedColumns,_isMobile,editMode,_selectedPage) {
+        var retColor = '';
+        // if (_selectedPage == 0) {
+        //   return 'display: none;';
+        // } else {
+          if (_isMobile) {
+            return 'display: none;';
+          } else {
+            if (usedColumns != undefined) {
+              if (usedColumns.length) {
+                if (editMode) {
+                  return 'color: #F60;';
+                } else {
+                  return '';
+                }
+              } else {
+                return 'display: none;';
+              }
+            } else {
+              return 'display: none;';
+            }
+          }
+        // }
+      },
+      _computeClassColumHolder: function(page) { 
+        return 'column-holder  column-page' +  page.id;
+      },
+      _computeClassGridSizer: function(page) { 
+        return 'grid-sizer grid-page' +  page.id;
+      },
+      _getBackgroundImageCategory: function(categoryID) {
+        var retVal = "nature";
+        if (categoryID == 0) { retVal = "buildings"; }
+        if (categoryID == 1) { retVal = "food"; }
+        if (categoryID == 2) { retVal = "nature"; }
+        if (categoryID == 3) { retVal = "people"; }
+        if (categoryID == 4) { retVal = "technology"; }
+        if (categoryID == 5) { retVal = "objects"; }
+        return retVal;
+      },
+      _computeBackgroundCssClass: function(newvalue) {
+        this.log('ew-home._computeBackgroundCssClass');
+        var blur = "";
+        if (newvalue) {
+          var retVal = '';
+
+          if (newvalue.wallpaper != '') {
+            retVal = "background-image: url('" + newvalue.wallpaper +  "'); ";
+          } else {
+            retVal = 'background-image: none; ';
+          }
+          return retVal;
+        }
+      },
+      _showTabsAndSettings: function(usedColumns,isMobile) {
+        var retVal = true;
+        // if (this.hasUsedColumns(usedColumns) == 0) {
+        //   retVal = false;
+        // } 
+        // if (isMobile) {
+        //   retVal = false;
+        // }
+        // this.log('ew-home._showTabsAndSettings:' + retVal);
+        return retVal;
+      },
+
+      /* CHECK NAVIGATOR */
+      _checkNavigator: function() {
+        var is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
+        var is_explorer = navigator.userAgent.indexOf('MSIE') > -1;
+        var is_firefox = navigator.userAgent.indexOf('Firefox') > -1;
+        var is_safari = navigator.userAgent.indexOf("Safari") > -1;
+        var is_ipad = navigator.userAgent.indexOf("iPad") > -1;
+        var is_iphone = navigator.userAgent.indexOf("iPhone") > -1;
+        var is_android = navigator.userAgent.indexOf("Android") > -1;
+        var is_opera = navigator.userAgent.toLowerCase().indexOf("op") > -1;
+        if ((is_chrome)&&(is_safari)) {is_safari=false;}
+        if ((is_chrome)&&(is_opera)) {is_chrome=false;}
+        // if ((is_safari) && (is_iphone)) {
+        //   // $('#widgetsApp').css('height','calc(100% - 150px)'); 
+        // }
+        if (this.options != undefined) {
+          if (this.options.forceMobile != undefined) {
+            if (this.options.forceMobile == true) {
+              this._mobileMode(true);
+            }
+          }
+          if ((is_ipad) || (is_iphone) || (is_android)) {
+            this._mobileMode(true);
+          } else {
+            if ((is_chrome) || (is_safari)) {
+              if (!this.options.builtIn) {
+                $('#widgetsApp').css('height','calc(100%)');
+
+                
+              } else {
+                // document.getElementById('calendarid').src = './api/rest/Icon?id=6';
+                // document.getElementById('contactcenterid').src = './api/rest/Icon?id=5';
+                // document.getElementById('expressoMail12id').src = './bower_components/ew-home/img/icon-57.png';
+              }
+            }
+          }
+        }
+      },
+      _mobileMode: function(_isMobileMode) {
+        if (_isMobileMode != undefined) {
+          this.isMobile = _isMobileMode;
+        } else {
+          this.isMobile = !this.isMobile;
+        }
+        ewidgets.isMobile = this.isMobile;
+      },
+      /*
+        SCROLL FUNCTIONS
+      */
+      _scrollDown: function() {
+        this.log('SCROLL DOWN');
+        var pageid = this.params.pages[this.selectedPage].id;
+        var currentPage = $('#page' + pageid)[0];
+        if (currentPage != undefined) {
+          currentPage.scrollTo(0,currentPage.scrollTop + document.body.offsetHeight);
+        }
+      },
+      _scrollUp: function() {
+        this.log('SCROLL UP'); 
+        var pageid = this.params.pages[this.selectedPage].id;
+        var currentPage = $('#page' + pageid)[0];
+        if (currentPage != undefined) {
+          currentPage.scrollTo(0,0);
+        }
+      },
+      /*
+        UTIL FUNCTIONS
+        MOMENT-JS Translate Function.
+      */
+      _translateMoment: function() {
+        if (moment != undefined) {
+          moment.defineLocale('pt-br', {
+                months : 'janeiro_fevereiro_março_abril_maio_junho_julho_agosto_setembro_outubro_novembro_dezembro'.split('_'),
+                monthsShort : 'jan_fev_mar_abr_mai_jun_jul_ago_set_out_nov_dez'.split('_'),
+                weekdays : 'domingo_segunda-feira_terça-feira_quarta-feira_quinta-feira_sexta-feira_sábado'.split('_'),
+                weekdaysShort : 'dom_seg_ter_qua_qui_sex_sáb'.split('_'),
+                weekdaysMin : 'dom_2ª_3ª_4ª_5ª_6ª_sáb'.split('_'),
+                longDateFormat : {
+                    LT : 'HH:mm',
+                    LTS : 'LT:ss',
+                    L : 'DD/MM/YYYY',
+                    LL : 'D [de] MMMM [de] YYYY',
+                    LLL : 'D [de] MMMM [de] YYYY [às] LT',
+                    LLLL : 'dddd, D [de] MMMM [de] YYYY [às] LT'
+                },
+                calendar : {
+                    sameDay: '[Hoje às] LT',
+                    nextDay: '[Amanhã às] LT',
+                    nextWeek: 'dddd [às] LT',
+                    lastDay: '[Ontem às] LT',
+                    lastWeek: function () {
+                        return (this.day() === 0 || this.day() === 6) ?
+                            '[Último] dddd [às] LT' : // Saturday + Sunday
+                            '[Última] dddd [às] LT'; // Monday - Friday
+                    },
+                    sameElse: 'L'
+                },
+                relativeTime : {
+                    future : 'em %s',
+                    past : '%s atrás',
+                    s : 'segundos',
+                    m : 'um minuto',
+                    mm : '%d minutos',
+                    h : 'uma hora',
+                    hh : '%d horas',
+                    d : 'um dia',
+                    dd : '%d dias',
+                    M : 'um mês',
+                    MM : '%d meses',
+                    y : 'um ano',
+                    yy : '%d anos'
+                },
+                ordinalParse: /\d{1,2}º/,
+                ordinal : '%dº'
+            });
+
+            moment.locale('pt-br');
+          }
+      }, 
+      _notifyNetworkStatus: function() {
+        this.log('ew-home._notifyNetworkStatus');
+        var oldOffline = this.offline;
+        this.offline =  !navigator.onLine;
+        // Show the snackbar if the user is offline when starting a new session
+        // or if the network status changed.
+        if (this.offline || (!this.offline && oldOffline === true)) {
+
+          Polymer.dom(this.$.snackBar).innerHTML = this.offline ?
+              'Você não está conectado a internet.' : 'Você está online.';
+          
+          this.$.snackBar.open();
+        }
+      },
+      _escapeJSON: function(str) {
+        return str.replace(/[\\]/g, '\\\\').replace(/[\"]/g, '\\\"').replace(/[\/]/g, '\\/').replace(/[\b]/g, '\\b').replace(/[\f]/g, '\\f').replace(/[\n]/g, '\\n').replace(/[\r]/g, '\\r').replace(/[\t]/g, '\\t');
+      },
+
+      /*
+        BACKGROUND TASKS
+      */
+      getBackgroundTaskByName: function(_name) {
+        if (this.backgroundTasks.indexOf(_name) != -1) {
+          var _elements = document.getElementsByTagName(_name);
+          return _elements[0];
+        } else {
+          return false;
+        }
+      },
+      unregisterBackgroundTask: function(event) {
+        this.log('ew-home.unregisterBackgroundTask:');
+        this.log(this.backgroundTasks);
+        var detail = event.detail;
+
+        if (this.backgroundTasks.indexOf(detail.element) != -1) {
+          document.getElementsByTagName(detail.element).remove();
+        }
+      },
+      registerBackgroundTask: function(event) {
+        var detail = event.detail;
+        if (this.backgroundTasks.indexOf(detail.element) == -1) {
+          this.log('ew-home.registerBackgroundTask:' + event.detail.element);
+          var el = document.createElement(detail.element);
+          el.params = detail.params;
+          el.refreshInterval = detail.refreshInterval;
+          this.backgroundTasks.push(detail.element);
+          if (this.$.backgroundTasks != undefined) {
+            this.$.backgroundTasks.append(el);
+          }
+          
+          // $('* /deep/ #backgroundTasks')[0].append(el);
+          // document.getElementById('body /deep/ #backgroundTasks').append(el);
+        }
+        
+      },
+      clearBackgroundTasks: function() {
+        this.log('ew-home.clearBackgroundTasks');
+        this.backgroundTasks = [];
+        $('#backgroundTasks').html("");
+      },
+
+      /*
+        OPEN FUNCTIONS
+      */
+      openAddWidgets: function() {
+        this.log('ew-home.openAddWidgets');
+        // if (this.selectedPage == 0) {
+        //   this.selectedPage = 1;
+        // }
+        if (this.editMode) {
+          this.editWidgets();
+        }
+        this.ew_showColumnDialog('ew-list-view',{ route: "./api/Home/UserWidgets" });
+      },
+
+      openSettings: function() {
+        this.log('ew-home.openSettings');
+        this.ew_showColumnDialog('ew-list-view', { route: "./api/Home/Settings" } );
+      },
+
+      chatWithContacts: function() {
+
+        var that = this;
+        var onDialogClosed = function(event) {
+        if (!event.canceled) {
+            // console.log(event.returnData);
+            for (var i in event.returnData.selectedItems) {
+              var contact = event.returnData.selectedItems[i];
+              console.log(contact);
+              var contactID = decodeURIComponent(contact.hiddenValue);
+              contactID = contactID.split(',')[0].split('uid=')[1];
+
+              var usuario = contactID + '@im.pr.gov.br';
+              
+              that.ew_showMessage("Enviada solicitação para adicionar: " + usuario);
+              that.chatWith(usuario,contact.title);
+              // that.addRecipient(contact.email,contact.title);
+            }
+        }
+        };
+
+        this.ew_showColumnDialog('ew-list-view',{
+        route: './api/rest/ew-expresso-catalog/Contacts',
+        enableSelection: true, 
+        enableMultiSelection: true, 
+        enablePersonal: false, 
+        search: '',
+        searchEnabled: true,
+        } ,onDialogClosed);
+      },
+
+      chatToggle: function() {
+        this.chatVisible = !this.chatVisible;
+        var that = this;
+        var _callBack = function() {
+          if (that.chatVisible) {
+            jsxc.gui.roster.toggle('shown');
+          } else {
+            jsxc.gui.roster.toggle('hidden');
+          }
+        }
+        
+        this.$.expressoIM.load(this.loginResponse.auth,_callBack);
+        
+      },
+
+      chatWith: function(userBID,userName) {
+        var that = this;
+        var _callBackOnLoadJSXC = function() { 
+            if (jsxc != undefined) {
+                jsxc.xmpp.addBuddy(userBID,userName); 
+                setTimeout(function() {
+                    jsxc.gui.window.open(userBID);
+                } ,1500);
+            } else {
+                that.ew_showMessage('Você não está conectado ao Messenger!');
+            }
+        } 
+        this.$.expressoIM.load(this.loginResponse.auth,_callBackOnLoadJSXC);
+      },
+      
+      openNewsVersion: function() {
+        var onClosed = function() { };
+        var _newVersionParams = { route: "./api/Home/News" };
+        this.ew_showColumnDialog('ew-list-view',_newVersionParams,onClosed);
+      },
+
+      editWidgets: function() {
+        this.editMode = !this.editMode;
+        this.$.fabEdit.transform(this.editMode ? ' scale(-1, 1)' : '');
+        ewidgets.setEditMode(this.editMode);
+      },
+
+      reloadPage: function (e) {
+        window.location.reload();
+      },
+
+      addWidget: function(e) {
+        e.stopPropagation();
+        this.log('ew-home.addWidget');
+        var selItem = e.detail.params;
+        // console.log(selItem);
+
+        // if (ewidgets.selectedPage == 0) {
+        //   ewidgets.selectedPage = 1;
+        //   this.selectedPage = 1;
+        // }
+
+        var _multiColumn = false;
+        if (selItem.element == 'ew-expresso-mail') {
+          _multiColumn = true;
+        }
+        var config = { 
+            class: 'EWColumn',
+            widgetTitle: selItem.widgetTitle,
+            widgetId: selItem.id,
+            description: selItem.description,
+            width: selItem.width,
+            height: selItem.height,
+            thumb: selItem.icon,
+            link: selItem.link,
+            element: selItem.element,
+            dialog: false,
+            multiColumn: _multiColumn,
+            import: selItem.import,
+        };
+        
+        if (selItem.params != '') {
+          config.params = selItem.params;
+        }
+
+        var columnWidget = new EWColumn(config, false);
+
+        if (ewidgets.ewHome != undefined) {
+          if (ewidgets.ewHome.editMode) {
+            ewidgets.ewHome.editWidgets();
+          }           
+        }
+
+
+
+        columnWidget.page = ewidgets.selectedPage;
+        columnWidget.pageid = 'page' + ewidgets.selectedPage;
+        
+        if (this.isMobile) {  
+          this.usedColumns.push(columnWidget.toJSON());
+          this.$.usedColumnsLocalStorage.save();
+          ewidgets.hasChanges = true;
+          // console.log(this.usedColumns);
+          this.$.mobileView.ew_refresh();
+        } else {
+          ewidgets.addColumn(columnWidget);
+          this.usedColumnsChanged();
+        }
+      },
+
+      /* 
+        PACKERY - FUNCTIONS
+      */
+      layoutPackerys: function() {
+        this.log('ew-home.layoutPackerys');
+        var pageid = this.params.pages[this.selectedPage].id;
+        var pack = this.getPackeryFromPage(pageid);
+        if (pack != undefined) {
+          pack.layout();
+        }
+      },
+      getPackeryFromPage: function(pageid) {
+        this.log('ew-home.getPackeryFromPage:' + pageid);
+        if (this.packerys[pageid] != undefined) {
+          return this.packerys[pageid];
+        } else {  
+          return this.createPackeryForPage(pageid);
+        }
+      },
+      createPackeryForPage: function(pageid) {
+        this.log('ew-home.createPackeryForPage:' + pageid);
+        window.jQueryBridget( 'packery', Packery, $ );
+
+        var elementsel = this.getDomPage(pageid);
+
+        if (elementsel) {
+          var container = $(elementsel).packery(
+            {
+              columnWidth: '.grid-sizer',
+              itemSelector: ".ew-widget-on-page-" + pageid,
+              percentPosition: true,
+              initLayout: true,
+            } 
+          );
+
+          var pack = container.data('packery');
+
+          if (pack) {
+            var that = this;
+
+            pack.on("dragItemPositioned", function() {
+              that.log('ew-home.pack.dragItemPositioned;');
+              pack.layout();
+              that.resortUsedColumns();
+              ewidgets.syncAll();
+              that.fire('iron-signal', {name: 'columnschange', data: that.usedColumns});
+            });
+
+            pack.on("removeComplete", function() {
+              that.log('ew-home.pack.removeComplete;');
+              pack.layout();
+              that.resortUsedColumns();
+              ewidgets.syncAll();
+              that.fire('iron-signal', {name: 'columnschange', data: that.usedColumns});
+            });
+            this.packerys[pageid] = pack;
+          }
+        }
+        
+        return pack;
+      },
+      checkIfWillDisableFullScreenOnPage: function(page) {
+        this.log('ew-home.checkIfWillDisableFullScreenOnPage');
+
+        var columns =  this.getColumnsFromPage(page);
+        var qtdColumns = columns.length;
+
+        if (qtdColumns >= 1) {
+          for (var i = 0; i < columns.length; i++) {
+            // console.log("column-element-" + columns[i].id);
+            var domPage = this.getDomPage(page);
+            if (domPage) {
+              var columnEl = domPage.querySelectorAll('#column-element-' + columns[i].id)[0];
+              if (columnEl) {
+                columnEl.fullScreenChange(false);
+              }
+            }
+
+          }
+        }
+
+      },
+      hasUsedColumns: function(usedColumns) {
+        if (!usedColumns) {
+          retVal = 0;
+        } else {
+          retVal = usedColumns.length;
+        }
+        this.log('ew-home.hasUsedColumns:' + retVal);
+        return retVal;
+      },
+      usedColumnsChanged: function() {
+        this.log('ew-home.usedColumnsChanged');
+        this.$.usedColumnsLocalStorage.reload();
+      },
+      resortUsedColumns: function() {
+        this.log('ew-home.resortUsedColumns');
+        var _usedColumns = []; 
+        var selectedPage = ewidgets.selectedPage;
+        for (var x = 0; x < this.usedColumns.length; x++) {
+          var colum = this.usedColumns[x];
+          if (colum.page != selectedPage) {
+            _usedColumns.push(colum);
+          }
+        }
+        _usedColumns = this.resortUsedColumnsFromPage(selectedPage,_usedColumns);
+        this.set('usedColumns',_usedColumns);
+      },
+
+      resortUsedColumnsFromPage: function(pageid,_usedColumns) {
+        this.log('ew-home.resortUsedColumnsFromPage');
+        var pack = this.getPackeryFromPage(pageid);
+        if (pack) {
+          var itemElems = pack.getItemElements();
+          $( itemElems ).each( function( i, itemElem ) {
+            _usedColumns.push(itemElem.column);
+
+          });
+        }
+        return _usedColumns;
+      },
+
+      getColumnsFromPage: function(page,_usedColumns) {
+        var _pageColumns = [];
+        if (_usedColumns == undefined) {
+          _usedColumns = this.usedColumns;
+        }
+        if (_usedColumns != undefined) {
+          for (var x = 0; x < _usedColumns.length; x++) {
+            var colum = _usedColumns[x];
+            if (colum) {
+              if (colum.page == page) {
+                _pageColumns.push(colum);
+              }
+            } else {
+              console.warn(colum);
+            }
+            
+          }
+        }
+        return _pageColumns;
+      },
+
+      checkForRemovedColumns: function(globalParams) {
+        this.log('ew-home.checkForRemovedColumns:');
+        if (globalParams != undefined) {
+          if (globalParams.removed != undefined) {
+            this.log(globalParams.removed);
+            if (globalParams.removed.length) {
+              for (var i = 0; i < globalParams.removed.length; i++) {
+                var tempColumn = globalParams.removed[i];
+                var msgShow = 'O Widget "' + tempColumn.widgetTitle + '" foi removido da sua página pela administração.';
+                var _onConfirmed = function() {
+   
+                };
+                this.ew_showDialog('Widget Removido',msgShow,_onConfirmed,'OK','');
+              }
+              this.saveSettings();
+            }
+          }
+        }
+      },
+
+      getDomPage: function(page) {
+        this.log('ew-home.getDomPage:' + page);
+        var retVal = undefined;
+        var domPages = Polymer.dom(this.$.pages);
+        if (domPages) {
+          var domPage = domPages.querySelectorAll('#page' + page)[0];
+          if (domPage) {
+            retVal = domPage;
+          }
+        }
+        return retVal;
+      },
+      getGridSizer: function(page) {
+        this.log('ew-home.getGridSizer');
+        var columnEl = undefined;
+
+        var domPage = this.getDomPage(page);
+        
+        if (domPage) {
+          columnEl = domPage.querySelectorAll('#gridSizer' + page)[0];
+        }
+        return columnEl;
+      },
+      layoutSelectedPage: function() {
+        this.log('ew-home.layoutSelectedPage:' + ewidgets.selectedPage);
+        var pack = this.getPackeryFromPage(ewidgets.selectedPage);
+
+        if (pack != undefined) {
+          pack.layout(); 
+        }
+      },
+      clearColumns: function() {
+        this.log('ew-home.clearColumns');
+        for (var i = 0; i < this.params.pages.length; i++) {
+          var domPage = this.getDomPage(i);
+
+          if (domPage != undefined) {
+            var columns = domPage.querySelectorAll('item-column');
+            if (columns) {
+
+              for (x = 0; x < columns.length; ++x) {
+                columns[x].remove();
+              }
+            }
+            var columns = domPage.querySelectorAll('multi-column');
+            if (columns) {
+              for (x = 0; x < columns.length; ++x) {
+                columns[x].remove();
+              }
+            }
+          }
+
+        }
+      },
+      checkPage: function(event) {
+        if (this.params.pages != undefined) {
+          if (this.params.pages.length == 1) {
+            var that = this;
+            var title = 'Você sabia que pode adicionar mais páginas?';
+            var message = 'Você pode organizar seus widgets em diferentes páginas, Deseja adicionar mais páginas agora?';
+            var onConfirmed = function(event) {
+              if (event.confirmed) {
+                that.ew_showColumnDialog('ew-settings-page-editor',that.params);
+              } 
+            };
+            this.ew_showDialog(title,message,onConfirmed,'SIM','NÃO'); 
+          }
+        }
+      },
+      selectPage: function(_page) {
+        if (this.isLogged) {
+
+          // console.log(event.detail);
+          // console.log(this.selectedPage);
+
+          // console.log(event.detail.item.dataset.page);
+
+          ewidgets.selectedPage = _page;
+
+          // this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
+        
+          // if (event.detail.item.page == undefined) {
+          //   ewidgets.selectedPage = this.selectedPage;
+          // } else {
+          //   ewidgets.selectedPage = event.detail.item.page;
+          // }
+          this.log('ew-home.selectPage:' + ewidgets.selectedPage);
+          this.$.usedColumnsLocalStorage.save();
+          this.$.usedColumnsLocalStorage.reload();
+
+          if (ewidgets.selectedPage != 0) {
+            if (this.loadedPages.indexOf(ewidgets.selectedPage) < 0) {
+              ewidgets.renderSavedColumns(this.usedColumns);
+              this.push('loadedPages',ewidgets.selectedPage);
+            }
+          }
+
+          this.layoutSelectedPage();
+        }
+
+      },
+      /*
+        USER GLOBAL SETTINGS
+      */
+      setupSaveSettings: function() {
+        this.log('ew-home.setupSaveSettings');
+        var that = this;
+        var intervalSave = setInterval(function () {
+          if (!that.isLogged) {
+            clearInterval(intervalSave);
+          } else {
+            if (ewidgets.hasChanges) {
+              ewidgets.hasChanges = false;
+              that.saveSettings();
+            }
+          }
+        }, 2000);
+        ewidgets.hasChanges = false;
+      },
+      changeParams: function(event) {
+        this.params = event.detail;
+        // this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
+      },
+      setSettingsColumn: function (e) {
+        this.log('ew-home.setSettingsColumn:');
+        var currentColumn = e.detail.column;
+        for (var x = 0; x < this.usedColumns.length; x++) {
+          var colum = this.usedColumns[x];
+          if (currentColumn.id == colum.id) {
+            this.usedColumns[x].params = currentColumn.params;
+          }
+        }
+        this.log(this.usedColumns);
+        this.$.usedColumnsLocalStorage.save();
+        this.saveSettings();
+      },
+      globalSettingsSave: function(event) {
+        this.log("ew-home.globalSettingsSave");
+        if (event != undefined) {
+          this.params = event.detail;
+          if (event.detail.forcePageReload) {
+            this.forcePageReload = true;
+          }
+        }
+
+        //ALWAYS DISABLE FORCEPAGERELOAD ON PARAMS.
+        this.params.forcePageReload = false;
+        this.$.globalParamsLocalStorage.save();
+        this.$.globalParamsLocalStorage.reload();
+
+        this.saveSettings();
+      },
+      saveSettings: function() {
+        this.log("ew-home.saveSettings");
+        this.$.usedColumnsLocalStorage.reload();
+        var _params = { };
+        // this.log(this.usedColumns);
+        var userData = {
+          'usedColumns': this.usedColumns,
+          'globalParams': this.params,  
+        };
+
+        // console.log(userData);
+
+        _params.userData = this._escapeJSON(JSON.stringify(userData));
+        // _params.userData = JSON.stringify(userData);
+
+        Polymer.dom(this.$.snackBar).innerHTML = 'Salvando preferências...';
+        this.$.snackBar.open();
+
+        this.paramsSettings = _params;
+        this.$.ajaxSettings.generateRequest();
+      },
+      /*
+        LOAD ANIMATIONS
+      */
+      loadAnimations: function(themeName) {
+        this.log('ew-home.loadAnimations');
+        // var cssImport = document.createElement("link");
+        // cssImport.id = "animationLoader";
+        // cssImport.rel = "stylesheet";
+        // cssImport.href = "./src/ew-home/css/animate.css";
+        // document.head.appendChild(cssImport);
+      },
+      /*
+        LOAD THEME
+      */
+      loadTheme: function(themeName) {
+        this.log('ew-home.loadTheme:' + themeName);
+        if ((themeName == 'undefined') || (themeName == undefined)) {
+          themeName = 'celepar-theme';
+        }
+        var cssImport = document.createElement("link");
+        cssImport.id = "themeLoader";
+        cssImport.rel = "import";
+        if (themeName == 'celepar-theme') {
+          cssImport.href = "./app/src/ew-home/" + themeName + ".html";
+        } else {
+          cssImport.href = "./app/bower_components/polymer-themes/" + themeName + ".html";
+        }
+        if (this.loadedThemes.indexOf(themeName) >= 0) {
+          this.forcePageReload = true;
+          this.themeAlreadyLoaded = true;
+        }
+        this.push('loadedThemes',themeName);
+        document.head.appendChild(cssImport);
+
+      },
+
+      /*
+        USER DATA RESPONSE
+      */
+      handleUserDataResponse: function(event) {
+        this.log("ew-home.handleUserDataResponse");
+        var response = event.detail.response;
+
+        var userDataResponse;
+        if (response != undefined) {
+          userDataResponse = response;
+        } else {
+          userDataResponse = event.detail;
+        }
+
+        var foundError = this.$.ajaxGetUserData._handleResponseError(userDataResponse);
+        var foundDatabaseError = this.$.ajaxGetUserData._handleDatabaseError(userDataResponse);
+
+        if (foundError) {
+          this.logout();
+        } else {
+
+          if (foundDatabaseError) {
+            this.set('isDatabaseConnected',false);
+          } else {
+
+            this.params = userDataResponse.globalParams;
+            this.checkForRemovedColumns(this.params);
+            this.log(userDataResponse.usedColumns);
+            this.usedColumns = userDataResponse.usedColumns;
+            if (userDataResponse.usedColumns) {
+              this.usedColumns = userDataResponse.usedColumns;
+            } else {
+              this.usedColumns = [];
+            }
+            
+            this.$.usedColumnsLocalStorage.save();
+            this.$.globalParamsLocalStorage.save();
+
+            if (this.params == undefined) {
+              this._initializeDefaultGlobalParams();
+            }
+
+            if (this.isMobile) {  
+              
+              if ((this.options.autoLoadElement != '') && (this.options.autoLoadElement != undefined) ) {
+                this.$.mobileView.multi = false;
+                this.$.mobileView.element = this.options.autoLoadElement;
+                if (this.options.autoLoadParams != "") {
+                  this.menuViewParams = JSON.parse(atob(this.options.autoLoadParams));
+                }
+              } else {
+                this.$.mobileView.element = 'ew-list-view';
+              }  
+              if ((this.params.showAnimations == undefined) || (this.params.showAnimations == true) ){
+                this.loadAnimations();
+              }
+
+              this.loadTheme(this.params.theme);
+              this.setupSaveSettings();
+              
+              this.$.mobileView.render();
+
+            } else {
+
+              if ((this.params.showAnimations == undefined) || (this.params.showAnimations == true) ){
+                this.loadAnimations();
+              }
+
+              this.loadTheme(this.params.theme);
+              this.changeParams({ detail: this.params });
+              ewidgets.renderSavedColumns(this.usedColumns);
+              this.setupSaveSettings();
+
+              this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
+              // this.adjustResolution();
+            }
+          }
+        } 
+      },
+      /*
+        WIDGETS RESPONSE
+      */
+      handleResponseToWidgets: function(event) {
+        this.log("ew-home.handleResponseToWidgets");
+        var response = event.detail.response;
+        var retVal;
+        if (response != undefined) {
+            retVal = response;
+        } else {
+          retVal = event.detail;
+        }
+        var foundError = this.$.ajaxGetUserWidgets._handleResponseError(retVal);
+        var foundDatabaseError = this.$.ajaxGetUserWidgets._handleDatabaseError(retVal);
+
+        if (foundError) {
+          this.logout();
+        } else {
+          if (foundDatabaseError) {
+            this.set('isDatabaseConnected',false);
+            
+          } else {
+            console.warn(retVal);
+            this.widgets = retVal;
+            if (retVal.RELEASE_SHOWNEWS == "1")   {
+              this.newsButtonTitle = retVal.RELEASE_BUTTON_TITLE;
+              this.hideNews = false; 
+            } else {
+              this.hideNews = true;
+            }
+          }
+        }
+      },
+      /*
+        SAVE SETTINGS
+      */
+      handleResponseToData: function(event) {
+        this.log("ew-home.handleResponseToData");
+        var response = event.detail.response;
+        if (response != undefined) {
+          if (response.result != undefined) {
+            this.data = response.result;
+          } 
+        } else {
+          this.data = event.detail;
+        }
+        var that = this;
+        this.async(function() {
+          that.$.snackBar.close();
+        },2000);            
+        ewidgets.hasChanges = false;
+
+        if (this.forcePageReload) {
+          window.location.reload(); 
+        }
+
+      },
+      windowResized: function() {
+        this.chatVisible = !this.chatVisible;
+        this.chatVisible = !this.chatVisible;
+        this.notifyResize();
+      },
+      showMessage: function(event) {
+        this.log('ew-home.showMessage');
+        this.$.messageArea.show({text: event.detail.message , duration: 3000 });
+      },
+      getViewBlockedParams: function() {
+        var _releaseDate = this.versionReleaseDate.format('DD/MM/YYYY');
+        return { 
+          action: 'ew-list-view',
+          signal: '',
+          params: { 
+            showHeader: true,
+            widgetTitle: 'Aviso',
+            hideSearch: true,
+            items: [
+              {  action: 'ew_close', viewTypeCard: true, icon: 'icons:error', title: 'Desculpe-nos pelo transtorno e inconveniente.', description: 'Esta funcionalidade foi temporariamente desabilitada pela administração do sistema, assim que possível ela estará disponível novamente. ', mobile: true },
+            ],
+          }, 
+          mobile: true, 
+          icon: 'av:fiber-new', 
+          title: 'Aviso', 
+          description: 'Conteúdo bloqueado..'
+        };
+      },
+     
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,553 @@
+<!--
+
+Prover uma interface de Login, utilizando a API.
+
+Example:
+
+    <ew-login></ew-login>
+
+@group Expresso Elements
+@element ew-login
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="ew-login">
+  <template>
+  
+    <style>
+
+      #overlayLogin {
+        display: block;
+        margin: 0;
+        background: rgba(255, 255, 255, 1);
+        color: #757575;
+        z-index: 10000;
+        width: 100%;
+        height: 100%;
+        position: fixed;
+      }
+
+      paper-toast {
+        z-index: 10001;
+      }
+
+      paper-button {
+        display: block;
+      }
+      paper-button.colorful {
+        color: #4285f4;
+        margin: 0px;
+      }
+      paper-button[raised].colorful {
+        background: #4285f4;
+        color: #fff;
+        margin: 0px;
+      }
+
+      /* [hidden] {
+        display: none;
+      } */
+
+      .banner-area {
+        /*position: absolute;*/
+        left: 10%;
+        /*top: 40%;*/
+        width: 500px;
+        height: 600px;
+        float: left;
+      }
+
+      .login-area {
+        left: 50%;
+        top: 50%;
+        min-width: 250px;
+        position: absolute;
+        /*width: 40%;*/
+        width: 80%;
+        right: 10%;
+        float: left;
+        
+        transform: translate(-50%, -50%);
+      }
+
+      .login-form { 
+        float: right;
+        min-width: 250px;
+        max-width: 350px;
+      }
+
+      paper-dropdown-menu {
+        width: 100%;
+      }
+
+      .login-logo {
+        width: 100%;
+        height: 67px;
+        margin-bottom: 20px;
+      }
+
+      .login-company-logo {
+        width: 100%;
+        height: 65px;
+        margin-top: 20px;
+      }
+
+      .card-margin {
+        padding: 5px !important;
+      }
+
+      .card-content {
+        min-height: 120px;
+      }
+
+      paper-spinner {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        position: absolute;
+      }
+
+      paper-card {
+        min-width: 250px;
+        min-height: 200px;
+        width: 100%;
+      }
+
+      iron-image {
+        width: 100%;
+      }
+
+      .animation-falling {
+        animation: falling 1s;
+        -moz-animation: falling 1s; /* Firefox */
+        -webkit-animation: falling 1s; /* Safari and Chrome */
+        -o-animation: falling 1s; /* Opera */
+      }
+
+      .animation-scale-fadein {
+        animation: scaleFadein 1s;
+        -moz-animation: scaleFadein 1s; /* Firefox */
+        -webkit-animation: scaleFadein 1s; /* Safari and Chrome */
+        -o-animation: scaleFadein 1s; /* Opera */
+      }
+
+      /* FALLING */
+      @keyframes falling {
+          from {
+              -webkit-transform: translateY(-100%);
+              -moz-transform: translateY(-100%);
+              -ms-transform: translateY(-100%);
+               -o-transform: translateY(-100%);
+                  transform: translateY(-100%);
+          }
+          to {
+              -webkit-transform: translateY(0%);
+             -moz-transform: translateY(0%);
+              -ms-transform: translateY(0%);
+               -o-transform: translateY(0%);
+                  transform: translateY(0%);
+          }
+      }
+      @-moz-keyframes falling { /* Firefox */
+          from {
+              -webkit-transform: translateY(-100%);
+              -moz-transform: translateY(-100%);
+              -ms-transform: translateY(-100%);
+               -o-transform: translateY(-100%);
+                  transform: translateY(-100%);
+          }
+          to {
+              -webkit-transform: translateY(0%);
+             -moz-transform: translateY(0%);
+              -ms-transform: translateY(0%);
+               -o-transform: translateY(0%);
+                  transform: translateY(0%);
+          }
+      }
+      @-webkit-keyframes falling { /* Safari and Chrome */
+          from {
+              -webkit-transform: translateY(-100%);
+              -moz-transform: translateY(-100%);
+              -ms-transform: translateY(-100%);
+               -o-transform: translateY(-100%);
+                  transform: translateY(-100%);
+          }
+          to {
+              -webkit-transform: translateY(0%);
+             -moz-transform: translateY(0%);
+              -ms-transform: translateY(0%);
+               -o-transform: translateY(0%);
+                  transform: translateY(0%);
+          }
+      }
+      @-o-keyframes falling { /* Opera */
+          from {
+              -webkit-transform: translateY(-100%);
+              -moz-transform: translateY(-100%);
+              -ms-transform: translateY(-100%);
+               -o-transform: translateY(-100%);
+                  transform: translateY(-100%);
+          }
+          to {
+              -webkit-transform: translateY(0%);
+             -moz-transform: translateY(0%);
+              -ms-transform: translateY(0%);
+               -o-transform: translateY(0%);
+                  transform: translateY(0%);
+          }
+      }
+
+      /* SCALE */
+      @keyframes scaleFadein {
+          from {
+              opacity:0;
+              -ms-transform: scale(0,0); /* IE 9 */
+              -webkit-transform: scale(0,0); /* Safari */
+              transform: scale(0,0); /* Standard syntax */
+          }
+          to {
+              opacity:1;
+              -ms-transform: scale(1,1); /* IE 9 */
+              -webkit-transform: scale(1,1); /* Safari */
+              transform: scale(1,1); /* Standard syntax */
+          }
+      }
+      @-moz-keyframes scaleFadein { /* Firefox */
+          from {
+              opacity:0;
+              -ms-transform: scale(0,0); /* IE 9 */
+              -webkit-transform: scale(0,0); /* Safari */
+              transform: scale(0,0); /* Standard syntax */
+          }
+          to {
+              opacity:1;
+              -ms-transform: scale(1,1); /* IE 9 */
+              -webkit-transform: scale(1,1); /* Safari */
+              transform: scale(1,1); /* Standard syntax */
+          }
+      }
+      @-webkit-keyframes scaleFadein { /* Safari and Chrome */
+          from {
+              opacity:0;
+              -ms-transform: scale(0,0); /* IE 9 */
+              -webkit-transform: scale(0,0); /* Safari */
+              transform: scale(0,0); /* Standard syntax */
+          }
+          to {
+              opacity:1;
+              -ms-transform: scale(1,1); /* IE 9 */
+              -webkit-transform: scale(1,1); /* Safari */
+              transform: scale(1,1); /* Standard syntax */
+          }
+      }
+      @-o-keyframes scaleFadein { /* Opera */
+         from {
+              opacity:0;
+              -ms-transform: scale(0,0); /* IE 9 */
+              -webkit-transform: scale(0,0); /* Safari */
+              transform: scale(0,0); /* Standard syntax */
+          }
+          to {
+              opacity:1;
+              -ms-transform: scale(1,1); /* IE 9 */
+              -webkit-transform: scale(1,1); /* Safari */
+              transform: scale(1,1); /* Standard syntax */
+          }
+      }
+
+      @media screen and (max-width: 1200px) {
+        .banner-area { display: none; }
+        .login-area { width: 0%; }
+      }
+ 
+    </style>
+  
+      <ew-api-ajax
+          id="loginAjax"
+          loading="{{isLoading}}" 
+          url="../../api/rest/Login"
+          params="{{params}}"
+          last-response="{{loginResponse}}"
+          on-response="handleResponse">        
+      </ew-api-ajax>
+      <iron-localstorage id="optionsLocalStorage" name="options" value="{{options}}" on-iron-localstorage-load-empty="initializeDefaultOptions"></iron-localstorage>
+      <iron-localstorage id="expressoLocalStorage" name="expresso"
+        value="{{loginResponse}}">
+      </iron-localstorage>
+
+      <template is="dom-if" if="[[!isLogged]]">
+
+        <div id="overlayLogin">
+
+          <div class="login-area">
+
+            <!-- <div class="banner-area">
+              <ew-list-view class="animation-falling" params="{{imagesViewParams}}" auto></ew-list-view>             
+            </div> -->
+
+            <div class="login-form" style="height: 500px;">
+              <!-- <ew-oauth-central></ew-oauth-central> -->
+              <!-- <ew-list-view class="animation-falling" params="{{loginViewParams}}" auto></ew-list-view> -->
+              <!-- <paper-material elevation="0">
+                <iron-image class="login-logo animation-scale-fadein" sizing="contain"  src="./app/src/ew-home/img/logo_ewidgets.png"></iron-image>
+              </paper-material> -->
+
+              <form is="iron-form" id="formLogin" method="post" action="/Login">
+                <paper-card id="card-login" elevation="2" class="animation-falling">
+                
+                  <div class="card-content">
+                    <template is="dom-if" if="{{!isLoading}}">
+
+                      <paper-input id="username" name="user" label="Login" on-keydown="checkForEnter" value="{{user}}" always-float-label autocomplete="username"></paper-input>
+
+                      <paper-input id="password" name="current-password" label="Senha" type="password" on-keydown="checkForEnter" value="{{password}}" always-float-label autocomplete="current-password"></paper-input>
+
+                    </template>
+                    <template is="dom-if" if="{{isLoading}}">
+                      <paper-spinner id="loading" active></paper-spinner>
+                    </template>
+                  </div>
+                  <div class="card-actions card-margin">
+                    <template is="dom-if" if="{{!isLoading}}">
+                    <paper-button autofocus raised class="colorful custom" on-tap="doLogin"><iron-icon icon="check"></iron-icon>Entrar</paper-button>
+                    </template>
+                  </div>
+                </paper-card>
+              </form>
+<!-- 
+              <paper-material elevation="0" class="animation-scale-fadein">
+                <iron-image class="login-company-logo" sizing="contain"  src="http://www.pr.gov.br/logos/brasao_80x98.png"></iron-image>
+                <iron-image class="login-company-logo" sizing="contain"  src="http://www.pr.gov.br/logos/celepar/logo-celepar-v-m.png"></iron-image>
+              </paper-material> -->
+            </div>
+
+        </div>
+      </div>
+
+    </template>
+    <paper-toast id="messageToast" duration="5000" text="{{errorMessage}}"></paper-toast>
+  </template>
+
+<script>
+
+  Polymer({
+
+    is: 'ew-login',
+
+    listeners: {
+        'user-logged-out': 'doLogout'
+    },
+
+    properties: {
+          isLogged: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true,
+            notify: true
+          },
+
+          isLoading: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            reflectToAttribute: true,
+          },
+
+          errors: { 
+            type: Boolean,
+            value: false,
+          },
+
+          errorMessage: {
+            type: String,
+            value: "", 
+          },
+
+          loginResponse: {
+            type: Object,
+            value: {},
+            notify: true,
+            reflectToAttribute: false, 
+            observer: '_loginResponseChanged',
+          }, 
+
+          imagesViewParams: {
+            type: Object,
+            value: { route: './api/rest/Banners' },
+          },
+
+          loginViewParams: {
+            type: Object,
+            value: { route: './api/rest/LoginView' },
+          },
+
+          params: {
+            type: Object,
+            value: { "id": 1, "params": '{"user":"","password":""}' },
+          }, 
+
+          user: { 
+            type: String,
+            value: '',
+            reflectToAttribute: true,
+            notify: true,
+          },
+          password: { 
+            type: String,
+            value: '',
+            reflectToAttribute: true,
+            notify: true,
+          },
+          options: {
+            type: Object,
+            value: { builtIn: false, top: 0 },
+            reflectToAttribute: true,
+            notify: true
+          },
+          elementsImported: {
+            type: Boolean,
+            value: true,
+            notify: true,
+          },
+      },
+
+    ready: function() {
+      // super.ready();
+      this.$.optionsLocalStorage.reload();
+      this.$.expressoLocalStorage.reload();
+
+      if (this.loginResponse != null) {
+        if (this.loginResponse.auth != "") {
+          this.isLogged = true;
+
+          this.importElements();
+
+        } else {
+          this.isLogged = false;
+        }
+      } else {
+        this.isLogged = false;
+      }
+    }, 
+
+    _loginResponseChanged: function(_data) {
+      // console.warn('_loginResponseChanged');
+      // console.warn(_data);
+      // if (this.isLogged == false) {
+      //   if (this.loginResponse.auth != "") {
+      //     this.isLogged = true;
+
+      //     this.importElements();
+
+      //   } else {
+      //     this.isLogged = false;
+      //   }
+      // }
+    },
+
+    importElements: function(_result) {
+      // this.fire('user-logged-in',_result);
+    },
+
+    getParams: function() {
+      return this.params;
+    },
+
+    doLogout: function(e) {
+      // console.log('doLogout');
+      this.user = ''
+      this.password = '';
+      this.initializeDefaultResponse(); 
+      this.$.expressoLocalStorage.save();
+      this.isLoading = false;
+      this.isLogged = false;
+    },
+
+    checkForEnter: function (e) {
+        // check if 'enter' was pressed
+        if (e.keyCode === 13) {
+            // enter pressed!
+            this.doLogin(e);
+        } 
+    },
+
+    doLogin: function(e) {      
+      this.loginUser(this.user,this.password);
+    },
+
+    loginUser: function(userName, passwd) {
+
+      this.isLoading = true;
+
+      // console.log("LOGIN");
+
+      this.errors = false;
+
+      if (passwd == "") {
+        this.showMessage("Senha não informada/inválida!","error");
+        this.errors = true;
+      }
+
+      if (userName == "") {
+        this.showMessage("Usuário não informado/inválido!","error");
+        this.errors = true;
+      }
+
+      if (!this.errors) {
+        this.params = { user: this.user , password: this.password };
+
+        this.$.loginAjax.generateRequest();
+      
+      } else { 
+        this.isLoading = false;
+      }
+    
+      return false;
+    },
+
+    initializeDefaultOptions: function() {
+      this.options = {}; 
+      this.options.builtIn = false; 
+      this.options.top = 0; 
+    },
+
+    handleResponse: function(event) {
+
+      var data = event.detail;
+
+      if (data.error != undefined) {
+        if (data.error.code == 5) {
+          this.showMessage("Usuário ou Senha inválido(s)","error");
+        } else {
+          if (data.error.code == 2200) {
+            this.showMessage("Usuário inválido!","error");
+          } else {
+            this.showMessage("Ocorreu um erro desconhecido ao tentar efetuar o Login.","error");
+          }
+        } 
+        this.isLoading = false;
+      } else {
+        if (data.response.result != undefined) {
+          this.loginResponse = data.response.result;
+          this.$.expressoLocalStorage.save();
+          this.isLogged = true;
+          
+          this.importElements(data.response.result);
+
+        }
+      }
+    },
+
+    initializeDefaultResponse: function() {
+      this.loginResponse = { auth:  "" };
+    },
+
+    showMessage: function(message,msgType) {
+      this.$.messageToast.show( {text: message } );
+    },
+
+
+  });
+
+</script>
+</dom-module>

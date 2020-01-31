@@ -1,0 +1,69 @@
+<html><head><link rel="import" href="class.html"><link rel="import" href="../../polymer.html"><link rel="import" href="../utils/mixin.html"><link rel="import" href="../utils/templatize.html"><script>(function(){'use strict';var UndefinedArgumentError=/*#__PURE__*/function(_Error){babelHelpers.inherits(UndefinedArgumentError,_Error);function UndefinedArgumentError(message,arg){var _this;babelHelpers.classCallCheck(this,UndefinedArgumentError);_this=babelHelpers.possibleConstructorReturn(this,babelHelpers.getPrototypeOf(UndefinedArgumentError).call(this,message));_this.arg=arg;_this.name=_this.constructor.name;// Affordances for ensuring instanceof works after babel ES5 compilation
+// TODO(kschaaf): Remove after polymer CLI updates to newer Babel that
+// sets the constructor/prototype correctly for subclassed builtins
+_this.constructor=UndefinedArgumentError;_this.__proto__=UndefinedArgumentError.prototype;return _this}return UndefinedArgumentError}(babelHelpers.wrapNativeSuper(Error));/**
+   * Wraps effect functions to catch `UndefinedArgumentError`s and warn.
+   * 
+   * @param {Object=} effect Effect metadata object
+   * @param {Object=} fnName Name of user function, if known
+   * @return {?Object} Effect metadata object
+   */function wrapEffect(effect,fnName){if(effect&&effect.fn){var fn=effect.fn;effect.fn=function(){try{fn.apply(this,arguments)}catch(e){if(babelHelpers.instanceof(e,UndefinedArgumentError)){console.warn("Argument '".concat(e.arg,"'").concat(fnName?" for method '".concat(fnName,"'"):""," was undefined. Ensure it has an undefined check."))}else{throw e}}}}return effect}/**
+   * Mixin to selectively add back Polymer 1.x's `undefined` rules
+   * governing when observers & computing functions run based
+   * on all arguments being defined (reference https://www.polymer-project.org/1.0/docs/devguide/observers#multi-property-observers).
+   * 
+   * When loaded, all legacy elements (defined with `Polymer({...})`)
+   * will have the mixin applied. The mixin only restores legacy data handling
+   * if `_legacyUndefinedCheck: true` is set on the element's prototype.
+   * 
+   * This mixin is intended for use to help migration from Polymer 1.x to
+   * 2.x+ by allowing legacy code to work while identifying observers and
+   * computing functions that need undefined checks to work without
+   * the mixin in Polymer 2.
+   *
+   * @mixinFunction
+   * @polymer
+   * @summary Mixin to selectively add back Polymer 1.x's `undefined` rules
+   * governing when observers & computing functions run.
+   */Polymer.LegacyDataMixin=Polymer.dedupingMixin(function(superClass){/**
+     * @polymer
+     * @mixinClass
+     * @implements {Polymer_LegacyDataMixin}
+     */var LegacyDataMixin=/*#__PURE__*/function(_superClass){babelHelpers.inherits(LegacyDataMixin,_superClass);function LegacyDataMixin(){babelHelpers.classCallCheck(this,LegacyDataMixin);return babelHelpers.possibleConstructorReturn(this,babelHelpers.getPrototypeOf(LegacyDataMixin).apply(this,arguments))}babelHelpers.createClass(LegacyDataMixin,[{key:"_marshalArgs",/**
+       * Overrides `Polyer.PropertyEffects` to add `undefined` argument
+       * checking to match Polymer 1.x style rules
+       * 
+       * @param {!Array<!MethodArg>} args Array of argument metadata
+       * @param {string} path Property/path name that triggered the method effect
+       * @param {Object} props Bag of current property changes
+       * @return {Array<*>} Array of argument values
+       * @private
+       */value:function _marshalArgs(args,path,props){var vals=babelHelpers.get(babelHelpers.getPrototypeOf(LegacyDataMixin.prototype),"_marshalArgs",this).call(this,args,path,props);// Per legacy data rules, single-property observers (whether in `properties`
+// and in `observers`) are called regardless of whether their argument is
+// undefined or not. Multi-property observers must have all arguments defined
+if(this._legacyUndefinedCheck&&1<vals.length){for(var i=0;i<vals.length;i++){if(vals[i]===void 0||args[i].wildcard&&vals[i].base===void 0){// Break out of effect's control flow; will be caught in
+// wrapped property effect function below
+var name=args[i].name;throw new UndefinedArgumentError("Argument '".concat(name,"' is undefined. Ensure it has an undefined check."),name)}}}return vals}/**
+       * Overrides `Polyer.PropertyEffects` to wrap effect functions to
+       * catch `UndefinedArgumentError`s and warn.
+       * 
+       * @param {string} property Property that should trigger the effect
+       * @param {string} type Effect type, from this.PROPERTY_EFFECT_TYPES
+       * @param {Object=} effect Effect metadata object
+       * @return {void}
+       * @protected
+       */},{key:"_addPropertyEffect",value:function _addPropertyEffect(property,type,effect){return babelHelpers.get(babelHelpers.getPrototypeOf(LegacyDataMixin.prototype),"_addPropertyEffect",this).call(this,property,type,wrapEffect(effect,effect&&effect.info&&effect.info.methodName))}/**
+       * Overrides `Polyer.PropertyEffects` to wrap effect functions to
+       * catch `UndefinedArgumentError`s and warn.
+       *
+       * @param {Object} templateInfo Template metadata to add effect to
+       * @param {string} prop Property that should trigger the effect
+       * @param {Object=} effect Effect metadata object
+       * @return {void}
+       * @protected
+       */}],[{key:"_addTemplatePropertyEffect",value:function _addTemplatePropertyEffect(templateInfo,prop,effect){return babelHelpers.get(babelHelpers.getPrototypeOf(LegacyDataMixin),"_addTemplatePropertyEffect",this).call(this,templateInfo,prop,wrapEffect(effect))}}]);return LegacyDataMixin}(superClass);return LegacyDataMixin});// LegacyDataMixin is applied to base class _before_ metaprogramming, to
+// ensure override of _addPropertyEffect et.al. are used by metaprogramming
+// performed in _finalizeClass
+var Class=Polymer.Class;Polymer.Class=function(info,mixin){return Class(info,function(superClass){return mixin?mixin(Polymer.LegacyDataMixin(superClass)):Polymer.LegacyDataMixin(superClass)})};// Apply LegacyDataMixin to Templatizer instances as well, and defer
+// runtime switch to the root's host (_methodHost)
+Polymer.Templatize.mixin=Polymer.dedupingMixin(function(superClass){return(/*#__PURE__*/function(_Polymer$LegacyDataMi){babelHelpers.inherits(_class,_Polymer$LegacyDataMi);function _class(){babelHelpers.classCallCheck(this,_class);return babelHelpers.possibleConstructorReturn(this,babelHelpers.getPrototypeOf(_class).apply(this,arguments))}babelHelpers.createClass(_class,[{key:"_legacyUndefinedCheck",get:function get(){return this._methodHost&&this._methodHost._legacyUndefinedCheck}}]);return _class}(Polymer.LegacyDataMixin(superClass)))});console.info("LegacyDataMixin will be applied to all legacy elements.\n"+"Set `_legacyUndefinedCheck: true` to enable.")})();</script></head><body></body></html>

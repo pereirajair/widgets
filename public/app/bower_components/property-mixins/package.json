@@ -1,0 +1,43 @@
+{
+  "name": "@fooloomanzoo/property-mixins",
+  "version": "2.5.7",
+  "description": "mixin for custom elements to extends property mixins for data formats",
+  "scripts": {
+    "prepublish": "npm run analyze && git add . && git commit -m \"publish new version\" && npm version patch && git push",
+    "analyze": "polymer analyze > analysis.json",
+    "start": "npm run analyze && polymer serve -o",
+    "test": "polymer test",
+    "test:p": "polymer test -p --config-file=wct.p.conf.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fooloomanzoo/property-mixins.git"
+  },
+  "keywords": [
+    "mixin",
+    "polymer",
+    "customElements",
+    "properties",
+    "date",
+    "time",
+    "range",
+    "color"
+  ],
+  "author": "fooloomanzoo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fooloomanzoo/property-mixins/issues"
+  },
+  "dependencies": {
+    "@polymer/polymer": "^2.6.1"
+  },
+  "devDependencies": {
+    "web-component-tester": "^6.5.0",
+    "@webcomponents/webcomponentsjs": "^1",
+    "@polymer/iron-component-page": "^3",
+    "@polymer/iron-flex-layout": "^2",
+    "@polymer/iron-demo-helpers": "^2",
+    "@polymer/iron-form": "^2",
+    "@fooloomanzoo/input-picker-pattern": "^2"
+  }
+}

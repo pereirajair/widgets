@@ -1,0 +1,91 @@
+<!--
+### ELEMENTO
+
+`ew-loading-spinner`
+
+Exibe os icone de Loading no centro da pagina. 
+
+Estes eventos de loading são controlados de forma automatica pela plataforma, sempre que um componente ew-api-ajax é executado o loading do widget é exibido automaticamente.
+
+
+### HTML
+  
+    <ew-loading-spinner loading="{{isLoading}}"></ew-loading-spinner>
+
+-->
+<dom-module id="ew-loading-spinner">
+  <template> 
+    <style>
+      paper-spinner {
+          position: absolute;
+          z-index: 100;
+      }
+      #loadingArea {
+        margin-top: 200px;
+        margin-bottom: 10px;
+        margin-left: calc((50%) - 20px);
+      }
+      .refresh {
+        background-color:#fff;
+        border-radius:50%;
+
+      }
+      .refreshSpinner {
+        padding:5px;
+        width:22px;
+        height:22px
+      }
+      .refreshShadow {
+        width:32px;
+        height:32px;
+        border-radius:50%;
+        margin:0 auto;
+        margin-bottom: -38px;
+        border-color:#fff;
+        border-style: solid;
+        border-width: 1px;
+        position: absolute;
+        z-index: 1000;
+        margin-left: 50%;
+        margin-top: 200px;
+      } 
+
+      #loadingProgressBar {
+        width: 100%;
+      }
+  
+    </style>
+    <paper-progress id="loadingProgressBar" disabled="{{!loading}}" hidden="{{!loading}}" indeterminate bottom-item></paper-progress>
+     <paper-material id='loadingArea' class="refreshShadow scale" elevation="2" style$="[[_computeShowLoadingStyle(loading)]]">
+      <paper-spinner class="refresh refreshSpinner" active="{{loading}}"></paper-spinner>
+    </paper-material>
+  </template>
+  <script>
+
+    class EWLoadingSpinner extends Polymer.mixinBehaviors([EWBehaviorWidgetBehavior], Polymer.Element) {
+      static get is() {
+        return 'ew-loading-spinner';
+      }
+      static get properties() {
+        return {
+          loading: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            reflectToAttribute: true,
+          },
+        }
+      }
+      _computeShowLoadingStyle(isLoadingActive) {
+        if (isLoadingActive) {
+          return '';
+        } else {
+          return 'display: none;';
+        }
+      }
+    };
+
+  customElements.define(EWLoadingSpinner.is, EWLoadingSpinner);
+
+  </script>
+</dom-module>

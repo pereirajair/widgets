@@ -1,0 +1,95 @@
+{
+    "name": "celepar/light-minimo",
+    "description": "Projeto minimo Light-PHP.",
+    "authors": [
+      {
+        "name": "Joao Alfredo Knopik Junior",
+        "email": "jakjr@celepar.pr.gov.br"
+      },
+      {
+        "name": "Patrik Unterstell",
+        "email": "pmenezes@celepar.pr.gov.br"
+      },
+      {
+        "name": "Roberson A. Faria",
+        "email": "roberson.faria@celepar.pr.gov.br"
+      }
+    ],
+    "keywords": ["framework", "laravel", "light-php"],
+    "license": "MIT",
+    "type": "project",
+    "require": {
+        "php": ">=7.0.0",
+        "fideloper/proxy": "~3.3",
+        "laravel/framework": "5.5.*",
+        "laravel/tinker": "~1.0",
+        "celepar/light-layout": "5.5.*",
+        "celepar/light-macros": "5.5.*",
+        "celepar/light-menu": "5.5.*",
+        "celepar/light-shortcut": "5.5.*",
+        "celepar/light-forms": "5.5.*",
+        "celepar/light-pdf": "5.5.*",
+        "celepar/light-central-seguranca": "5.5.*",
+        "jakjr/pagination": "*"
+    },
+    "require-dev": {
+        "filp/whoops": "~2.0",
+        "fzaninotto/faker": "~1.4",
+        "mockery/mockery": "0.9.*",
+        "phpunit/phpunit": "~6.0",
+
+        "symfony/dom-crawler": "3.1.*",
+        "symfony/css-selector": "3.1.*",
+        "phpspec/phpspec": "~2.1",
+        "barryvdh/laravel-ide-helper": "^2.1"
+    },
+    "repositories": [
+      {
+        "type": "composer",
+        "url": "http://satis.celepar.parana"
+      }
+    ],
+    "autoload": {
+        "classmap": [
+            "database/seeds",
+            "database/factories"
+        ],
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [
+            ]
+        }
+    },
+    "scripts": {
+      "post-install-cmd": [
+        "php artisan optimize",
+        "php artisan vendor:publish --tag=public --force"
+      ],
+      "post-update-cmd": [
+        "php artisan optimize",
+        "php artisan ide-helper:generate",
+        "php artisan vendor:publish --tag=public --force"
+      ],
+      "post-create-project-cmd": [
+        "cp .env.example .env",
+        "php artisan key:generate",
+        "cp .env .env.homologacao; sed -i 's/local/homologacao/g' .env.homologacao",
+        "cp .env .env.producao; sed -i 's/local/producao/g' .env.producao; sed -i 's/APP_DEBUG=true/APP_DEBUG=false/' .env.producao"
+      ]
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "secure-http": false
+    }
+}

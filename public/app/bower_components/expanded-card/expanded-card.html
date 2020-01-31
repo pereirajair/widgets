@@ -1,0 +1,149 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../neon-animation/animations/transform-animation.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../iron-flex-layout/classes/iron-flex-layout.html">
+
+
+<dom-module id="expanded-card">
+  <template>
+    <style>
+    iron-collapse {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    </style>
+    <div class="vertical layout">
+      <paper-icon-button on-tap="toggleExpand" class="self-end" id="expandButton"></paper-icon-button>
+      <iron-collapse id="contentCollapse" opened="{{expanded}}">
+        <content></content>
+      </iron-collapse>
+    </div>
+  </template>
+
+  <script>
+  Polymer({
+    is: 'expanded-card',
+    behaviors: [Polymer.NeonAnimationRunnerBehavior],
+    properties: {
+      expanded: {
+        type: Boolean,
+        value: false,
+        notify: true,
+        observer: '_expandedChanged'
+      },
+      expandMoreTitle: {
+        type: String,
+        value: "Show More"
+      },
+      expandLessTitle: {
+        type: String,
+        value: "Show Less"
+      },
+      enableRotateAnimation: {
+        type: Boolean,
+        value: true
+      },
+      expandMoreIcon: {
+        type: String,
+        value: "expand-more"
+      },
+      expandLessIcon: {
+        type: String,
+        value: "expand-less"
+      },
+      animationConfig: {
+        value: function() {
+          return {
+            'rotateIcon': {
+              name: 'transform-animation',
+              node: this.$.expandButton,
+              transformOrigin: "50% 50%",
+              transformFrom: "rotate(0)",
+              transformTo: "rotate(180deg)",
+              timing: {duration: 350}
+            }
+          }
+        }
+      }
+    },
+    listeners: {
+      'neon-animation-finish': '_onNeonAnimationFinish'
+    },
+    _onNeonAnimationFinish: function() {
+      if(this.expanded) {
+        this.$.expandButton.icon = "icons:expand-less";
+      }
+      else {
+        this.$.expandButton.icon = "icons:expand-more";
+      }
+    },
+
+    // Fires when an instance of the element is created
+    created: function() {},
+
+    // Fires when the local DOM has been fully prepared
+    ready: function() {
+      //Set initial icon
+      if(this.expanded) {
+        this.$.expandButton.icon = "icons:expand-less";
+      }
+      else {
+        this.$.expandButton.icon = "icons:expand-more";
+      }
+
+      //Set initial title
+      if (this.expanded) {
+        this.$.expandButton.title = this.expandLessTitle;
+      }
+      else {
+        this.$.expandButton.title = this.expandMoreTitle;
+      }
+    },
+
+    // Fires when the element was inserted into the document
+    attached: function() {},
+
+    // Fires when the element was removed from the document
+    detached: function() {},
+
+    // Fires when an attribute was added, removed, or updated
+    _expandedChanged: function(newVal, oldVal) {
+
+
+      //If icon is already set no need to animate!
+      if((newVal && (this.$.expandButton.icon == "icons:expand-less")) || (!newVal && (this.$.expandButton.icon == "icons:expand-more"))) {
+        return;
+      }
+
+      //Set title
+      if (newVal) {
+        this.$.expandButton.title = this.expandLessTitle;
+      }
+      else {
+        this.$.expandButton.title = this.expandMoreTitle;
+      }
+
+      if(this.enableRotateAnimation)
+      {
+        //Play rotate animation
+        this.cancelAnimation();
+        this.playAnimation('rotateIcon');
+      }
+      else {
+        if(this.expanded) {
+          this.$.expandButton.icon = "icons:expand-less";
+        }
+        else {
+          this.$.expandButton.icon = "icons:expand-more";
+        }
+      }
+    },
+    toggleExpand: function() {
+      this.expanded = !this.expanded;
+    }
+  });
+  </script>
+</dom-module>

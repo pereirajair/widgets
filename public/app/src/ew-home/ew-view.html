@@ -1,0 +1,144 @@
+<!--
+### ew-view
+
+`ew-view`
+
+Use este elemento para visualizar um widget em desenvolvimento.
+
+-->
+<script src="./ew-behavior.js"></script>
+<dom-module id="ew-view">
+  <template>
+    <style>
+      #dialogItemColumn {
+        width: 100%;
+        height: calc(100%);
+        overflow: hidden;
+      } 
+      #dialogMultiColumn {
+        width: 100%;
+        height: calc(100%);
+        overflow: hidden;
+      } 
+      item-column {
+        width: 100%;
+        height: 100%;
+      }
+      #holderEwView {
+        width: 100%;
+        height: calc(100%);
+        overflow: hidden;
+      }
+    </style>
+    <div id='holderEwView'>
+      <template is="dom-if" if="{{multi}}">
+        <multi-column id="dialogMultiColumn" column="{{_getColumn(element,params)}}" parent="{{parent}}" tab-view="{{!isMobile}}" enable-push="{{isMobile}}" with-margin="{{withMargin}}"></multi-column>  
+      </template>
+      <template is="dom-if" if="{{!multi}}">
+        <item-column id="dialogItemColumn" column="{{_getColumn(element,params)}}" parent="{{parent}}" tab-view="{{!isMobile}}" enable-push="{{isMobile}}" with-margin="{{withMargin}}"></item-column>
+      </template>
+    </div>
+  </template>
+  <script>
+
+    class EWView extends Polymer.mixinBehaviors([EWBehaviorWidgetBehavior,Polymer.MutableData], Polymer.Element) {
+		static get is() {
+			return 'ew-view';
+		}
+		static get properties() {
+      return {
+      	element: { type: String, value : '', notify: true, reflectToAttribute: true },
+        height: { type: String, value: '100%', notify: true, reflectToAttribute: true },
+        multi: { type: Boolean, value : false, notify: true, reflectToAttribute: true }, 
+        enablePush: { type: Boolean, value : null, notify: true, reflectToAttribute: true }, 
+        withMargin: { type: Boolean, value : false, notify: true, reflectToAttribute: true }, 
+        column: {
+          type: Object,
+          value: { },
+          notify: true,
+          reflectToAttribute: true,
+        },
+        params: {
+          type: Object,
+          value: { },
+          notify: true,
+          reflectToAttribute: true,
+        },
+        parent: {
+          type: Object,
+          value: { },
+          notify: true,
+          reflectToAttribute: false,
+        },
+      }
+    }
+    getItemColumn() {
+      return this.shadowRoot.querySelector("#" + this.getElementId());
+    }
+    _computeStyle(_height) {
+      if (_height == undefined) {
+        _height = '100%';
+      }
+      var cssStyle = 'width: 100%;  height: calc(' + _height + '); overflow: hidden;';
+      return cssStyle;
+    }
+    attached() {
+      if (this.element != '') {
+        var that = this;
+        that.render();
+      }
+    }
+    _getColumn(_element,_params) {
+      var newData = {};
+      var configColumn = { element: _element, params: _params };
+      var column = new EWColumn(configColumn);
+      newData.column = column;
+      this._dialogData = newData;
+      return this._dialogData.column;
+    }
+    _getNewPage(column) {
+      var newpage = { 
+        "id": "holder0",
+        "column": column,
+        "element" : column.element,
+      };
+      if (this.params != undefined) {
+        newpage.params = this.params;
+      }
+      return newpage;
+    } 
+    getElementId() {
+      var elementID = 'dialogItemColumn';
+      if (this.multi) {
+        elementID = 'dialogMultiColumn';
+      }
+      return elementID;
+    }
+    render() {
+
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        
+        var _element = this.shadowRoot.querySelector("#" + this.getElementId());
+
+        if (_element) {
+          _element.setColumnDialog(this);
+          _element.drawPage(0,this._getNewPage(this._getColumn(this.element,this.params)));
+          _element._enableBackButton(false);
+          _element._enableDrawerToggle(false); 
+          if (window.navigator.userAgent.indexOf("Edge") > -1) {
+            _element.style='width: 100% !important; height: 100%;';
+          }
+          if (_element.ew_loading != undefined) {
+            _element.ew_loading(false);
+          }
+        }
+
+      });
+      
+    }
+  }
+
+  customElements.define(EWView.is, EWView);
+
+  </script>
+</dom-module>

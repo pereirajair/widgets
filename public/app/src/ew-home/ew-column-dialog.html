@@ -1,0 +1,170 @@
+<dom-module id="ew-column-dialog">
+    <template>
+        <style>
+
+        :host {
+            width: 100%;
+            height: 100%;
+        }
+
+        paper-dialog { 
+            color: var(--paper-menu-color);
+            background-color: var(--paper-menu-background-color);
+
+             --paper-dialog-scrollable: {
+                box-sizing: border-box;
+                padding: 0px;
+                margin: 0px;
+                width: 70%;
+                min-height: 550px;
+                min-width: 800px;
+                height: 100%;
+
+            }
+        }    
+
+        paper-dialog-scrollable {
+            min-height: 550px;
+            min-width: 800px;
+            margin: 0px;
+            height: 550px;
+            margin-bottom: 0px !important;
+        }
+
+        item-column {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #columnDialog[mobile] {
+            top: 0px !important;
+            left: 0px !important;
+            /*bottom: 0px;*/
+            right: 0px;
+            /*margin: 0px;*/
+            position: fixed;
+            margin: 5px;
+        }
+
+        @media screen and (max-width: 900px) {
+            paper-dialog {
+                 --paper-dialog-scrollable: {
+                    box-sizing: border-box;
+                    padding: 0px;
+                    margin: 0px;
+                    width: 70%;
+                    min-height: 300px;
+                    min-width: 365px;
+                }
+            }
+            paper-dialog-scrollable {
+                min-height: 400px;
+                min-width: 365px;
+                margin: 0px;
+                height: 400px;
+            }
+        }
+
+        </style> 
+        <iron-signals on-iron-signal-ew-column-dialog="showColumnDialog"></iron-signals>
+        <paper-dialog id="columnDialog" mobile$="{{isMobile}}" on-iron-overlay-closed="_confirmDialog" entry-animation="scale-up-animation" exit-animation="fade-out-animation"> 
+            <paper-dialog-scrollable style="margin-top: 0px; height: 500px;">
+                <div class="container">
+                    <item-column id="dialogItemColumn" column="{{dialogData.column}}" with-margin="{{withMargin}}"></item-column>
+                </div>
+            </paper-dialog-scrollable> 
+        </paper-dialog> 
+    </template>
+    <script>
+
+        class EWColumnDialog extends Polymer.mixinBehaviors([EWBehaviorWidgetBehavior], Polymer.Element) {
+        static get is() {
+          return 'ew-column-dialog';
+        }
+        static get listeners() {
+          return {
+            'tap': 'tapFabButton',
+          }
+        }
+        static get properties() {
+          return {
+                dialogData: {
+                    type: Object,
+                    value: { 
+                    title: 'Confirmação',
+                    column: undefined,
+                    buttonCancel: 'Cancelar',
+                    buttonConfirm: 'Confirmar',
+                    onConfirmed: 'evt-confirmed',
+                    },
+                    notify: true,
+                    reflectToAttribute: true,
+                },
+                isMobile: {
+                    type: Boolean,
+                    value: false,
+                    notify: true,
+                    reflectToAttribute: true,
+                },
+                withMargin: {
+                    type: Boolean,
+                    value: false,
+                },
+                returnData: {
+                    type: Object,
+                    value: null,
+                    notify: true,
+                },
+          }
+        }
+        close(returnData) {
+            this.setReturnData(returnData);
+            this.$.columnDialog.close();
+        }
+        setReturnData(_data) {
+            this.set('returnData',_data);
+        }
+        _confirmDialog(event) {
+            var retData = event.detail;
+            if (this.returnData) {
+                retData.returnData = this.returnData.detail;
+            }
+            this.dialogData.onConfirmed(retData);
+        }
+        showColumnDialog(event) {
+            // this.log('ew-column-dialog.showColumnDialog');
+            var newData = event.detail;
+
+            var configColumn = { element: event.detail.element, params: event.detail.params };
+            var column = new EWColumn(configColumn);
+
+            newData.column = column;
+
+            this.dialogData = newData;
+
+            var newpage = { 
+                "id": "holder0",
+                "column": column,
+                "element" : column.element,
+                "params" : event.detail.params,
+            };
+
+            this.$.dialogItemColumn.setColumnDialog(this);
+            this.$.dialogItemColumn.selectedPage = 0;
+            this.$.dialogItemColumn.drawPage(0,newpage);
+            this.$.dialogItemColumn._enableBackButton(false);
+            this.$.dialogItemColumn._enableDrawerToggle(false);
+            this.$.columnDialog.open();
+        }
+        
+      };
+
+      customElements.define(EWColumnDialog.is, EWColumnDialog);
+
+    </script>
+</dom-module>

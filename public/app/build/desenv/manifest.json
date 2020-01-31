@@ -1,0 +1,7 @@
+{
+  "name": "Expresso",
+  "short_name": "Expresso",
+  "description": "Expresso",
+  "start_url": "/",
+  "display": "standalone"
+}

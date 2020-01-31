@@ -1,0 +1,102 @@
+version: '3'
+services:
+
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: ./devops/php/Dockerfile
+    image: digitalocean.com/php
+    container_name: app2
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - mydb
+      - webserver
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+      # http_proxy: http://proxy0.celepar.parana:8080
+      # https_proxy: http://proxy0.celepar.parana:8080
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./devops/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    # command: ["cd /var/www/","php artisan migrate:fresh" , "php artisan db:seed"]
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    user: root
+    container_name: webserver2
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8002:80"
+      - "80:80"
+    volumes:
+      - ./:/var/www
+      - ./devops/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+
+  mydb:
+    image: postgres:9.6
+    container_name: laradb
+    tty: true
+    stdin_open: true
+    environment:
+       - POSTGRES_USER=postgres
+       - POSTGRES_PASSWORD=widgets
+       - POSTGRES_DB=ewidgets
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+      # - ./devops/postgresql/:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+    restart: always
+    networks:
+      - app-network
+
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-widgets}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-widgets}
+    volumes:
+       - pgadmin:/root/.pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5051}:80"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  polymerproject2:
+    container_name: polymerproject2
+    user: root
+    build:
+      context: .
+      dockerfile: ./devops/php/Dockerfile.polymer
+    volumes:
+      - ./public/app:/home/polymer/app
+    ports:
+      - "8082:8081"
+    networks:
+      - app-network
+    dns: 
+      - 10.15.54.146
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+#Volumes
+volumes:
+  pgadmin:
+  dbdata:
+    driver: local

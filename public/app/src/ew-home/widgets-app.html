@@ -1,0 +1,50 @@
+<!--
+### widgets-app
+
+`widgets-app`
+
+Elemento utilizado pela plataforma para carregar o ew-home e todo o código da plataforma.
+
+-->
+<dom-module id="widgets-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        overflow: hidden !important;
+      }
+    </style>
+    <ew-home id="EWHOME" development="{{development}}" options="{{options}}"></ew-home>
+  </template>
+  <script>
+    
+    class WidgetsApp extends Polymer.Element {
+        static get is() {
+          return 'widgets-app';
+        }
+        static get properties() {
+          return { 
+            development: { type: Boolean, value: false, reflectToAttribute: true, notify: true },
+            _options: { type: Object, value: {}, reflectToAttribute: true, notify: true, computed: '_computeOptions(development)'}
+          }
+        }
+        _computeOptions(_development) {
+          var _options = {};
+          if (_development) {
+            _options = { "builtIn": true, "top": 0 };
+            
+          }
+          return _options;
+        }
+        getEwHome() {
+          return this.$.EWHOME;
+        }
+      };
+
+    customElements.define(WidgetsApp.is, WidgetsApp);
+
+  </script>
+</dom-module>

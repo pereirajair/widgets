@@ -1,0 +1,1186 @@
+<!--
+### WIDGET
+
+`ew-list-view`
+
+Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou até mesmo chamar o mesmo Widget de List view com novos items.
+
+
+-->
+<dom-module id="ew-list-view">
+    <template>
+    <style>
+        :host {
+            width: 100%;
+            height: 100%;
+        }
+        .content { 
+            width: 100%;
+            height: 100%;
+        }
+        .formList {
+          margin: 0px;
+          padding: 0px;
+        }
+        #scrollList {
+          @apply(--layout-vertical);
+          @apply(--layout-flex);
+          height: 100%;
+          overflow-y: hidden;
+        }
+        #itemsListContainer {
+          height: 100%;
+          @apply(--layout-flex);
+          @apply(--layout-vertical);
+          overflow-y: hidden;
+        }
+        .page_help { 
+          font-size: 12px; 
+          position: absolute;
+          right: 120px;
+          top: 15px;
+        }
+        
+    </style>
+        <ew-api-ajax 
+          id="ajax"
+          url="{{params.route}}"
+          params="{{params}}"
+          files="{{files}}" 
+          loading="{{isLoading}}"
+          isasync="{{isasync}}" 
+          on-response="ew_handleResponseToResponseParams" auto="{{auto}}">        
+        </ew-api-ajax>
+        <iron-signals on-iron-signal-ew-refresh-route="_refreshRoute"></iron-signals>
+        <iron-localstorage id="LocalPhotos" name="LocalPhotos" value="{{localPhotos}}" on-iron-localstorage-load-empty="_initializeDefaultPhotos"></iron-localstorage>
+        <ew-header background-color="{{backgroundColor}}" style="height: 100%;" show-header="{{responseParams.showHeader}}">
+            <div slot='title' hidden="{{searchEnabled}}">{{widgetTitle}}
+              <template is="dom-if" if="{{responseParams.image}}">
+                <iron-image src="{{responseParams.image}}" style$="{{_computeImageSize(responseParams)}}" sizing="{{responseParams.imageSizing}}" position=""></iron-image>
+              </template>
+            </div>
+            <div slot='header-icon' class='header-icon' hidden="{{!showSelection}}">
+              <paper-icon-button id="cancelSelection" icon="icons:cancel" on-tap="_cancelSelections"></paper-icon-button>
+              <paper-tooltip for="cancelSelection" position="right">Cancelar seleção de contatos.</paper-tooltip>
+            </div>
+            <div slot='toolbar-buttons'>
+                <template is="dom-if" if="{{responseParams.autoScrollPages}}">
+                  <div class='page_help'>{{_increaseNumber(selectedPage)}} de {{responseParams.pages.length}}</div>
+                  <paper-icon-button id="prev" icon="icons:chevron-left" on-tap="previous" hidden="{{!selected}}"></paper-icon-button>
+                  <paper-icon-button id="nxt" icon="icons:chevron-right" on-tap="next" ></paper-icon-button>
+                  <paper-tooltip for="prev" position="bottom">Anterior</paper-tooltip>
+                  <paper-tooltip for="nxt" position="bottom">Próximo</paper-tooltip>
+                </template>
+                <template is="dom-repeat" items="{{responseParams.toolbarButtons}}" as="button">
+                    <template is="dom-if" if="{{_computeVisibleOnThisViewState(button,viewState)}}">
+                      <paper-icon-button data-button="{{button}}" icon="{{button.icon}}" hidden="{{searchEnabled}}" on-tap="_tapToolbarButton"></paper-icon-button>
+                    </template>
+                </template>
+                <template is="dom-if" if="{{responseParams.toolbarMenuItems.length}}">
+                  <template is="dom-if" if="{{_computeHasItemsOnThisViewState(responseParams.toolbarMenuItems)}}">
+                    <paper-icon-button style='float: right;' data-toolbarmenuitems="{{responseParams.toolbarMenuItems}}" icon="icons:more-vert" hidden="{{searchEnabled}}" on-tap="_openToolbarMenus"></paper-icon-button>
+                    <!-- <paper-menu-button class="menu_folders" style='float: right; padding: 0px;' hidden="{{searchEnabled}}" horizontal-align="right">
+                        <paper-icon-button icon="more-vert" id="iconMore" class="dropdown-trigger" slot="dropdown-trigger"></paper-icon-button>
+                        <paper-listbox hidden="{{searchEnabled}}" class="dropdown-content" slot="dropdown-content">
+                          <template is="dom-repeat" items="{{responseParams.toolbarMenuItems}}" as="button">
+                            <template is="dom-if" if="{{_computeVisibleOnThisViewState(button,viewState)}}">
+                              <paper-item on-tap="_tapToolbarButton" data-button="{{button}}" style="z-index: 1000;"><iron-icon icon="{{button.icon}}" item-icon slot="item-icon"></iron-icon>{{button.title}}</paper-item>
+                            </template>
+                          </template>
+                        </paper-listbox>
+                    </paper-menu-button> -->
+                  </template>
+                </template>
+                <ew-search id="searchBar" search-value="{{searchValue}}" search-enabled="{{searchEnabled}}" hidden="{{responseParams.hideSearch}}"></ew-search>
+            </div>
+            <div id="itemsListContainer" class="content" slot='content'>
+                <ew-loading-spinner loading="{{isLoading}}"></ew-loading-spinner>
+                  <div style="height: 100%;">
+                    <template is="dom-if" if="{{showPages}}">
+                        <paper-tabs selected="{{selectedPage}}">
+                            <template is="dom-repeat" items="[[pages]]">
+                                <paper-tab>
+                                  <template is="dom-if" if="{{item.icon}}">
+                                    <iron-icon style="margin: 10px;" icon="{{item.icon}}"></iron-icon>
+                                  </template>{{item.title}}</paper-tab>
+                            </template>
+                        </paper-tabs>
+                    </template>                  
+                    <ew-list id="scrollList" data="{{menuData}}" local-photos="{{localPhotos}}" style$="{{_computeStyleListView(showPages)}}" on-select="_openItem" multi-selection="{{multiSelection}}" is-loading="{{isLoading}}" has-more-items="{{hasMoreItems}}" on-toggle="_toggleItem" on-loadnextpage="_loadNextPage" enable-selection="{{responseParams.enableSelection}}"></ew-list>
+                  </div>
+            </div>
+        </ew-header>
+        <template is="dom-if" if="{{!isLoading}}">
+          <template is="dom-repeat" items="{{responseParams.fabButtons}}" as="button">
+            <template is="dom-if" if="{{_computeVisibleOnThisViewState(button,viewState)}}">
+              <ew-fab icon="{{button.icon}}" data-button="{{button}}" tooltip="{{button.tooltip}}" on-tap="_tapFabButton"></ew-fab>
+            </template>
+          </template>
+        </template>
+    </template>
+    <script>
+        Polymer({
+            is: "ew-list-view",
+            behaviors: [EWBehaviorWidgetBehavior, Polymer.IronResizableBehavior, window.Columns.EWColumn],
+            listeners: {
+              'ew-tap-button-item' : '_tapButtonItem',
+              'iron-swipe' : '_swipeItem',
+            },
+            properties: {
+                widgetTitle: { 
+                  type: String, 
+                  value: "",
+                  computed: '_computeTitle(responseParams,selectedItems)' },
+                params: {
+                  type: Object, 
+                  value: { items: [] }, 
+                  notify: true, 
+                  reflectToAttribute: false, 
+                },
+                hasMoreItems: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                isLoading: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                isLoadingNextPage: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                responseParams: {
+                  type: Object, 
+                  value: { items: [] }, 
+                  notify: true, 
+                  reflectToAttribute: false, 
+                },
+                isasync: { 
+                  type: Boolean, 
+                  value: true, 
+                  notify: true 
+                },
+                auto: { 
+                  type: Boolean, 
+                  value: 0, 
+                  notify: true 
+                },
+                currentPage: {
+                    type: Number,
+                    value: 1,
+                    notify: true,
+                    reflectToAttribute: true, 
+                },
+                selectedPage: {
+                    type: Number,
+                    value: 0,
+                    notify: true,
+                    reflectToAttribute: true, 
+                    observer: 'updateData',
+                },
+                showSelection: {
+                  type: Boolean,
+                  value: false,
+                },
+                pages: {
+                  type: Array, 
+                  value: [], 
+                  notify: true, 
+                  reflectToAttribute: false,
+                  computed: '_computePages(responseParams,selectedItems)'
+                },
+                items: {
+                  type: Array,
+                  value: function () {
+                    return [];
+                  },
+                  notify: true,
+                  reflectToAttribute: true,
+                },
+                menuData: {
+                  type: Array, 
+                  value: function () {
+                    return [];
+                  }, 
+                  notify: true, 
+                  reflectToAttribute: false,
+                  // computed: '_computeMenuData(isMobile,responseParams,searchValue,selectedPage,selectedItems)'
+                },
+                formID: {
+                  type: String,
+                  value: 'formList',
+                  notify: true,
+                  reflectToAttribute: true,
+                  computed: '_computeFormID(params)'
+                },
+                lastSearch: {
+                  type: String,
+                  value: '',
+                  notify: true,
+                  reflectToAttribute: true,
+                },
+                backgroundColor: {
+                  type: String,
+                  value: 'indigo',
+                  notify: true,
+                  reflectToAttribute: true,
+                  computed: '_computeBackgroundColor(responseParams,selectedItems)'
+                },
+                showPages: {
+                  type: Boolean,
+                  value: false,
+                  notify: true,
+                  reflectToAttribute: true,
+                  computed: '_computeShowPages(responseParams,selectedItems)'
+                },
+                searchEnabled: {
+                  type: Boolean,
+                  value: false,
+                  notify: true,
+                  reflectToAttribute: true
+                },
+                searchValue: {
+                  type: String,
+                  value: '',
+                  notify: true,
+                  reflectToAttribute: true,
+                  observer: '_searchChange'
+                },
+                element: { 
+                    type: String, 
+                    value: 'ew-list-view', 
+                    notify: true, 
+                    reflectToAttribute: true 
+                },
+                viewState: { 
+                    type: String, 
+                    value: 'normal', 
+                    notify: true, 
+                    reflectToAttribute: true 
+                },
+                interval: { 
+                  type: Number, 
+                  value: 5, 
+                  notify: true 
+                },
+                selectedItemsPageID: {
+                  type: Number, 
+                  value: -1,
+                  notify: true,
+                  reflectAttribute: true,
+                },
+                selectedItems: {
+                  type: Array, 
+                  value: [],
+                  notify: true,
+                  reflectAttribute: true,
+                },
+                multiSelection: {
+                  type: Boolean,
+                  value: false,
+                  notify: true, 
+                  reflectAttribute: true, 
+                  computed: '_computeMultiSelection(selectedItems,responseParams)'
+                },
+                enableMultiSelection: {
+                  type: Boolean,
+                  value: false,
+                  notify: true, 
+                  reflectAttribute: true, 
+                  computed: '_computeEnableMultiSelection(responseParams)'
+                },
+                files: {
+                  type: Array,
+                  value: [],
+                  notify: true,
+                  reflectToAttribute: true,
+                },
+            },
+            _swipeItem: function(e) {
+              // console.warn('_swipeItem');
+              // console.warn(e.detail);
+              var _swipeAction = e.detail;
+              if (_swipeAction.direction == 'right') {
+                var _action = _swipeAction.target.dataItem.swipeRightAction;
+                if (_action != undefined) {
+                  this._runAction(_action);
+                }
+              }
+              if (_swipeAction.direction == 'left') {
+                var _action = _swipeAction.target.dataItem.swipeLeftAction;
+                if (_action != undefined) {
+                  this._runAction(_action);
+                }
+              }
+              var that = this;
+              this.async(function() { 
+                that.notifyResize();
+              },500);
+            },  
+            _refreshRoute: function(event) {
+              var _route1 = "";
+              var _route2 = new String(this.responseParams.route).valueOf();
+              var _route3 = new String(this.params.route).valueOf();
+              var _route4 = new String(event.detail.route).valueOf();
+              
+              if (event.detail != undefined) {
+                if (event.detail.route != undefined) {
+                  _route1 = new String(event.detail.route).valueOf();
+                } else {
+                  if (event.detail.params.route != undefined) {
+                    _route1 = new String(event.detail.params.route).valueOf();
+                  }
+                }
+              } 
+              
+              // console.warn("_refreshRoute");
+              // console.warn(event);
+              // console.log(_route1);
+              // console.log(_route2);
+              // console.log(_route3);
+              // console.log(_route4);
+
+              if (_route1 != undefined) {
+
+                if ((_route1 == _route2) || (_route1 == _route3))  {
+                  if (event.detail.params != undefined) {
+                    var _newParams = Object.assign({}, this.params, event.detail.params);
+                    // console.warn(_newParams);
+                    this.params = _newParams;
+                  }
+                  this.reload();
+                }
+              }
+            },
+            _onFormSubmit: function(event) {
+              event.preventDefault();
+              console.log('_onFormSubmit');
+            },
+            updateData: function() {
+              var _menuData = this._computeMenuData(this.isMobile,this.responseParams,this.searchValue,this.selectedPage, this.selectedItems);
+                  this.set('menuData',_menuData);
+            },
+            _computePages: function(params,selectedItems) {
+                return params.pages; 
+            },
+            _increaseNumber(number) {
+              return number + 1;
+            },
+            _computeFormID: function(params) {
+              var _randFormID = Math.floor((Math.random() * 10000) + 1);
+              var formID = 'formID' + _randFormID;
+              return formID;
+            },
+            _computeImageSize: function(params) {
+              var retVal = ' width: ' + params.imageWidth + '; min-height: ' + params.imageHeight + ';  position: absolute; top: 0px; left: 0px; object-position: 0 0; ';
+              return retVal;
+            },
+            _computeVisibleOnThisViewState: function(_element,_viewState) {
+              var retval = false;
+              if (_viewState == _element.viewState) {
+                retval = true;
+              }
+              return retval;
+            },
+            _computeHasItemsOfType: function(_items,type) {
+              var retval = false;
+              for (var i in _items) {
+                if (this.viewState == _items[i].viewState) {
+                  retval = true;
+                }
+              }
+              return retval;
+            },
+            _computeHasItemsOnThisViewState: function(_items) {
+              var retval = false;
+              for (var i in _items) {
+                if (this.viewState == _items[i].viewState) {
+                  retval = true;
+                }
+              }
+              return retval;
+            },
+            previous: function() {
+              if (this.selectedPage >= 1) {
+                this.selectedPage = this.selectedPage - 1;
+              } else { 
+                this.ew_showMessage('Voce já está na primeira página.');
+              }
+            },
+            next: function() {
+              if (this.selectedPage < (this.responseParams.pages.length - 1)) {
+                this.selectedPage = this.selectedPage + 1;
+              } else { 
+                if (this.responseParams.autoScrollToFirstPageOnEnd == true) {
+                  this.selectedPage = 0;
+                }
+              }
+            },
+            ready: function() {
+              if (this.params != undefined) {
+                if (this.params.auto != undefined) {
+                  if (this.params.auto != '') {
+                console.warn('LOAD');
+                    this.load();
+                  }
+                } 
+              }
+            },
+            load: function(_params) {
+              this.debug = false;
+              this.log('ew-list-view.load');
+              
+              if (_params != undefined) {
+                this.set('responseParams',[]);
+                this.params = JSON.parse(JSON.stringify(_params));
+                this.notifyPath('params');
+              }
+
+              // console.warn(this.params);
+
+              if (this.params != undefined) {
+                  if (this.params.searchEnabled != undefined) {
+                    this.searchEnabled = this.params.searchEnabled;
+                    this.$.searchBar.focus();
+                  }
+                  if (this.params.search != undefined) {
+                    this.set('searchValue',this.params.search);
+                    this.$.searchBar.updateSearchInputValue();
+                  }
+                  if (this.params.route != undefined) {
+                      if (this.params.route != '') {
+                          this.params = JSON.parse(JSON.stringify(this.params));
+                          // console.log(this.params);
+                          this.doRequest();
+                      }
+                  } else {
+                      if (this.params.fabButton == undefined) {
+
+                          this.params.fabButton = { "icon" : "icons:done", action: "ew_close" };
+                      }    
+                       this.ew_stopLoading();
+                  }
+                  
+              } else {
+                  this.ew_stopLoading();
+              }
+
+              this.set('selectedItems',[]);
+              this.set('showSelection',false);
+              this.set('viewState','normal');
+              this.$.LocalPhotos.reload();
+
+            },
+            _initializeDefaultPhotos: function() {
+              this.localPhotos = [];
+            },
+            _computeTitle: function(params,selectedItems) {
+              if (selectedItems.length == 0) {
+                return params.widgetTitle;
+              } else {
+                return selectedItems.length + ' selecionados.';
+              }
+            },
+            reload: function() {
+                this.params = JSON.parse(JSON.stringify(this.params));
+                this.params.isMobile = this.isMobile;
+                this.doRequest();
+            },
+            doRequest: function(_xhr) {
+              this.log('ew-list-view.doRequest');
+              var that = this;
+              if (this.isasync == true) { 
+                this.shadowRoot.querySelector("#ajax").generateRequest(_xhr).then(function(response) {
+                  that.ew_handleResponseToResponseParams({detail: response});
+                });
+              } else {
+                this.shadowRoot.querySelector("#ajax").generateRequest();
+              }
+            },
+            reloadSelectedItems: function(_view) {
+                // this.params = JSON.parse(JSON.stringify(this.params));
+                // console.log(JSON.stringify(this.selectedItems));
+                // console.log(this.selectedItems);
+                this.params.selectedItems = JSON.stringify(this.selectedItems);
+                this.params.view = _view;
+                this.params.isMobile = this.isMobile;
+                this.doRequest();
+            },
+            _searchChange: function() {
+              if (this.isAttached) {
+                this.log('ew-list-view._searchChange: ' + this.searchValue);
+                if (this.responseParams.localSearch == false) {
+
+                    this.isDoingSearch = true;
+                    var _oldParams = JSON.parse(JSON.stringify(this.params));
+                    _oldParams.search = this.searchValue;
+                    _oldParams.isMobile = this.isMobile;
+                    this.set('params',_oldParams);
+                    this.set('responseParams',{});
+                    this.doRequest();
+                } else {
+                  var _menuData = this._computeMenuData(this.isMobile,this.responseParams,this.searchValue,this.selectedPage, this.selectedItems);
+                  this.set('menuData',_menuData);
+                }
+              }
+            },
+            _computeShowPages: function(_params,_selectedItems) {
+                var retVal = false;
+                // if (_selectedItems != undefined) {
+                //   if (_selectedItems.length != 0) { 
+                //     retVal = true;
+                //   }
+                // }
+                if (_params != undefined) {
+                    if (_params.hidePages  != undefined) {
+                        if (_params.hidePages == false) {
+                            retVal = true;
+                        }
+                    } 
+                }
+                return retVal;
+            },
+            _computeStyleListView: function(showPages) {
+                var retVal =  'height: 100%; ';
+                if (showPages) {
+                    retVal = ' height: calc(100% - 48px); ';
+                }
+                return retVal;
+            },
+            _computeSelectedPage: function(params) {
+                if (params != undefined) {
+                    if (params.selectedPage != undefined) {
+                        return params.selectedPage;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    return 0;
+                }
+            },
+            _computeBackgroundColor: function(params,selectedItems) {
+              if (selectedItems.length) {
+                return 'blue-grey';
+              } else {
+                this.selectedPage = this._computeSelectedPage(params);
+                if (params != undefined) {
+                    if (params.backgroundColor != undefined) {
+                        return params.backgroundColor;
+                    } else {
+                        return 'indigo';
+                    }
+                } else {
+                    return 'indigo';
+                }
+              }
+            },
+            _tapFabButton: function(e) {
+              this.log('ew-list-view._tapFabButton');
+                e.stopPropagation();
+                var _selButton = e.model.button;
+                //var _selButton = this.params.fabButton;
+                this._tapButton(_selButton);
+            },
+            _tapToolbarButton: function(e) {
+              this.log('ew-list-view._tapToolbarButton');
+                e.stopPropagation();
+                var _selButton = e.model.button;
+                this._tapButton(_selButton);
+            },
+            _getSelectedIDS: function() {
+              var strSelected = '';
+              var selectedIDS = '';
+              if (this.selectedItems.length != 0) {
+                for(var key in this.selectedItems){
+                    strSelected = strSelected + this.selectedItems[key].id + ',';
+                }
+                strSelected = strSelected.substr(0,strSelected.length - 1); 
+                selectedIDS = strSelected;
+              }
+              return selectedIDS;
+            },
+            _runAction: function(_selButton) {
+              
+              var _form = this._getFormData();
+              
+              if (_selButton.event != undefined) {
+                this.fire(_selButton.event,{ item: _selButton });  
+              } else {
+                if (_selButton.signal != undefined) {
+                    if (_selButton.signal != '') {
+                        
+                        this.ew_signal(_selButton.signal,_selButton);
+                    }
+                }
+                if (_selButton.action != undefined) {
+                  switch (_selButton.action) {
+                    case "ew_signal":
+                        if (_selButton.params.close != undefined) {
+                          if (_selButton.params.close == true) {
+                            this._close();
+                          }
+                        }
+                        _selButton.params.parent = this;
+                        this.ew_signal(_selButton.params.signal,_selButton.params);
+                        break;
+                    case "ew_close":
+                        this._close();
+                        break;
+                    case "ew_closeAndRefresh":
+                        var _newParams = {};
+                        if (this.parent != undefined) {
+                          if (this.parent.params != undefined) {
+                            _newParams = JSON.parse(JSON.stringify(this.parent.params));
+                          }
+                        }
+                        _newParams.selectedIDS = this._getSelectedIDS();
+                        this._close();
+                        if (this.parent != undefined) {
+                          if (this.parent.load != undefined) {
+                            this.parent.load(_newParams);
+                          } else {
+                            this.parent.ew_refresh();
+                          }
+                        }
+                        break;
+                    case "ew_send":
+
+                        var _ironSendForm = this.$.scrollList.getIronForm();
+                        var _validForm = _ironSendForm.validate();
+                        // var elements = _ironSendForm._getValidatableElements();
+
+                        if (_validForm) {
+                          var array3 = Object.assign({}, _form, _selButton.params);
+                          this.params = JSON.parse(JSON.stringify(array3));
+                          this.params.isMobile = this.isMobile;
+                          // console.log(this.params);
+                          this.doRequest(true);
+
+                        } else {
+                          this.ew_showMessage("Campos obrigatórios não informados/inválidos!");
+                        }
+                        break;
+                    case "ew_select":
+                        this.reloadSelectedItems(_selButton.params.view);
+                        break;
+                    case "ew_js":
+                        eval.apply(document,[_selButton.params]);
+                        break;
+                    case "ew_load":
+                        var _newParams = _selButton.params;
+                        _newParams.selectedIDS = this._getSelectedIDS();
+                        _newParams.isMobile = this.isMobile;
+                        this.load(_newParams);
+                        break;
+                    case "ew_actions":
+                        var _selparams = _selButton.params;
+                        for (var i in _selparams) {
+                          this._runAction(_selparams[i]);
+                        }
+                        break;
+                    case "ew_save":
+                        this.params = _selButton.params;
+                        this.ew_save(_selButton.params);
+                        break;
+                    case "ew_dialog":
+                        if (_selButton.params.message != undefined) {
+                          var that = this;
+                          var dialogFunction = function(event) {
+                            if (event.confirmed) {
+                              // console.warn('dialogConfirmed');
+                              if (_selButton.params.actionConfirm != "") {
+                                var _action = { action : _selButton.params.actionConfirm, params: _selButton.params.paramsConfirm};
+                                that._runAction(_action);
+                              }
+            
+                            } else {
+                              if (_selButton.params.actionCancel != "") {
+                                var _action = { action : _selButton.params.actionCancel, params: _selButton.params.paramsCancel};
+                                that._runAction(_action);
+                              }
+                            }
+                          }
+                          this.ew_showDialog(_selButton.params.title,_selButton.params.message,dialogFunction,'Confirmar','Cancelar');
+                        }
+                        break;
+                    case "ew_showMessage":
+                        if (_selButton.params.message != undefined) {
+                          this.ew_showMessage(_selButton.params.message);
+                        }
+                        break;
+                    case "ew_registerBackgroundTask":
+                        this.ew_registerBackgroundTask(_selButton.params.name,_selButton.params,_selButton.params.interval);
+                        break;
+                    case "ew_refreshBackgroundTask":
+                        this.ew_refreshBackgroundTask(_selButton.params.name);
+                        break;
+                    case "ew_openURL":
+                        if (_selButton.params.url != undefined) {
+                          window.open(_selButton.params.url);
+                        }
+                        break;
+                    case "ew_refresh":
+                        this.ew_refresh();
+                        break;
+                    default:
+                        // _selButton.params.parent = this;
+                        _selButton.params.selectedIDS = this._getSelectedIDS();
+                        if (_selButton.dialog == true) {
+                          this.ew_showColumnDialog(_selButton.action,_selButton.params);
+                        } else {
+                          this.ew_openWidget(_selButton.action,_selButton.params);
+                        }
+                        break;
+                  }
+                }
+              }
+            },
+            _tapButtonItem: function(event) {
+              this.log('ew-list-view._tapButton');
+              event.stopPropagation();
+              var selButton = event.detail;
+              this._tapButton(selButton);
+
+            },
+            _tapButton: function(_selButton) {
+              this.log('ew-list-view._tapButton');
+
+              if (this.isMobile) {
+                if (window.innerWidth < 641) {
+                  this.ew_signal('ew-close-drawer');
+                }
+              } 
+                var that = this;
+                that._runAction(_selButton);
+            },
+            ew_handleResponseToResponseParams: function(event) {
+                this.log('ew-list-view.ew_handleResponseToResponseParams');
+                if (this.isDoingSearch == true) {
+                  this.isDoingSearch = false;
+                }
+                var _params = {};
+                var response = event.detail.response;
+                if (response != undefined) {
+                    if (response.result != undefined) {
+                      _params = response.result;
+                    } 
+                } else {
+                  _params = event.detail;
+                }
+
+                  if (_params.onScrollNextPageAutoLoad != undefined) {
+                    if (_params.onScrollNextPageAutoLoad == true) {
+                      this.hasMoreItems = true;
+                    }
+                  }
+  
+                    var that = this;
+                    that.set('responseParams',_params);
+                    if (_params.actions != undefined) {
+                      if (_params.actions.length != 0) {
+                        for (var i in _params.actions) {
+                          that._tapButton(_params.actions[i]);
+                        }
+                      }
+                    }
+                    if (this.isLoadingNextPage) {
+                      this.isLoadingNextPage = false;
+                      var _menuData = this._computeMenuData(this.isMobile,_params,this.searchValue,this.selectedPage, this.selectedItems);
+                      
+                      for (var i in _menuData) {
+                        this.push('menuData',_menuData[i]);
+                      }
+
+                      this.responseParams.items = _menuData;
+
+                    } else {
+                      var _menuData = this._computeMenuData(this.isMobile,_params,this.searchValue,this.selectedPage, this.selectedItems);
+                      this.set('menuData',_menuData);
+                    }
+
+                    //CHECK IF HAS SOME CODE EDITOR TO SHOW AND LAZY-LOAD THE CODE-EDITOR.
+                    var _codeDitor = this._getItemsFromType(18);
+                    if (_codeDitor.length != 0) {
+                      this._loadCodeEditor();
+                    }
+
+                    that.notifyResize();
+
+                // if (_params.autoScrollPages) {
+
+                //   this.interval = _params.autoScrollInterval;
+                //   if (this.interval != 0) {
+
+                //     var that = this;
+                //     var intervalNextBanner = setInterval(function () {
+
+                //       if (!that.parentNode) {
+                //         clearInterval(intervalNextBanner);
+                //       } else {
+                //         if (that.params != undefined) {
+                //           if (that.params.items != undefined) {
+                //             if (that.params.items.length >= 1) {
+                //               that.next();
+                //             }
+                //           }
+                //         }
+                //       }
+
+                //     }, this.interval *  1000); 
+                //   }
+                // }
+
+            },
+            _computeMenuData: function(_isMobile,_params,_searchValue,_selectedPage,_selectedItems) {
+                this.log('ew-list-view._computeMenuData');
+
+                var menuData = [];
+                
+                if (_params != undefined) {
+                    if (_params.items != undefined) {
+                        for (var i in _params.items) {
+                          if (this.selectedItemsPageID != -1) {
+                            if (_params.items[i].pageID == (this.selectedItemsPageID - 1)) {
+                              // console.warn('splice:' + i);
+                              _params.items.splice(i,1);
+                            }
+                          }
+                        }
+                        if (this.selectedItemsPageID != -1) {
+                          for (var i in _selectedItems) {
+                            _selectedItems[i].pageID = this.selectedItemsPageID - 1;
+                            _params.items.push(_selectedItems[i]);
+                          }
+                        }
+                        for (var i in _params.items) {
+                            var canBeePushed = true;
+                            if (_searchValue != '') {
+                                var found = false;
+                                if (_params.items.viewType != 2) {
+                                    if (_params.items[i].title != undefined) {
+                                        if (_params.items[i].title.toLowerCase().indexOf(_searchValue.toLowerCase()) != -1) {
+                                            found = true;
+                                        }
+                                    }
+                                    if (_params.items[i].description != undefined) {
+                                        if (_params.items[i].description.toLowerCase().indexOf(_searchValue.toLowerCase()) != -1) {
+                                            found = true;
+                                        }
+                                    }
+                                    if (_params.items[i].subdescription != undefined) {
+                                        if (_params.items[i].subdescription.toLowerCase().indexOf(_searchValue.toLowerCase()) != -1) {
+                                            found = true;
+                                        }
+                                    }
+                                } 
+                                if (!found) {
+                                    canBeePushed = false;
+                                }
+                            }
+                            if (this.responseParams.localSearch == false) {
+                              canBeePushed = true;
+                            }
+                            if (_params.items[i].pageID != undefined) {
+                                if (_params.items[i].pageID != _selectedPage) {
+                                    canBeePushed = false;
+                                }
+                            }
+                            if (_isMobile) {
+                                if (_params.items[i].mobile) {
+                                    if (canBeePushed) {
+                                        menuData.push(_params.items[i]);
+                                    }
+                                }
+                            } else {
+                                if (canBeePushed) {
+                                    menuData.push(_params.items[i]);    
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+                this.log(menuData);
+                this.notifyResize();
+
+                this.notifyPath('menuData');
+
+                var that = this;
+                this.async(function() {
+                  that.notifyResize();
+                },1000);
+
+                return menuData;
+            },
+            _toggleItem: function(e) {
+              this.log('ew-list-view._toggleItem');
+              this.log('showSelection:' + this.showSelection);
+              this.log('enableSelection:' + this.responseParams.enableSelection);
+              this.log('enableMultiSelection:' + this.responseParams.enableMultiSelection);
+              this.log('multiSelection:' + this.multiSelection);
+                e.stopPropagation();
+                var item = e.detail.item;
+                if (item.signal != undefined) {
+                    if (item.signal != '') {
+                        item.parent = this;
+                        this.ew_signal(item.signal,item);
+                    }
+                } else {
+
+                  if (this.responseParams.enableSelection == true) {
+                    if (!this._isSelected(item.id)) {
+                      this._onSelectItem(item);
+                    } else {
+                      this._onUnSelectItem(item);
+                    }
+
+                    this.responseParams = JSON.parse(JSON.stringify(this.responseParams));
+                    this.notifyPath('responseParams');
+
+                    this.log(this.selectedItems);
+                  } else {
+
+                    for (var i in this.responseParams.items) {
+                        if (this.responseParams.items[i].id == item.id) {
+                            if (this.responseParams.items[i].toggle) {
+                                this.responseParams.items[i].toggleEnabled = item.toggleEnabled;    
+                            }
+                        }
+                    }
+
+                    this.responseParams = JSON.parse(JSON.stringify(this.responseParams));
+                    this.notifyPath('responseParams');
+
+                    this._tapButton(item);
+
+                  }
+                  
+                }
+            },
+            _openToolbarMenus: function(event) {
+              this.ew_showColumnDialog('ew-list-view',{'route': './api/rest/MenuDialog','title': 'Outras Opções','items': JSON.stringify(this.responseParams.toolbarMenuItems)});
+            },
+            _getFormData: function() {
+              var _formData = {};
+              _formData = this._getFormDataFromType(_formData,5); //TEXTAREA
+              _formData = this._getFormDataFromType(_formData,6); //INPUT
+              _formData = this._getFormDataFromType(_formData,7); //DATE
+              _formData = this._getFormDataFromType(_formData,8); //TIME
+              _formData = this._getFormDataFromType(_formData,9); //HIDDEN
+              _formData = this._getFormDataFromType(_formData,12); //CHECKBOX
+              _formData = this._getFormDataFromType(_formData,13); //DROPDOWN MENU
+              _formData = this._getFormDataFromType(_formData,14); //CONTACT INPUT
+              _formData = this._getFormDataFromType(_formData,15); //RADIO
+              _formData = this._getTextHTMLEditorContent(_formData,20); //RADIO
+              _formData = this._getMonacoEditorContent(_formData); //MONACO EDITOR
+              this.files =  this.$.scrollList._getAllFiles(); // FILES
+              
+              if (_formData.route == undefined) {
+                _formData.route = this.params.route;
+              }
+              return _formData;
+            },
+            _getTextHTMLEditorContent: function(_formData,_type) {
+              var _input = this._getItemsFromType(_type);
+              for (var i in _input) {
+                _formData[_input[i].name] = document.getElementById(_input[i].name + "Input").innerHTML;
+              }
+              return _formData;
+            },
+            _getMonacoEditorContent: function(_formData) {
+              var _input = this._getItemsFromType(18);
+              for (var i in _input) {
+                if (_input[i] != undefined) {
+                  if (_input[i].value != undefined) {
+                    _formData['codeContent'] = _input[i].value;
+                  }
+                }
+              }
+              /*if (window.editor != undefined) {
+                _formData['codeContent'] = window.editor.getValue(); 
+              } */
+              return _formData;
+            },
+            _getFormDataFromType: function(_formData,_type) {
+              var _input = this._getItemsFromType(_type);
+              for (var i in _input) {
+                var value = _input[i].value;
+                if (_type == 5) {
+                  var _elements = this.$.scrollList.getAllTextAreas();
+                  for (var x in _elements) { 
+                    if (_elements[x].id == 'TextArea' + _input[i].name) {
+                      value = Polymer.dom(_elements[x]).node.$.input.textarea.value;
+                    }
+                  }
+                }
+                if (_type == 7) {
+                  var _pickers = this.$.scrollList.getAllDatePickers();
+                  for (var x in _pickers) { 
+                    if (_pickers[x].id == 'DatePicker' + _input[i].name) {
+                      // console.warn(_pickers[x].getInputValue());
+                      value = _pickers[x].getInputValue();
+                    }
+                  }
+                }
+                if (_type == 14) {
+                  var _contactInputs = this.$.scrollList.getAllContactInputs();
+                  for (var x in _contactInputs) { 
+                    if (_contactInputs[x].name == _input[i].name) {
+                      // console.warn(_contactInputs[x].getInputValue());
+                      value = _contactInputs[x].getEmails();
+                    }
+                  }
+                }
+                if (_type == 8) {
+                  var _timeInputs = this.$.scrollList.getAllTimeInputs();
+                  for (var x in _timeInputs) { 
+                    if (_timeInputs[x].id == 'timeInput' + _input[i].name) {
+                      // console.warn(_timeInputs[x].getInputValue());
+                      value = _timeInputs[x].hour + ':' + _timeInputs[x].min;
+                    }
+                  }
+                }
+                _formData[_input[i].name] = value;
+              }
+              return _formData;
+            },
+            _getItemsFromType: function(_type) {
+              var _newItems = [];
+              for (var i in this.responseParams.items) {
+                if (this.responseParams.items[i].viewType == _type) {
+                  _newItems.push(this.responseParams.items[i]);
+                }
+              }
+              return _newItems;
+            },
+            _cancelSelections: function() {
+              this.log('ew-list-view._cancelSelections');
+              for (var i in this.menuData) {
+                if (this.menuData[i].selected) {
+                    this.menuData[i].selected = false;    
+                }
+              }
+              this.set('selectedItems',[]);
+              this.set('showSelection',false);
+              this.ew_signal('ew-expresso-catalog-contact-picture-cancel-selection');
+              this.viewState = 'normal';
+              // this.params.viewType = 'normal';
+              this.responseParams = JSON.parse(JSON.stringify(this.responseParams));
+              this.notifyPath('responseParams');
+            },
+            _onSelectItem: function(item) {
+              this.log('ew-list-view._onSelectItem');
+              this.selectedItems.push(item);
+              this.viewState = 'selection';
+              var _index = this._getItemIndexByID(item);
+              if (_index != -1) { 
+                this.menuData[_index].selected = true;
+                // console.log(this.menuData);
+              }
+
+              this.set('showSelection',true);
+              this.notifyPath('menuData');
+            },
+            _getItemIndexByID: function(item) {
+              var index = -1;
+              for (var i in this.menuData) {
+                if (this.menuData[i].id != undefined) {
+                  if (this.menuData[i].id == item.id) {
+                    _index = i;
+                  }
+                }
+                
+              }
+              return _index;
+            },
+            _onUnSelectItem: function(item) {
+              this.log('ew-list-view._onUnSelectItem');
+              var newItems = [];
+              for (var i in this.selectedItems) {
+                if (this.selectedItems[i].id != item.id) {
+                  newItems.push(this.selectedItems[i]);
+                }
+              }
+              this.set('selectedItems',newItems);
+              if (newItems.length == 0) {
+                this.viewState = 'normal';
+                // this.params.viewType = 'normal';
+                this.set('showSelection',false);
+              }
+              var _index = this._getItemIndexByID(item);
+              // console.warn(_index);
+              if (_index != -1) { 
+                this.menuData[_index].selected = false;
+              }
+            },
+            _isSelected: function(_id) {
+              this.log('ew-list-view._isSelected');
+              var found = false;
+              for (var i in this.selectedItems) {
+                if (this.selectedItems[i].id == _id) {
+                  found = true;
+                }
+              }
+              return found;
+            },
+            _computeMultiSelection: function(selectedItems,params) {
+              var retVal = false;
+              if (params.enableSelection == true) {
+                if (selectedItems.length >= 1) {
+                  retVal = true;
+                }
+              } 
+              return retVal;
+            },
+            _computeEnableMultiSelection: function(params) {
+              var retVal = false;
+              if (params.enableMultiSelection == true) {
+                retVal = true;
+              } 
+              return retVal;
+            },
+            _openItem: function(e) {
+              this.log('ew-list-view._openItem');
+              e.stopPropagation();
+              if (e.detail != undefined) {
+                var item = e.detail.item;
+                // console.log(item);
+                var that = this;
+                var _onClose = function() {
+                    that.ew_loading(false);
+                };
+                this.multiSelection = this._computeMultiSelection(this.selectedItems,this.responseParams);
+                this.enableMultiSelection = this._computeEnableMultiSelection(this.responseParams);
+                // console.warn('showSelection:' + this.showSelection);
+                // console.warn('enableSelection:' + this.responseParams.enableSelection);
+                // console.warn('multiSelection:' + this.multiSelection);
+
+                if (this.enableMultiSelection){
+                  this._toggleItem(e);
+                  this.responseParams = JSON.parse(JSON.stringify(this.responseParams));
+                  this.notifyPath('responseParams');
+                } else {
+                  if (this.multiSelection) {
+                    this._toggleItem(e);
+                    this.responseParams = JSON.parse(JSON.stringify(this.responseParams));
+                    this.notifyPath('responseParams');
+                  } else {
+                    this._tapButton(item);  
+                  }
+                }
+              }
+                
+            },
+            _close: function(e) {
+                this.params.selectedItems = this.selectedItems;
+                this.ew_closeWidget(this.params);
+            },
+            _loadNextPage: function(e) {
+              e.stopPropagation();
+              this.currentPage = this.currentPage + 1;
+             
+              this.params.page = this.currentPage;
+              this.params.selectedIDS = '';
+              this.params = JSON.parse(JSON.stringify(this.params));
+             
+              this.isLoadingNextPage = true;
+              this.doRequest();
+              this.log('ew-list-view._loadNextPage:' + this.currentPage);
+            },
+            _loadCodeEditor: function() {
+              ewidgets.importLazyWidgets(['./app/bower_components/monaco-editor/monaco-editor.html','./app/bower_components/monaco-editor/monaco-schemas.html']);
+            }
+        });
+    </script>
+</dom-module>

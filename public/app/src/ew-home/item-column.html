@@ -1,0 +1,954 @@
+<!--
+### item-column
+
+`item-column`
+
+Elemento utilizado pela plataforma para exibir um Widget.
+
+--> 
+<dom-module id="item-column">
+  <template>
+    <style>
+        :host {
+            display:block;
+            min-width:100px;
+            height:50%;
+            min-height: 80px;
+            position: absolute !important;
+            z-index: 0 !important;
+            /*display: inline-flex;*/
+
+        }
+
+       /* #backButton {
+          position: absolute;
+        }*/
+
+        .card {
+            background: var(--paper-menu-background-color);
+            margin: 10px;
+            height: calc(100% - 20px);
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        paper-icon-button {
+            background-size: cover;
+        }
+
+        paper-progress {
+            position:absolute;
+            top:64px;
+            width:100%;
+            opacity: 0;
+            transition:500ms opacity;
+            z-index: 1;
+        }
+
+        paper-toolbar {
+            width: 100%;
+            top: 0;
+            left: 0;
+            --paper-toolbar-height: 34px;
+            --paper-toolbar-title: {
+                margin-left: 5px;
+            };
+        }
+
+        paper-toolbar .drag { 
+            cursor: move;
+            cursor: -webkit-grabbing;
+        }
+
+        .holder {
+            height:100%;
+            width:100%;
+            /*padding: 0px 10px 0px 0px;*/
+            box-sizing: border-box;
+            overflow-y:auto; 
+            overflow-x:hidden;
+        }
+
+        .holder > * {
+            width:100%;
+            display:block;
+            height: 100% !important;
+        }
+
+        .holder.flex {
+            display:flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        .holder .hack {
+            height: 0;
+            border: none;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .handle {
+            position: absolute;
+            bottom:0;
+            right:0;
+            width: 17px; 
+            height: 0px;
+            cursor:se-resize;
+            visibility: hidden;
+        }
+        
+        paper-toolbar {
+            --paper-toolbar-title {
+                font-size: 8px;
+                font-weight: bold;
+            }
+
+            --paper-toolbar-height { 20px; }
+
+        }
+        
+
+        .rotate {
+            transform: rotate(-45deg);
+        }
+
+        .error {
+            font-family: Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            text-align: center;
+            color:#646464;
+            font-size: .7em;
+            transition:500ms opacity;
+            opacity:1;
+            display:flex;
+            text-align: center;
+            height: 100%;
+        }
+
+        .error div {
+            margin:auto;
+        }
+
+        .error p {
+            margin: 0.2em 0 0;
+        }
+
+        .error paper-icon {
+            width:32px;
+            height:32px;
+        }
+
+        .logo {
+            color:#fff;
+            margin-left: 7px;
+        }
+
+        .notloaded-logo {
+          height: 30px;
+          width: 30px;
+          margin: 4px;
+        }
+
+        .title a {
+            color:#fff;
+            text-decoration: none;
+        }
+
+        .editableTitle {
+            color:#000;
+            top:0;
+            left:0;
+            z-index: 1;
+            color: #fff;
+            display: block;
+            /*display:none;*/
+            width:100% !important;
+        }
+
+        .editableTitle .unfocused-underline {
+            background-color:#fff;
+        }
+
+        .light .editableTitle .unfocused-underline {
+            background-color:#000;
+        }
+
+        paper-menu-button {
+            padding: 0px;
+        }
+
+        .ew-toolbar {
+          padding: 0px;
+        }
+        paper-drawer-panel {
+          position: relative;
+        }
+        .packery-drop-placeholder {
+          outline: 3px dashed #444;
+          outline-offset: -6px;
+          /* transition position changing */
+          -webkit-transition: -webkit-transform 0.2s;
+                  transition: transform 0.2s;
+        }
+
+        .displayNone {
+          display: none;
+        }
+
+      </style>
+      <template is="dom-if" if="{{isMobile}}">
+        <app-location route="{{route}}" use-hash-as-path></app-location>
+        <app-route route="{{route}}" pattern="/:selectedColumn/:selectedPage" data="{{routeData}}"></app-route>
+      </template>
+      <iron-signals on-iron-signal-columnschange="columnsChange"></iron-signals>
+
+      <paper-material id="widgetCard" class="card" elevation="1" style$="{{_computePaperMaterialStyle(column,withMargin,hasLoaded,loading)}}">
+
+        <div style$="{{_computeHasLoadedStyle(hasLoaded,loading)}}">
+          
+          <div id="widgetToolBar" class$="{{_computeDisplayNoneCssClass('ew-toolbar',editMode)}}" shadow> 
+              <template is="dom-if" if="{{column.thumb}}"> 
+                <paper-icon-button class="logo" style$="{{_computeStyle(column)}}" ></paper-icon-button>
+              </template>
+              <span class="title" style="margin-left: 0px; ">{{column.name}}</span>
+              <paper-icon-button id="refreshWidget" on-click="refresh" icon="refresh" style="float: right;"></paper-icon-button>
+              <paper-icon-button id="deleteWidget" on-click="_delete" icon="delete" class="editable" style="float: right;"></paper-icon-button>
+              <paper-icon-button id="dragIcon" icon="open-with" class="editable drag" style="float: right;"></paper-icon-button>
+
+              <paper-tooltip for="dragIcon" position="bottom">Mover Widget.</paper-tooltip>
+              <paper-tooltip for="deleteWidget" position="bottom">Excluir Widget.</paper-tooltip>
+              <paper-tooltip for="refreshWidget" position="bottom">Atualizar Widget.</paper-tooltip>
+          </div> 
+          <!-- <ew-loading-spinner loading="{{loading}}"></ew-loading-spinner> -->
+
+            <!-- 
+            <paper-toolbar id="backToolbar" hidden$="{{!enableBackButton}}"> 
+                <paper-icon-button id="backButton" icon="arrow-back" on-tap="backOnePage"></paper-icon-button>
+            </paper-toolbar> 
+            -->
+
+            <template is="dom-if" if="{{!column.autoload}}">
+              <template is="dom-if" if="{{!userLoaded}}">
+                  <paper-button class="indigo" raised on-tap="openWidget"><iron-image class="notloaded-logo" style$="{{_computeStyle(column)}}" on-tap="openWidget"></iron-image>{{column.name}}</paper-button>
+              </template>
+            </template>
+
+            <iron-pages id="holders" class="holder flex" style="overflow: auto; height: 100%;" selected="{{selectedPage}}" hidden$="{{hasError}}">
+              <div id="holder0" class="holder" style="overflow: hidden; height: 100%;"></div>
+              <template id="holderPages" is="dom-repeat" items="[[pages]]">
+                <div id$="{{item.id}}" style="overflow: auto; height: 100%;"></div>
+              </template>
+            </iron-pages>
+
+            <template is="dom-if" if="{{hasError}}">
+              <div class="error" style="overflow: auto; height: 100%;">
+                  <div>
+                      <iron-icon icon="cloud-off"></iron-icon>
+                      <p>Não foi possível atualizar o widget "<span>{{column.name}}</span>".<br>Você está conectado a internet?</p>
+                      <p>{{errorMessage}}</p>
+                      <p><paper-button raised class="custom indigo" on-tap="refresh"><iron-icon icon="refresh"></iron-icon>Atualizar</paper-button></p>
+                  </div>
+              </div>
+            </template>
+            <div id="columnHandle" class="handle horizontal end-justified layout editable" hidden="{{!editMode}}" style=" background-color: none; ">
+              <template is="dom-if" if="{{editMode}}">
+              <iron-icon icon="icons:arrow-drop-down-circle" class="rotate horizontal end-justified layout" style="color: #F60; margin-top: -23px; top: 5px; margin-right: -5px; transform: rotate(-45deg);"></iron-icon>
+              </template>
+            </div>
+            <paper-tooltip for="columnHandle" position="left">Clique e arraste para redimensionar o widget.</paper-tooltip>
+          </div>
+      </paper-material>
+ 
+    </template>
+    <script>
+    Polymer({
+      is: 'item-column',
+      behaviors: [EWBehaviorWidgetBehavior, Polymer.IronResizableBehavior],
+
+      listeners: {
+        'ew-push-widget': 'pushWidget',
+        'ew-api-ajax-loading' : '_setIsLoading',
+        'ew-api-ajax-error': 'errorLoading',
+        'ew-close-widget' : 'backOnePage',
+        'ew-save-params' : 'saveParams',
+        'ew-response' : 'responseFromWidget',
+        'ew-refresh' : 'refresh',
+        'ew-return-data' : 'setReturnData',
+      },
+
+      properties: {
+        route: { 
+          type: Object,
+          notify: true
+        },
+        routeData: {
+          type: Object
+        },
+        selectedColumn: {
+          type: Number,
+          value: 0,
+        },
+        column: {
+          type: Object,
+          value: undefined,
+          notify: true,
+          reflectToAttribute: true,
+        },
+        debug: {
+          type: Boolean,
+          value: false,
+        },
+        pages: {
+          type: Array,
+          value: [ { 'id' : 'holder1' }],
+          notify: true,
+          reflectToAttribute: true,
+        },
+        usedColumns: {
+          type: Object,
+          value: {},
+          notify: true
+        },
+        hasError: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        hasLoaded: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        errorMessage: {
+          type: String,
+          value: '',
+          notify: true,
+        },
+        editMode: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          reflectToAttribute: true
+        },
+        loading: {
+          type: Boolean,
+          value: true,
+          notify: true,
+          reflectToAttribute: true,
+        },
+        selectedPage: {
+          tyep: Number,
+          notify: true,
+          value: 0,
+        },
+        pageIndex: {
+          tyep: Number,
+          notify: true,
+          value: 0,
+          computed: '_computePageIndex(selectedPage)',
+        },
+        enableBackButton: {
+          type: Boolean,
+          value: false,
+          notify: true,
+        },
+        multiColumn: {
+          type: Boolean,
+          value: false,
+          notify: true, 
+        },
+        enablePush: {
+          type: Boolean,
+          value: true,
+          notify: true, 
+        },
+        userLoaded: {
+          type: Boolean,
+          value: false,
+          notify: true, 
+        },
+        fullScreen: {
+          type: Boolean,
+          value: false,
+          notify: true, 
+        },
+        isMobile: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true,
+          notify: true
+        },
+        withMargin: {
+          type: Boolean,
+          value: true,
+          notify: true, 
+        },
+        fullScreenEnabled: {
+          type: Boolean,
+          value: null,
+          notify: true,
+        },
+        dialog: {
+          type: Object,
+          value: null,
+        },
+        returnData: {
+          type: Object,
+          value: null,
+        },
+      },
+      observers: [ 
+        '_onRoutePathChanged(route.path)'
+      ],
+      _onRoutePathChanged: function(path) {
+        this.log('item-column._onRoutePathChanged:' + path);
+        
+        if (this.routeData != undefined) {
+          this.selectedColumn = parseInt(this.routeData.selectedColumn);
+
+          if (this.selectedPage >= parseInt(this.routeData.selectedPage)) {
+            this.selectedPage = parseInt(this.routeData.selectedPage);
+            if (this.selectedPage == 0) {
+              this._enableBackButton(false);
+            }  else {
+              this._enableBackButton(true);
+            }
+          }
+        }
+
+      },
+      log: function(message) {
+        if (this.debug) {
+          console.log(message);
+        }   
+      },
+      setReturnData: function(_data) {
+        this.set('returnData',_data);
+      },
+      setColumnDialog: function(_value) {
+        this.set('dialog',_value);
+      },
+      _computePageIndex: function(selectedPage) {
+        return selectedPage - 1;
+      },
+      columnsChange: function(event) {
+        this.log('item-column.columnsChange');
+        this.usedColumns = event.detail;
+        // this.fullScreenEnabled = this._computeFullScreenEnabled();
+      },
+      _computeFullScreenEnabled: function() {
+        this.log('item-column._computeFullScreenEnabled');
+        var enabled = false;
+        if (this.column != undefined) {
+          var qtdInPage = this.getQtdColumnsInPage(this.column.page);
+          if (qtdInPage == 1) {
+            enabled = true;
+          }
+        }
+        return enabled;
+
+      },
+      _computeDisplayNoneCssClass: function(_baseCssClass,editMode) {
+        var addClass = '';
+        if (!editMode) {
+          addClass = ' displayNone';
+        }
+        return _baseCssClass + addClass;
+      },
+
+      getToolbar: function() {
+        return this.$.widgetToolBar;
+      },
+
+      _returnDataToCurrentPage: function(value) {
+        this.log('_returnDataToCurrentPage: ');
+        this.log(value);
+        var pageID = this.selectedPage;
+        var holderEl = this.getHolder(pageID);
+        if (holderEl) {
+          this.log(holderEl);
+          var childNode = holderEl.firstChild;
+          if (childNode) {
+            if (childNode._returnData) {
+              childNode._returnData(value);
+            } 
+          }
+        }
+        
+      },
+
+      _enableBackButton: function(value) {
+        this.enableBackButton = value;
+        for (var x in this.pages) {
+          var pageID = x;
+          var holderEl = this.getHolder(x);
+          if (holderEl) {
+            var childNode = holderEl.firstChild;
+            if (childNode) {
+              if (childNode.ew_headerBackButton) {
+                childNode.ew_headerBackButton(value);
+              } 
+            }
+          }
+        }
+        
+      },
+
+      _enableDrawerToggle: function(value) {
+        this.enableDrawerToggle = value;
+        for (var x in this.pages) {
+          var pageID = x;
+          var holderEl = this.getHolder(x);
+          if (holderEl) {
+            var childNode = holderEl.firstChild;
+            // console.log(childNode);
+            if (childNode) {
+              if (childNode.ew_headerDrawerToggle) {
+                childNode.ew_headerDrawerToggle(value);
+              }
+              
+            }
+          }
+        }
+        
+      },
+
+      getHandle: function() {
+        return this.$.columnHandle;
+      },
+
+      
+
+      fullScreenChange: function(_fullScreen) {
+        this.log('item-column.fullScreenChange');
+
+        var columnEl = Polymer.dom(this).node;
+        var column = this.column;
+
+        this.fullScreen = _fullScreen;
+        this.column.fullScreen = _fullScreen;
+
+        if (!this.fullScreen) {
+          this.withMargin = true;
+          columnEl.style.width = (10 * column.width)+"%";
+          columnEl.style.height = (100 * column.height)+"px";
+          columnEl.style.position = 'absolute';
+        }
+        if (this.fullScreen) {
+          this.withMargin = false;
+          columnEl.style.top = "0px";
+          columnEl.style.left = "0px";
+          columnEl.style.width = "100%";
+          columnEl.style.height = "100%";
+          columnEl.style.position = 'absolute';
+        }
+
+        if (this.autoload) {
+
+          if (!this.userLoaded) {
+            columnEl.style.width = "20%";
+            columnEl.style.height = "80px";
+          }
+
+        }
+
+        this.fire('column-fullscreen', this.column );
+      }, 
+      fullScreenSwitch: function() {
+        this.log('item-column.fullScreenSwitch');
+        this.fullScreenChange(!this.fullScreen);        
+      },
+      _computeShowLoadingNextPageStyle: function(isLoadingActive) {
+        if (isLoadingActive) {
+          return '';
+        } else {
+          return 'display: none;';
+        }
+      },
+      _computeHasLoadedStyle: function(hasLoaded,loading) {
+        var retVal = 'width: 100%; height: 100%;';
+        if (hasLoaded == false) { 
+          if (loading) {
+            retVal = 'display: none;'
+          } else {
+            this.hasLoaded = true;
+          }
+        }
+        return retVal;
+      },
+      _computePaperMaterialStyle: function(column,withMargin,hasLoaded,loading) {
+        var retVal = '';
+        var is_ipad = navigator.userAgent.indexOf("iPad") > -1;
+        var is_iphone = navigator.userAgent.indexOf("iPhone") > -1;
+        var is_android = navigator.userAgent.indexOf("Android") > -1;
+        if (!withMargin) {
+          var _innerHeight = window.innerHeight;
+          if ((is_ipad) || (is_iphone) || (is_android)) {
+            retVal = 'margin: 0px; height: ' + _innerHeight + 'px !important; ';
+          } else {
+            retVal = 'margin: 0px;  height: 100%; ';
+          }
+        }
+        return retVal;
+      },
+      _delete: function (e) {
+        this.log('item-column._delete');
+
+        // this.fire('ew-column-delete',this);
+
+        this.fire('column-delete', this.column);
+      },
+      settings: function (e) {
+        this.log('item-column.settings');
+        this.fire('ew-settings-column', this);
+      },
+      saveParams: function(e) {
+        e.stopPropagation();
+        this.log('item-column.saveParams');
+        this.column.params = e.detail;
+        var holderPage = this.getHolder(this.selectedPage);
+        if (holderPage != undefined) {
+          if (holderPage.firstChild != undefined) {
+            if (holderPage.firstChild.load != undefined) {
+              var _params = e.detail;
+              holderPage.firstChild.set('params',_params);
+
+              var that = this;
+              // this.async(function() {
+                // console.log(holderPage.firstChild);
+                // console.log(holderPage.firstChild.params);
+                holderPage.firstChild.notifyPath('params');
+                holderPage.firstChild.load(_params);
+              // },3000);
+              
+            }
+          }
+        }
+        // this.refresh();
+        // this.ref
+        // console.log(this.column.params);
+        // if (!this.isMobile) {
+          this.fire('ew-settings-column-saved', this);
+        // }
+        // 
+      },
+      _computeColumnHolderId: function(column) {
+        return "ColumnHolder" + column.id;
+      },
+      getHolder: function(Pid) {
+        if (Pid == 0) {  
+          // return Polymer.dom(this.shadowRoot.querySelector("#holders")).querySelector('#holder0');
+          // return this.shadowRoot.querySelector('#holder0');
+          // super.ready();
+          // console.warn(this.$.holders.shadowRoot.querySelector("#holder0"));
+          // console.warn(Polymer.dom(this).querySelector("#holders"));
+
+          // console.log(this.shadowRoot.querySelector("#holder0"));
+          if (POLYMER == 2) {
+            return this.shadowRoot.querySelector("#holder0");
+          } else {
+            return this.$.holder0;
+          }
+          // if (this.$ != undefined) {
+          //   // console.log(this.$.holder0);
+          //   return this.$.holder0;
+          // }
+          // console.warn(Polymer.dom(this.shadowRoot.querySelector("#holders"))).querySelector('#holder0');
+          
+          // return this.$.holders.querySelector("#holder0");
+         
+        // return eval('this.$.holderPages' + Pid);
+        } else {
+          return Polymer.dom(this.$.holders).querySelector('#holder' + Pid);
+        }
+        // return eval('this.$.'+ Pid);
+      },
+      backOnePage: function(e) {
+        // if (e != undefined) {
+        //   e.stopPropagation();
+        // }
+        this.log('item-column.backOnePage');
+        if (this.selectedPage != 0) {
+
+          if (this.isMobile) {
+            window.history.back();
+          } 
+          this._enableBackButton(true);
+          this.selectedPage = this.selectedPage - 1;
+          this.loading = false;
+          this.pop('pages');
+          if (this.selectedPage == 0) {
+            this._enableBackButton(false);
+          }
+          if (this.returnData != undefined) {
+            
+            this.log('item-column.returnData');
+            this.log(this.returnData);
+
+            if (this.returnData.detail.canceled) {
+              this.refresh();
+              this.ew_stopLoading();
+            } else {
+              var hasconfirmed = false;
+              if (this.returnData.detail != undefined) {
+                hasconfirmed = true;
+              }
+              var page = this.pages[this.selectedPage];
+              var onConfirmedFunction = page.onConfirmed;
+
+              var retData = { returnData: this.returnData.detail, canceled: !hasconfirmed, confirmed: hasconfirmed };
+
+              // console.log(retData);
+
+              if (onConfirmedFunction != undefined) {
+                onConfirmedFunction(retData);
+              }
+            }
+
+          } else {
+            this.refresh();
+          }
+          
+
+        } else {
+          if (this.dialog != undefined) {
+            if (this.dialog.close != undefined) {
+              this.dialog.close(this.returnData);
+            }
+          }
+        }
+        
+      },
+      responseFromWidget: function(event) {
+        this.log('item-column.responseFromWidget');
+        var holderEl = this.querySelector('* /deep/ #holder' + (this.selectedPage - 1 ));
+        var childNode = holderEl.firstChild;
+        childNode.fire(event.detail.fire,event.detail.response);
+      },
+      getSelectedPage: function() {
+        var pageId = this.selectedPage;
+        var page = this.pages[pageId - 1];
+        return page;
+      },
+      setPage: function(pageId,column,params,onConfirmed) {
+        this.log('item-column.setPage');
+
+        var newpage = { 
+          "id": "holder" + pageId,
+          "column": column,
+          "element" : column.element,
+          "params" : params,
+          "onConfirmed" : onConfirmed,
+        };
+
+        var newPages = this.pages;
+
+        newPages[pageId - 1] = newpage;
+
+        this.set('pages',newPages);
+
+        return newpage;
+
+      },
+      addPage: function() {
+        this.log('item-column.addPage');
+
+        var newpageid = this.selectedPage + 2;
+        var newpage = { 
+          "id": "holder" + newpageid,
+        };
+
+        this.push('pages',newpage);
+
+        return newpage;
+
+      },
+      getDragIcon: function() {
+        return this.$.dragIcon;
+      },
+      getQtdColumnsInPage: function(_page) {
+        this.log('item-column.getQtdColumnsInPage');
+        var columns = this.usedColumns;
+        var qtdInPage = 0;
+        for (var i = 0; i < columns.length; i++) {
+          if (columns[i].page == _page) {
+            qtdInPage = qtdInPage + 1;
+          }
+        }
+        return qtdInPage;
+      },
+      pushWidget: function(event) {
+        this.log('item-column.pushWidget');
+        this.log(event.detail);
+        if (this.enablePush) {
+          event.stopPropagation();
+
+          var configColumn = { element: event.detail.element, params: event.detail.params, parent: event.detail.parent };
+
+          var elClass = new EWColumn(configColumn); 
+
+          this.addPage();
+
+          var newPage = this.setPage(this.selectedPage + 1,elClass,event.detail.params,event.detail.onConfirmed);
+
+          this.selectedPage = this.selectedPage + 1;
+          this.loading = true;
+          this.drawPage(this.selectedPage,newPage);
+
+          if (this.isMobile) {
+            window.location = "#/" + this.selectedColumn + '/' + this.selectedPage;
+          }
+        }
+
+      },
+      drawPage: function(pageId,_page) {
+        this.log('item-column.drawPage:' + pageId);
+        var page = this.pages[pageId - 1];
+        if (_page != undefined) {
+          var page = _page;
+        }
+        // console.log(page);
+        var elClass = page.column;
+        this.log('#holder' + this.selectedPage);
+        var holderEl = this.getHolder(this.selectedPage);
+        var parentFirstChild = undefined;
+        var parentEl = this.getHolder(this.selectedPage - 1);
+        if (parentEl != undefined) {
+          parentFirstChild = parentEl.firstChild;
+        }
+
+        var _parent = this.parent;
+        if (_parent == undefined) {
+          _parent = parentFirstChild;
+        }        // var holderEl = Polymer.dom(this).querySelectorAll('#holder' + this.selectedPage)[0];
+
+        if (holderEl != undefined) {
+          if (elClass != undefined) {
+
+              var element = document.createElement(elClass.element);
+              element.params = page.params;
+              element.parent = _parent;
+              holderEl.innerHTML = '';
+              holderEl.appendChild(element);
+              // console.log(element);
+              if (element.load != undefined) {
+                element.load();
+              }
+              this.loading = true;
+            
+          } else {
+            console.warn('elClass undefined');
+            // console.log(this.pages);
+          }
+        } else {
+          console.warn('holderEl undefined');
+          // console.log(this.pages);
+        }
+
+        this._enableBackButton(true); 
+      },
+      refresh: function (e) {
+        if (this.enablePush) {
+          if (e != undefined) {
+            e.stopPropagation();
+          }
+          this.log('item-column.refresh');
+          this.hasError =  !navigator.onLine;
+          this.loading = true;
+          if (this.hasError) {
+            this.selectedPage = 0;
+            this.set('pages',[ { 'id' : 'holder1' }]);
+            // this.addPage();
+            this._enableBackButton(false);
+          }
+          if (this.selectedPage == 0) {
+            // this.fire('column-refresh', this.column); 
+            var holderPage = this.getHolder(this.selectedPage);
+            // console.log(holderPage);
+            if (holderPage != undefined) {
+              if (holderPage.firstChild != undefined) {
+                if (holderPage.firstChild.load != undefined) {
+                    holderPage.firstChild.load();                 
+                }
+              }
+            }
+          } else {
+            this.drawPage(this.selectedPage);
+          }
+        }
+      },
+      // ready: function() {
+      //   super.ready();
+      //   this.hasError =  !navigator.onLine;
+      //   // this.addPage();
+      // },
+      // attached: function() {
+      //   // super.connectedCallback();
+      //   this.debug = true;
+      //   this.log('item-column.attached');
+        
+      //   this.isMobile = ewidgets.isMobile;
+      //   this.set('pages',[ { 'id' : 'holder1' }]);
+
+      //   if (this.column) {
+      //     if (this.column.autoRefresh != 0) {
+      //       //SETUP AUTO-REFRESH WIDGET FUNCTION.
+      //       var that = this;
+      //       var interval = setInterval(function () {
+              
+      //         if (!that.parentNode) {
+      //           clearInterval(interval);
+      //         } else {
+      //           that.refresh();
+      //         }
+
+      //       }, this.column.autoRefresh *  1000);
+
+      //     }
+      //   }
+
+      // }, 
+      openLink: function() { 
+        // this.log('item-column.openLink');
+        // if (this.column.link != undefined) {
+        //   if (this.column.link != '') {
+        //     if (this.column.link != '#') {
+        //       window.open(this.column.link);
+        //     }  
+        //   }
+        // }
+      },
+      openWidget: function(column) {
+        this.log('item-column.openWidget');
+        this.userLoaded = true;
+        this.refresh();
+        this.fullScreenChange(this.fullScreen);
+        ewidgets.layout();
+      },
+      _setIsLoading: function(event) {
+        this.loading = event.detail.value;
+        if (this.loading) {
+          this.hasError = false;
+        }
+      },
+      errorLoading: function(event) {
+        this.errorMessage = event.detail.error.message;
+        this.hasError = true;
+        this.loading = false;
+      },
+      _computeProgressStyle: function(column,loading) {
+        var opacity = 0;
+        if (loading) { 
+          opacity = 1;
+        }
+        return ' opacity: ' + opacity + ';';
+      },
+      _computeStyle: function (column) {
+        return 'background-image: url("data:image/jpeg;base64,' + column.thumb + '"); background-size: 30px 30px; background-repeat: no-repeat; background-position: 0px 5px;'; 
+      },
+      
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,21 @@
+{
+  "name": "oauth-popup",
+  "description": "OAuth popup",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0"
+  },
+  "keywords": [
+    "web-components",
+    "oauth"
+  ],
+  "homepage": "https://github.com/x-element/oauth-popup",
+  "_release": "8abd083e7a",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "8abd083e7aab987a35f6280a2f8a164646a2f7df"
+  },
+  "_source": "https://github.com/x-element/oauth-popup.git",
+  "_target": "*",
+  "_originalSource": "x-element/oauth-popup"
+}

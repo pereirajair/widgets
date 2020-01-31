@@ -1,0 +1,974 @@
+<!--
+### ELEMENTO
+
+`ew-list`
+
+Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do widget: ew-list-view.
+
+-->
+<dom-module id="ew-list">
+    <template>
+      <style>
+        .card-header {  font-size: 16px; line-height: 1.2em; margin-top: 10px; }
+        .card-description { font-size: 14px; }
+        .card-date { font-size: 12px; color: var(--paper-toolbar-color); float: right; margin-top: 0px; clear: both; }
+        body {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        paper-card {
+          max-width: 100%;
+          margin-bottom: 5px;
+          margin-top: 10px;
+          margin-left: 20px;
+          margin-right: 20px;
+          width: calc(100% - 40px);
+        }
+        .headerTitle {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--paper-toolbar-color);
+            background-color: var(--paper-toolbar-background);
+            padding: 10px;
+        }
+        #scrollList {
+          @apply( --layout-vertical );
+          @apply( --layout-flex );
+          height: calc(100%);
+          overflow-x: hidden;
+        }
+        .floatButtons {
+          float:right;
+        }
+        paper-card {
+          color: var(--paper-menu-color) !important;
+          background-color: var(--paper-menu-background-color) !important;
+        }
+        paper-icon-item {
+          color: var(--paper-menu-color) !important;
+          background-color: var(--paper-menu-background-color) !important;
+        }
+        .imageAvatar {
+              border-radius: 5px;
+              display: inline-block;
+              text-align: center;
+              margin-left: 8px;
+              margin-right: 8px;
+              height: 32px;
+              width: 32px;
+              min-width: 16px;
+              min-height: 16px;
+        }
+        .floatImage {
+          float: left;
+          margin: 10px;
+        }
+        .floatLeft {
+          float: left;
+        }
+        paper-icon-item.small {
+            min-height: 30px;
+            max-height: 30px;
+            height: 30px;
+            --paper-item-icon-width: 30px;
+        }
+        paper-icon-item.noicon {
+            --paper-item-icon-width: 5px;
+        }
+        paper-icon-item.picture {
+            --paper-item-icon-width: 50px;
+        }
+        paper-item-body.small {
+          min-height: 30px;
+          max-height: 30px;
+          height: 30px;;
+        }
+        paper-icon-item.medium {
+            min-height: 48px;
+            max-height: 48px;
+            height: 48px;
+            --paper-item-icon-width: 58px;
+        }
+        .listView {
+          @apply( --layout-vertical ); 
+          @apply( --layout-flex ); 
+        }
+        .small.description {
+          display: none;
+        }
+        .date {
+          font-size: 10px;
+          float:right;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            display: inline-block;
+            text-align: center;
+            padding-top: 4px;
+            top: 12px;
+            left: 21px;
+        }
+        .avatar_content {
+          margin-top: 20px;
+          margin-bottom: 20px;
+          /* border-radius: 40px;  */
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          /* align-items: center; */
+          min-height: 84px;
+        }
+        .avatar_small {
+            height: 30px;
+            display: inline-block;
+            text-align: center;
+            padding-top: 4px;
+            top: 2px;
+            left: 5px;
+        }
+        .progressBar {
+          width: 100%;
+          left: 0px;
+          height: 10px;
+          z-index: -1;
+          --paper-progress-height : 10px;
+        }
+        .progressTitle {
+          font-size: 12px;
+          text-align: center;
+          margin: 5px;
+          color: var(--paper-progress-active-color);
+        }
+        paper-button {
+          font-size: 12px;
+        }
+        .fabNone {
+          background-color: var(--paper-menu-background-color);
+          color: #000;
+          margin: 0px;
+          font-size: 12px;
+          padding: 0px;
+        }
+        .fabGreen {
+          background-color: var(--paper-green-500);
+          color: white;
+          margin: 4px;
+          font-size: 12px;
+          padding: 0.5em 0.57em;
+          /* padding: 1em; */
+          border-radius: 25px;
+        }
+        paper-card {
+          cursor: pointer;
+        }
+        paper-icon-item {
+          --paper-item-icon-width: 44px;
+          cursor: pointer;
+        }
+        paper-icon-item.small  {
+          --paper-item-icon-width: 30px;
+          cursor: pointer;
+        }
+        .fabTheme {
+          background-color: var(--paper-progress-active-color);
+          color: white;
+          margin: 4px;
+          font-size: 12px;
+          padding: 0.5em 0.57em;
+          
+          box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+          transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+
+          --paper-button-ink-color: var(--paper-progress-active-color);
+          --paper-button-flat-keyboard-focus: {
+            background-color: var(--paper-progress-active-color);
+            color: white !important;
+          };
+          --paper-button-raised-keyboard-focus: {
+            background-color: var(--paper-progress-active-color) !important;
+            color: white !important;
+          };
+        }
+       .fabHover {
+          display: none;
+        }
+        .fabHover:hover {
+          display: inline;
+        }
+        .fabRound {
+          padding: 1em;
+          border-radius: 25px;
+          min-width: 200px;
+        }
+        .fabRound:hover {
+          box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        }
+        .buttonBadge {
+          background-color: var(--paper-progress-active-color);
+          color: white;
+          font-size: 10px;
+          border: 0px;
+          border-radius: 20px;
+          margin-left: 10px;
+          padding-left: 3px;
+          padding-right: 3px;
+          float: right;
+          --paper-button-ink-color: var(--paper-progress-active-color);
+          --paper-button-flat-keyboard-focus: {
+            background-color: var(--paper-progress-active-color);
+            color: white !important;
+          };
+          --paper-button-raised-keyboard-focus: {
+            background-color: var(--paper-progress-active-color) !important;
+            color: white !important;
+          };
+        }
+        .dropdown-content {
+          z-index: 10000;
+        }
+        #editor-container {
+          height: 100vh;
+        }
+
+        .msgBodyContent {
+		      background-color: #FFF;
+		      color: #000;
+		      padding: 16px;
+		      height: 100%;
+		      overflow-y: auto;
+		      overflow-x: auto;
+		    }
+        .messageBodyInput {
+		      width: 100%; 
+		      min-height: 400px; 
+		      height: 100%;
+        }
+
+        monaco-editor {
+            flex: 1;
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+        .box {
+          max-width: 100%;
+        }
+
+        #chips {
+          @apply --layout-horizontal;
+          @apply --layout-end;
+          @apply --layout-wrap;
+          max-width: 90%;
+        }
+        .chip {
+          border-radius: 500px;
+          background-color: #e0e0e0;
+          margin: 1px 4px 1px 0;
+          white-space: nowrap;
+          overflow: hidden;
+          @apply --layout-horizontal;
+          @apply --layout-center;
+        }
+        .chip > span {
+          color: #424242;
+          margin-left: 10px;
+          font-size: 13px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .chip iron-icon {
+          margin: 2px 4px;
+          color: #cdcdcd;
+          background-color: #a6a6a6;
+          border-radius: 500px;
+          cursor: pointer;
+          min-width: 16px;
+          width: 16px;
+          min-height: 16px;
+          height: 16px;
+        }
+        .content { 
+            width: 100%;
+            height: 100%;
+        }
+        .formList {
+          margin: 0px;
+          padding: 0px;
+        }
+        .swipeBackground {
+          background-color: var(--paper-red-800);
+          color: #FFF;
+          width: 100%;
+          height: 100%;
+          position: absolute;
+        }
+        #swipeMessage {
+          margin: 20px;
+        }
+
+        .flex {
+          @apply(--layout-flex);
+        }
+        .fit {
+          @apply(--layout-fit);
+        }
+        .horizontal {
+          @apply(--layout-horizontal);
+        }
+        .center {
+          @apply(--layout-center);
+        }
+        .justified {
+          @apply(--layout-justified);
+        }
+        .fabHover {
+          background-color: #9e9e9e;
+          position: relative;
+          float: left;
+          display: none;
+          border-radius: 25PX;
+          /* margin: 4px; */
+          /* margin-top: 40px; 
+          right: 10PX;
+          margin-left: 10px;
+          */
+          color: #FFF;
+          
+        }
+        paper-icon-item:hover .fabHover {
+          display: block;
+        }
+        paper-icon-item:hover .fabHoverHide {
+          display: none;
+        }
+
+        .maxHeight {
+          height: 111px;
+          max-height: 111px;
+          min-height: 111px;
+        }
+        
+        .borderBottom {
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        paper-time-input {
+          --paper-input: {
+            width: 80px;
+          }
+        }
+        
+        .textImportant {
+          font-weight: 500;
+          color: #F60; 
+        }
+
+        .fabStarSelected {
+          color: var(--paper-yellow-700);
+        }
+        .fabStar {
+          color: #9e9e9e;
+        }
+      
+      </style>
+      <iron-form class="content formList" id="ironForm" on-iron-form-presubmit="_onFormSubmit">
+      <form id="{{formID}}" class="content formList" method="post" action="#{{responseParams.url}}">
+       <iron-list id="scrollList" items="[[data]]"  on-scroll="onScroll">
+        <template> 
+          <div style$="{{_computeItemStyle(item)}}">
+            <div>
+            <template is="dom-if" if="{{_computeViewType(item,2)}}">
+              <div class='headerTitle'><template is="dom-if" if="{{item.icon}}"><iron-icon icon="{{item.icon}}"  slot="item-icon" item-icon></iron-icon></template>{{item.title}}</div>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,1)}}">
+              <div class="swipeBackground" hidden="{{!item.swipeEnabled}}">
+                  <div id="swipeMessage" class="layout horizontal center justified fit" aria-hidden="true">
+                    <span>{{item.swipeRightMessage}}</span>
+                  </div>
+              </div>
+              <!-- <iron-swipeable-container disabled="{{!item.swipeEnabled}}"> -->
+              <paper-icon-item data-item="{{item}}" on-tap="_selectItem" class$="{{item.itemCssClass}}" style="{{item.itemStyle}}">
+                <template is="dom-if" if="{{item.icon}}">
+                  <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                </template>
+                <template is="dom-if" if="{{item.image}}">
+                  <iron-image class="imageAvatar" src="{{item.image}}" width="{{item.imageWidth}}" height="{{item.imageHeight}}" sizing="{{item.imageSizing}}" slot="item-icon" item-icon></iron-image>
+                </template>
+                <template is="dom-if" if="{{item.email}}">
+                  <ew-expresso-catalog-contact-picture id="contactPhoto_{{item.id}}" class$="{{_computePictureCssClass(item)}}" item="{{item}}" letter="[[item.title.0]]" email="{{item.email}}" selected="{{item.selected}}" on-tap="_toggleItem"  multi-selection="{{multiSelection}}" on-transitionend="_eatEvent" local-photos="{{localPhotos}}" small="{{_computeSmallPicture(item)}}" slot="item-icon" item-icon></ew-expresso-catalog-contact-picture>
+                </template>
+                <paper-checkbox class="styled" checked="{{item.toggleEnabled}}" on-tap="_toggleItem" hidden="{{!item.toggle}}" style='position: absolute; right: 50px;'></paper-checkbox>
+                <paper-item-body two-line class$="{{item.itemCssClass}}">
+                  <div>{{item.title}}</div>
+                  <div secondary class$="description {{item.itemCssClass}}">
+                    {{item.description}}
+                  </div>
+                  <div secondary class$="description {{item.itemCssClass}}">
+                    {{item.subdescription}}
+                  </div>
+                  <div secondary class$="date {{item.itemCssClass}}">
+                      {{item.date}}
+                    </div>
+                  <paper-ripple></paper-ripple>  
+                </paper-item-body>
+                <!-- <template is="dom-if" if="[[item.buttons]]">-->
+                  <div class="box">
+                    <template is="dom-repeat" items="[[item.buttons]]" as="button">
+                      <template is="dom-if" if="{{_compareButtonType(button,1)}}">
+                        <paper-icon-button data-item="{{item}}" data-button="{{button}}" icon="{{button.icon}}" class$='{{button.cssClass}}' on-tap="_tapButton"></paper-icon-button>
+                      </template>
+                      <template is="dom-if" if="{{_compareButtonType(button,2)}}">
+                        <paper-button style$='{{button.itemStyle}}' class$='{{button.cssClass}}' data-item="{{item}}" data-button="{{button}}" on-tap="_tapButton">
+                          <template is="dom-if" if="{{button.image}}"><iron-image class="" src="{{button.image}}" width="{{button.imageWidth}}" height="{{button.imageHeight}}" sizing="{{button.imageSizing}}"></iron-image></template>
+                          <template is="dom-if" if="{{button.icon}}"><iron-icon icon="{{button.icon}}">&nbsp;</iron-icon></template>{{button.title}}
+                        </paper-button>
+                      </template>
+                      <template is="dom-if" if="{{_compareButtonType(button,3)}}">
+                        <template is="dom-if" if="{{button.title}}"><div class="date"><iron-icon icon="{{button.icon}}"></iron-icon>{{button.title}}</div><br></template>
+                        <template is="dom-if" if="{{button.badge}}"><div class='buttonBadge' style='float: left; margin: 8px; '>{{button.badge}}</div></template>
+                      </template>
+                    </template>
+                  </div>
+                  <!-- </template> -->
+              </paper-icon-item>
+              <!-- </iron-swipeable-container> -->
+              
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,3)}}">
+                <!-- <iron-swipeable-container swipe-style="curve" disabled="{{!item.swipeEnabled}}"> -->
+                  <!-- <div class="swipeBackground" hidden="{{!item.swipeEnabled}}"></div> -->
+                  <paper-card data-item="{{item}}" on-tap="_selectItem" elevation="{{item.cardElevation}}">
+                    <div class="card-content">
+                      <template is="dom-if" if="{{item.buttons}}">
+                        <div slot='toolbar-buttons' class='floatButtons'>
+                          <template is="dom-repeat" items="{{item.buttons}}" as="button">
+                            <template is="dom-if" if="{{_compareButtonType(button,1)}}">
+                              <paper-icon-button data-item="{{item}}" data-button="{{button}}" icon="{{button.icon}}" on-tap="_tapButton"></paper-icon-button>
+                            </template>
+                            <template is="dom-if" if="{{_compareButtonType(button,2)}}">
+                                <paper-button class$='{{button.cssClass}}' data-item="{{item}}" data-button="{{button}}" raised on-tap="_tapButton">
+                                  <template is="dom-if" if="{{button.image}}"><iron-image class="" src="{{button.image}}" width="{{button.imageWidth}}" height="{{button.imageHeight}}" sizing="{{button.imageSizing}}"  slot="item-icon" item-icon></iron-image></template>
+                                  <template is="dom-if" if="{{button.icon}}"><iron-icon icon="{{button.icon}}">&nbsp;</iron-icon></template>
+                                  {{button.title}}<div class='buttonBadge'>{{button.badge}}</div>
+                                </paper-button>
+                            </template>
+                          </template>
+                        </div>
+                      </template>
+                      <template is="dom-if" if="{{item.image}}">
+                        <iron-image class="floatImage" src="{{item.image}}" width="{{item.imageWidth}}" height="{{item.imageHeight}}" sizing="{{item.imageSizing}}" slot="item-icon" item-icon></iron-image>
+                      </template>
+                      <div class="card-header">
+                        <template is="dom-if" if="{{item.icon}}">
+                          <iron-icon style="margin: 10px;" icon="{{item.icon}}"></iron-icon>
+                        </template>{{item.title}}
+                        <p class="card-description">{{item.description}}</p>
+                      </div>
+                      <template is="dom-if" if="{{item.innerHTML}}">
+                        <div class="card-description floatLeft" inner-h-t-m-l="{{item.innerHTML}}"></div>
+                      </template>
+                      <p class="card-date">{{item.date}}</p>
+                      <div style="clear: both;"></div>
+                    </div>
+                    <paper-ripple></paper-ripple>
+                  </paper-card>
+              <!-- </iron-swipeable-container> -->
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,4)}}">
+              <!-- INNERHTML -->
+              <template is="dom-if" if="{{item.innerHTML}}">
+                <div inner-h-t-m-l="{{item.innerHTML}}"></div>
+              </template>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,5)}}">
+              <!-- TEXTAREA -->
+              <paper-icon-item data-item="{{item}}">
+                <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                <paper-item-body two-line>
+                  <div><paper-textarea id="TextArea{{item.name}}" label="{{item.title}}" name="{{item.name}}" value="{{item.value}}" rows="4" required="{{item.required}}" always-float-label></paper-textarea>
+                  </div> 
+                  <div secondary>{{item.description}}</div>
+                </paper-item-body>
+              </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,6)}}">
+              <!-- INPUT -->
+              <paper-icon-item data-item="{{item}}">
+                <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                <paper-item-body two-line>
+                  <div><paper-input id="Input{{item.name}}" name="={{item.name}}" type="{{item.inputType}}" label="{{item.title}}" value="{{item.value}}" auto-validate required="{{item.required}}"></paper-input>
+                  </div> 
+                  <div secondary>{{item.description}}</div>
+                </paper-item-body>
+                <template is="dom-repeat" items="{{item.buttons}}" as="button">
+                  <template is="dom-if" if="{{_compareButtonType(button,1)}}">
+                    <paper-icon-button data-item="{{item}}" data-button="{{button}}" icon="{{button.icon}}" on-tap="_tapButton"></paper-icon-button>
+                  </template>
+                  <template is="dom-if" if="{{_compareButtonType(button,2)}}">
+                    <paper-button style$='{{button.itemStyle}}' class$='{{button.cssClass}}' data-item="{{item}}" data-button="{{button}}" on-tap="_tapButton">
+                      <template is="dom-if" if="{{button.image}}"><iron-image class="" src="{{button.image}}" width="{{button.imageWidth}}" height="{{button.imageHeight}}" sizing="{{button.imageSizing}}"  slot="item-icon" item-icon></iron-image></template>
+                      <template is="dom-if" if="{{button.icon}}"><iron-icon icon="{{button.icon}}">&nbsp;</iron-icon></template>{{button.title}}
+                    </paper-button>
+                  </template>
+                  <template is="dom-if" if="{{_compareButtonType(button,3)}}">
+                    <template is="dom-if" if="{{button.title}}"><div class="date"><iron-icon icon="{{button.icon}}"></iron-icon>{{button.title}}</div><br></template>
+                    <template is="dom-if" if="{{button.badge}}"><div class='buttonBadge' style='float: left; margin: 8px; '>{{button.badge}}</div></template>
+                  </template>
+                </template>
+              </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,7)}}">
+              <!-- DATE -->
+              <paper-icon-item data-item="{{item}}">
+                <iron-icon icon="{{item.icon}}"  slot="item-icon" item-icon></iron-icon>
+                <paper-item-body two-line>
+                  <div>
+                    <vaadin-date-picker id="DatePicker{{item.name}}" name="DatePicker{{item.name}}" label="{{item.title}}"  value="{{item.value}}" required="{{item.required}}" auto-validate error-message="Este campo é obrigatório."></vaadin-date-picker>
+                  </div> 
+                  <div secondary>{{item.description}}</div>
+                </paper-item-body>
+              </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,8)}}">
+               <!-- TIME -->
+              <paper-icon-item data-item="{{item}}">
+                <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                <paper-item-body two-line>
+                  <div>
+                    <paper-time-input id="timeInput{{item.name}}" name="{{item.name}}" value="{{item.value}}" hour="{{_computeHour(item)}}" min="{{_computeMin(item)}}" label="{{item.title}}" format="24" required="{{item.required}}"></paper-time-input>
+                  </div> 
+                  <div secondary>{{item.description}}</div>
+                </paper-item-body>
+              </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,9)}}">
+              <!-- HIDDEN -->
+              <input type="hidden" id="{{_computeInputID('HiddenInput',item)}}" name="{{item.name}}" value="{{item.value}}"></input>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,10)}}">
+              <!-- IMAGE -->
+              <iron-image src="{{item.image}}" style$="{{_computeImageSize(item)}}" sizing="{{item.imageSizing}}"></iron-image>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,11)}}">
+              <!-- PROGRESSBAR -->
+              <paper-progress class="progressBar" value="{{item.value}}" min="0" max="100" bottom-item></paper-progress>
+              <template is="dom-if" if="{{item.title}}">
+                <div class="progressTitle">{{item.title}}</div>
+              </template>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,12)}}">
+              <!-- CHECKBOX -->
+              <paper-icon-item data-item="{{item}}">
+                <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                <paper-item-body two-line>
+                  <div>
+                    <paper-checkbox id="checkboxInput{{item.name}}" name="{{item.name}}" checked="{{item.value}}">{{item.title}}</paper-checkbox>
+                  </div> 
+                  <div secondary>{{item.description}}</div>
+                </paper-item-body>
+              </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,13)}}">
+                <!-- DROPDOWN MENU -->
+                <paper-icon-item data-item="{{item}}">
+                    <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                    <paper-item-body two-line>
+                      <paper-dropdown-menu id="DropDownInput{{item.name}}" name="{{item.name}}" label="{{item.title}}" on-iron-overlay-closed="_eatEvent" required="{{item.required}}">
+                        <paper-listbox class="dropdown-content" slot="dropdown-content" selected="{{item.value}}">
+                          <template is="dom-repeat" items="[[item.items]]">
+                            <paper-item>{{item}}</paper-item>
+                          </template>
+                        </paper-listbox>
+                      </paper-dropdown-menu>
+                      <div secondary>{{item.description}}</div>
+                    </paper-item-body>
+                </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,14)}}">
+                <!-- CONTACT INPUT -->
+                <paper-icon-item data-item="{{item}}">
+                    <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                    <paper-item-body two-line>
+                      <div id="ContactsInputs{{item.name}}">
+                        <ew-expresso-catalog-contact-input id="ContactInput" name="{{item.name}}" visible="true" recipient-title="{{item.title}}" label="{{item.title}}" recipients="{{item.items}}" data="{{contacts}}" validate="{{item.required}}" selected-items="{{item.value}}" always-float-label></ew-expresso-catalog-contact-input>
+                      </div>
+                        <div secondary>{{item.description}}</div>
+                    </paper-item-body>
+                </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,15)}}">
+              <!-- RADIO -->
+              <paper-icon-item data-item="{{item}}">
+                  <iron-icon icon="{{item.icon}}" slot="item-icon" item-icon></iron-icon>
+                  <paper-item-body two-line>
+                      <paper-radio-group selected="{{item.value}}" required="{{item.required}}">
+                        <template is="dom-repeat" items="{{item.items}}" as="radio">
+                          <paper-radio-button name="{{index}}">{{radio}}</paper-radio-button>
+                        </template>
+                      </paper-radio-group>
+                    <div secondary>{{item.description}}</div>
+                  </paper-item-body>
+              </paper-icon-item>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,16)}}">
+                <!-- IFRAME -->
+                <iframe frameborder="0" src="{{item.value}}" scrolling="no" width="100%" height="100vh" style="height: 100vh"></iframe>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,17)}}">
+              <!-- FILES -->
+              <vaadin-upload id="uploadFilesInput{{item.name}}" form-data-name="{{item.name}}" headers="{{_computeVaadinHeaders()}}" target="/api/upload" max-file-size="16000000">
+                <div class="drop-label">
+                  <iron-icon icon="description"></iron-icon>
+                  {{item.description}}
+                </div>
+              </vaadin-upload>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,18)}}">
+                <monaco-editor id="MonacoEditor{{item.name}}" value="{{item.value}}" languague="{{item.subdescription}}"></monaco-editor>
+                <!-- TEXTAREA NORMAL -->
+                <!-- <monaco-editor-polymer id="MonacoEditor{{item.name}}" name="{{item.name}}" code="{{item.value}}" old="{{item.description}}" language="{{item.subdescription}}">
+                    <input type="hidden" name="codeContent2" class="editor slot" value="{{item.value}}"></input>
+                    <div id="editor-container" slot="editor-slot" class=""></div>
+                </monaco-editor-polymer> -->
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,19)}}">
+                <!-- PICTURE -->
+                <template is="dom-if" if="{{item.email}}">
+                  <div class="avatar_content">
+                    <ew-expresso-catalog-contact-picture class$="{{_computePictureCssClass(item)}}" item="{{item}}" letter="[[item.title.0]]" email="{{item.email}}" selected="{{item.selected}}" on-tap="_toggleItem"  multi-selection="{{multiSelection}}" on-transitionend="_eatEvent" local-photos="{{localPhotos}}" big={{_computeBigPicture(item)}} small="{{_computeSmallPicture(item)}}" slot="item-icon" item-icon></ew-expresso-catalog-contact-picture>
+                  </div>
+                </template>
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,20)}}">
+              <input type="hidden" name="{{item.name}}" value="{{item.value}}"></input>
+              <!-- HTML WYISWYG EDITOR -->
+              <div class="msgBodyContent">
+                <div id="{{item.name}}Input" class="messageBodyInput" inner-h-t-m-l="{{item.value}}" contenteditable="true"></div>
+              </div>		          
+            </template>
+            <template is="dom-if" if="{{_computeViewType(item,21)}}">
+              <template is="dom-if" if="{{item.listview}}">
+                <paper-card data-item="{{item}}" elevation="1" class="listView" style="{{item.itemStyle}}">
+                  <ew-list-view response-params="{{item.listview}}"></ew-list-view>
+                </paper-card>
+              </template>
+            </template>
+          </div>
+        </template>
+      </iron-list>
+      </form>
+      </iron-form>
+    </template>
+    <script>
+    Polymer({
+      is: 'ew-list',
+      behaviors: [EWBehaviorWidgetBehavior,Polymer.IronResizableBehavior, window.Columns.EWColumn],
+      properties: { 
+        data: {
+          type: Array, 
+          value: [], 
+          notify: true, 
+          reflectToAttribute: false,
+          observer: '_dataChanged'
+        },
+        localPhotos: {
+          type: Array, 
+          value: [], 
+          notify: true, 
+          reflectToAttribute: false 
+        },
+        formID: {
+          type: String,
+          value: 'formList',
+          notify: true,
+          reflectToAttribute: true,
+          computed: '_computeFormID(params)'
+        },
+        hasMoreItems: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+        isLoading: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+        multiSelection: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+        enableSelection: { type: Boolean, value: true, notify: true, reflectToAttribute: true },
+
+      },
+      getMeta: function(metaName) {
+        const metas = document.getElementsByTagName('meta');
+
+        for (let i = 0; i < metas.length; i++) {
+          if (metas[i].getAttribute('name') === metaName) {
+            return metas[i].getAttribute('content');
+          }
+        }
+
+        return '';
+      },
+      _computeVaadinHeaders: function() {
+        var _token = this.getMeta('csrf-token');
+        return { 'X-CSRF-TOKEN' : _token };
+      },
+      _dataChanged: function() {
+        this.async(function() {
+          this._localizeAllDatePickers();
+          this._localizeAllInputFiles();
+        },1000);
+      },
+      getAllTextAreas: function() {
+        var _elements = this._getItemsFromType(5);
+        retVal = [];
+        for (var i in _elements) {
+          var _element = Polymer.dom(this.$.scrollList).querySelectorAll('#TextArea' + _elements[i].name)[0];
+          retVal.push(_element);
+        }
+        return retVal;
+      },
+      getAllDatePickers: function() {
+        var _datePickers = this._getItemsFromType(7);
+        retVal = [];
+        for (var i in _datePickers) {
+          var _picker = Polymer.dom(this.$.scrollList).querySelectorAll('#DatePicker' + _datePickers[i].name)[0];
+          retVal.push(_picker);
+        }
+        return retVal;
+      },
+      getAllContactInputs: function() {
+        var _contactInputs = this._getItemsFromType(14);
+        retVal = [];
+        for (var i in _contactInputs) {
+          var _contact = Polymer.dom(this.$.scrollList).querySelectorAll('#ContactsInputs' + _contactInputs[i].name)[0].querySelectorAll('#ContactInput')[0];
+          retVal.push(_contact);
+        }
+        return retVal;
+      },
+      getAllTimeInputs: function() {
+        var _timeInputs = this._getItemsFromType(8);
+        retVal = [];
+        for (var i in _timeInputs) {
+          var _time = Polymer.dom(this.$.scrollList).querySelectorAll('#timeInput' + _timeInputs[i].name)[0];
+          retVal.push(_time);
+        }
+        return retVal;
+      },
+      _localizeAllDatePickers: function() {
+        // console.log('_localizeAllDatePickers');
+        var _datePickers = this._getItemsFromType(7);
+        for (var i in _datePickers) {
+          var _picker = Polymer.dom(this.$.scrollList).querySelectorAll('#DatePicker' + _datePickers[i].name)[0];
+          if (_picker != undefined) {
+            this._localizeDatePicker(_picker);
+          }
+        }
+      },
+      getIronForm: function() {
+        return this.$.ironForm;
+      },
+      _computeFormID: function(params) {
+        var _randFormID = Math.floor((Math.random() * 10000) + 1);
+        var formID = 'formID' + _randFormID;
+        return formID;
+      },
+      _localizeAllInputFiles: function() {
+        var _uploadFilesInputs = this._getItemsFromType(17);
+        var _files = [];
+        for (var i in _uploadFilesInputs) {
+          var _input = Polymer.dom(this.$.scrollList).querySelectorAll('#uploadFilesInput' + _uploadFilesInputs[i].name)[0];
+          if (_input != undefined) {
+            _input.set('i18n.addFiles.many', 'Enviar Arquivos');
+            _input.set('i18n.dropFiles.many', 'Arraste e solte os arquivos aqui... (limite 16 Mb)');
+          }
+        }
+        return _files;
+      },
+      _getAllFiles: function() {
+        var _uploadFilesInputs = this._getItemsFromType(17);
+        var _files = [];
+        for (var i in _uploadFilesInputs) {
+          var _input = Polymer.dom(this.$.scrollList).querySelectorAll('#uploadFilesInput' + _uploadFilesInputs[i].name)[0];
+          if (_input != undefined) {
+            for (var i in _input.files) {
+              _files.push(_input.files[i]);
+            }
+          }
+        }
+        return _files;
+      },
+      _computeInputID: function(prefix,item) {
+        var _randFormID = Math.floor((Math.random() * 10000) + 1);
+        var formID = prefix + item.name + _randFormID;
+        return formID;
+      },
+      _computeHour: function(item) {
+        if (item.value != undefined) {
+          var time = item.value.split(':');
+          var retVal = parseInt(time[0]);
+          return retVal;
+        }
+      },
+      _computeMin: function(item) {
+        if (item.value != undefined) {
+          var time = item.value.split(':');
+          var retVal = parseInt(time[1]);
+          return retVal;
+        }
+      },
+      _getItemsFromType: function(_type) {
+        var _newItems = [];
+        for (var i in this.data) {
+          if (this.data[i].viewType == _type) {
+            _newItems.push(this.data[i]);
+          }
+        }
+        return _newItems;
+      },
+      _localizeDatePicker: function(_datePicker) {
+        _datePicker.i18n = {
+          week: 'Semana',
+          calendar: 'Calendar',
+          clear: 'Limpar',
+          today: 'Hoje',
+          cancel: 'Cancelar',
+          firstDayOfWeek: 1,
+          monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+          weekdays: 'Domingo_Segunda_Terça_Quarta_Quinta_Sexta_Sábado'.split('_'),
+          weekdaysShort: ['Dom','Seg','Ter','Qua','Qui','Sex','Sa'],
+          formatDate: function(d) {
+            return [d.day, d.month + 1, d.year].join('/'); 
+            // return [d.getDate(), d.getMonth() + 1, d.getFullYear()].join('/');
+          },
+          parseDate: function(text) {
+            // This example produces a really strict parser which only accepts
+            // perfectly formatted dates like '12.8.2013'. Less strict implementation or
+            // a 3rd party parser like in the example below is recommended.
+            var parts = text.split('/');
+            if (parts.length === 3) {
+              var date = new Date(0, 0);
+              date.setFullYear(parseInt(parts[2]));
+              date.setMonth(parseInt(parts[1]) - 1);
+              date.setDate(parseInt(parts[0]));
+              return date;
+            }
+          },
+          formatTitle: function(monthName, fullYear) {
+            return monthName + ' ' + fullYear;
+          }
+        }
+      },
+      attached: function(){
+        this.async(function() {
+          this._localizeAllDatePickers();
+          this._localizeAllInputFiles();
+        },1000);
+      },
+      _compareButtonType: function(button,type) {
+        if (button.buttonType == type) {
+          return true;
+        } else {
+          return false;
+        }
+      },
+      _computeImageSize: function(item) {
+        var retVal = ' width: ' + item.imageWidth + '; min-height: ' + item.imageHeight + '; ' + item.itemStyle;
+        return retVal;
+      },
+      _computeItemStyle: function(item) {
+        var retVal = '';
+        if ((item.viewType == 13) || (item.viewType == 7)) {
+          retVal = ' z-index: 1000; ';
+        }
+        return retVal;
+      },
+      _computeViewType: function(item,_type) {
+        var retVal = false;
+        if (parseInt(item.viewType) == parseInt(_type)) {
+          retVal = true;
+        }
+        return retVal;
+      },
+      _computeBigPicture: function(item) {
+        if (item.itemCssClass != undefined) {
+          if (item.itemCssClass.indexOf("big") == -1) {
+            return false
+          } else {
+            return true;
+          }
+        }
+      },
+      _computeSmallPicture: function(item) {
+        if (item.itemCssClass != undefined) {
+          if (item.itemCssClass.indexOf("small") == -1) {
+            return false
+          } else {
+            return true;
+          }
+        }
+      },
+      _computePictureCssClass: function(item) {
+        if (this._computeSmallPicture(item)) {
+          return 'avatar_small';
+        } else {
+          return 'avatar';
+        }
+      },
+      _selectItem: function(e) {
+        e.stopPropagation();
+        var _selItem = e.model.item;
+        if (_selItem.toggle) {
+          e.model.item.toggleEnabled = !e.model.item.toggleEnabled;
+          this._toggleItem(e);        
+        } else {
+          this.fire('select',{ item : _selItem });
+          if (this.multiSelection) {
+            var _photoElement = Polymer.dom(this.$.scrollList).querySelectorAll("#contactPhoto_" + _selItem.id)[0];
+            if (_photoElement != undefined) {
+              _photoElement.selected = !_photoElement.selected;
+            }
+          }
+        }
+        this.ew_signal('ew-search-close',_selItem);
+      },
+      _tapButton: function(e) {
+        e.stopPropagation();
+        var _selItem = e.model.item;
+        var _selButton = e.model.button;
+        if (_selButton.event != undefined) {
+          this.fire(_selButton.event,{ item: _selItem });  
+        } else {
+          this.fire('ew-tap-button-item',_selButton);
+          // if (_selButton.action != undefined) {
+          //   // console.log(_selButton.params);
+          //   this.ew_openWidget(_selButton.action,_selButton.params);
+          // }
+        }
+        // console.log(_selItem);
+        // console.log(_selButton);
+      },
+      _toggleItem: function(e) {
+        // if ((this.enableSelection == true)) {
+        e.stopPropagation();
+        var _selItem = e.model.item;
+        if (_selItem.selected == undefined) {
+          _selItem.selected = false;
+        }
+        _selItem.selected = !_selItem.selected;
+        this.fire('toggle',{ item : _selItem });
+        // console.log(_selItem);
+        // var _photoElement = Polymer.dom(this.$.scrollList).querySelectorAll("#contactPhoto_" + _selItem.id)[0];
+      },
+      onScroll: function(e) {
+        // console.log('ew-list.onScroll');
+          if ((this.hasMoreItems) && (!this.isLoading)) {
+            var _scrollTop = 0;
+            if (e.target != undefined) {
+              if (e.target.scrollTop + e.target.offsetHeight >= e.target.scrollHeight - 100) {
+                // this.fire('ew-list-view-load-next-page',{ });
+                this.fire('loadnextpage',{ });
+                // this.loadNextPage();
+              }
+            }
+          }
+      },
+
+    });
+  </script>
+</dom-module>
