@@ -70,8 +70,6 @@ class PontoCelepar extends WidgetController {
             $f_data["saldo"]["dataatualizacao"] = $first_element->dataatualizacao;
             $f_data["saldo"]["ano"] = $first_element->ano;
 
-
-
             $f_data["registros"] = array();
             $tmp_data = array();
 
@@ -128,12 +126,8 @@ class PontoCelepar extends WidgetController {
                     $view->addItem($item->getItem());
 
                 }
-            
             } 
-            
         }
-
-		
 
 		return response()->json($view);
 	}

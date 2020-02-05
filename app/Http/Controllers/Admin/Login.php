@@ -23,12 +23,13 @@ class Login extends WidgetController {
 
         if ($send == true) {
             $showForm = false;
-            $view->addErrorItem("Senha Alterada com sucesso!");
-            $view->showMessage("Senha Alterada com sucesso!");
+            // $view->addErrorItem("Senha Alterada com sucesso!");
+            // $view->showMessage("Senha Alterada com sucesso!");
 
             \Session::put('route_' . $routeID . '_username',$this->getParam('username'));
             \Session::put('route_' . $routeID . '_password', $this->getParam('password'));
             $view->runSignal("ew-refresh-route",array("route" => $route->url));
+            $view->runAction("ew_load",array("route" => $route->url));
             $view->runAction("ew_closeAndRefresh");
             // $view->setFab("done","Fechar","ew_close",array());	
         }

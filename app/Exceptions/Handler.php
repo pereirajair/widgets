@@ -50,18 +50,22 @@ class Handler extends ExceptionHandler
     public function render($request, Exception $exception)
     {
 
-        return parent::render($request, $exception);
+        if (isset($_POST['route'])) {
+            $view = new EWListView("Erro",true);
+            $view->addRefreshButton();
+            $view->setBackgroundColor("red");
+            $obj = parent::render($request, $exception);
+            $view->addHeaderItem($exception->getMessage());
+            $view->addHTML("<pre><div style='font-size: 10px;'>" . $exception->getTraceAsString() . "</div></pre>");
+            // $view->printArray($exception);
+            // $view->addHTML($exception->getFile() . $exception->getLine());
+            $view->addHTML($obj->getContent());
+            return response()->json($view); 
+        } else {
+            return parent::render($request, $exception);
+        }
 
         
-        $view = new EWListView("Erro",true);
-        $view->addRefreshButton();
-        $view->setBackgroundColor("red");
-        $obj = parent::render($request, $exception);
-        $view->addHeaderItem($exception->getMessage());
-        $view->addHTML("<pre><div style='font-size: 10px;'>" . $exception->getTraceAsString() . "</div></pre>");
-        // $view->printArray($exception);
-        // $view->addHTML($exception->getFile() . $exception->getLine());
-        $view->addHTML($obj->getContent());
-        return response()->json($view); 
+        
     }
 }

@@ -62,9 +62,7 @@ class PrevisaoTempo extends WidgetController
 			$view->hideSearch(false,false);
 			$view->addActionToolbarButton("refresh","ew_refresh",array());
 	
-			if ($viewName == 'search') {
-				$view = $this->getSearchView();
-			}
+			
 			if ($viewName == 'saveData') {
 				$params = (array) $this->getParams(true);
 				$params['view'] = '';
@@ -75,7 +73,12 @@ class PrevisaoTempo extends WidgetController
 			if (($viewName == '') && ($search != "")) {
 				$params = (array) $this->getParams(true);
 				$params['view'] = 'search';
-				$view->runAction('ew_load',$params); 
+				$params['search'] = $search;
+				// if ($viewName == 'search') {
+				$view = $this->getSearchView();
+			
+				// $view->printArray($params);
+				// $view->runAction('ew-list-view',$params); 
 			} 
 			
 			if (($viewName == '') && ($search == "")) {

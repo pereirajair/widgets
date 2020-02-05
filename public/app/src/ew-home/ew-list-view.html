@@ -95,7 +95,7 @@ Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou a
             </div>
             <div id="itemsListContainer" class="content" slot='content'>
                 <ew-loading-spinner loading="{{isLoading}}"></ew-loading-spinner>
-                  <div style="height: 100%;">
+                  <div style$="{{styleDiv}}">
                     <template is="dom-if" if="{{showPages}}">
                         <paper-tabs selected="{{selectedPage}}">
                             <template is="dom-repeat" items="[[pages]]">
@@ -279,6 +279,12 @@ Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou a
                   notify: true, 
                   reflectAttribute: true, 
                   computed: '_computeEnableMultiSelection(responseParams)'
+                },
+                styleDiv: {
+                  type: String, 
+                  value: 'height: 100%',
+                  notify: true, 
+                  reflectToAttribute: true,
                 },
                 files: {
                   type: Array,
@@ -793,6 +799,7 @@ Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou a
                     var _codeDitor = this._getItemsFromType(18);
                     if (_codeDitor.length != 0) {
                       this._loadCodeEditor();
+                      this.styleDiv = '';
                     }
 
                     that.notifyResize();

@@ -30,7 +30,7 @@ Elements Widgets - Home Screen
         left: 0px;
         display: block;
         background-size: 100% 100%;
-        min-width: 120%;
+        min-width: 100%;
         min-height: 100%;
         z-index: 0;
         background-color:#E5E5E5;
@@ -81,9 +81,10 @@ Elements Widgets - Home Screen
         }
       }
       .logo-system {
-        width: 200px;
+        width: 150px;
         top: 0px;
-        height: 50px;
+        height: 40px;
+        margin-right: 50px;;
       }
       #fabNews {
         background-color: #F60;
@@ -161,17 +162,18 @@ Elements Widgets - Home Screen
 
     <div id="backgroundImage" class="background-image" style$="{{backgroundCssClass}}"></div>
     <ew-login id="loginForm" login-response="{{loginResponse}}" is-logged="{{isLogged}}"></ew-login>
-    <div class="ew-content fullHeight" style$="{{_computeHomeWidgetsStyle(options)}}"> 
+    <div class="ew-content fullHeight"> 
       <div id="homeWidgets" class="fullHeight">
         <app-drawer-layout fullbleed style$="{{_computeHeaderLayoutStyle(options)}}">
           
           <app-header-layout fullbleed>
             <app-header slot="header" reveals style$="{{_computeHeaderStyle(options)}}">
-              <app-toolbar id="mainToolbar" sticky class$='{{_computeDisplayNoneCssClass(isMobile)}}' style="">
+              <app-toolbar id="mainToolbar" sticky class$='{{_computeDisplayNoneCssClass(isMobile)}}'>
                 <paper-icon-button icon="menu" hidden="{{!isMobile}}" drawer-toggle></paper-icon-button>
-                <div hidden="{{!options.showLogo}}"><iron-image sizing="contain" class="logo-system" src="{{options.logoSystem}}"></iron-image></div>
+                <!-- <div hidden="{{!options.showLogo}}"></div> -->
+                <iron-image sizing="contain" class="logo-system" src="./app/src/ew-home/img/logo_ewidgets.png"></iron-image>
                 
-                <paper-tabs id="tabPages" selected="{{selectedPage}}" class="bottom self-end" hidden="{{!showTabsAndSettings}}">
+                <paper-tabs id="tabPages" selected="{{selectedPage}}" class="bottom self-end">
                   <template is="dom-repeat" items="{{params.pages}}">
                       <paper-tab data-page="{{item.id}}"><iron-icon icon="{{item.icon}}"></iron-icon><div class='pageName'>{{item.name}}</div></paper-tab>
                   </template>
@@ -179,42 +181,24 @@ Elements Widgets - Home Screen
 
                 <div main-title></div>
 
-                <div style="{{_computeButtonsStyle(chatVisible)}}">
-                <paper-button id="fabAdd" class="fabButton" style$="{{showAddButtonStyle}}" hidden="{{isMobile}}" on-tap="openAddWidgets"></iron-icon>Widgets</paper-button>
-                <paper-button id="fabNews" class="fabButton" style$="{{showAddButtonStyle}}" hidden="{{hideNews}}" on-tap="openNewsVersion">{{newsButtonTitle}}</paper-button>
-                <paper-icon-button id="fabEdit" icon="create" class="fab-edit" on-tap="editWidgets" style="{{showEditButtonStyle}}">Editar</paper-icon-button>
+                <div>
+                  <paper-button id="fabAdd" class="fabButton" style$="{{showAddButtonStyle}}" hidden="{{isMobile}}" on-tap="openAddWidgets"></iron-icon>Widgets</paper-button>
+                  <paper-button id="fabNews" class="fabButton" style$="{{showAddButtonStyle}}" hidden="{{hideNews}}" on-tap="openNewsVersion">{{newsButtonTitle}}</paper-button>
+                  <paper-icon-button id="fabEdit" icon="create" class="fab-edit" on-tap="editWidgets" style="{{showEditButtonStyle}}">Editar</paper-icon-button>
+                  <paper-icon-button id="settingsButton" icon="settings" class="fab-settings"  on-tap="openSettings"></paper-icon-button>
+                  <paper-icon-button id="fabLogout" icon="icons:exit-to-app" class="fab-exit" on-tap="logout" hidden="{{options.builtIn}}"></paper-icon-button>
 
-                <!-- <div style="background: url('./src/ew-home/img/novo.png');     
-                    width: 40px;
-                    height: 20px;
-                    background-size: 30px 18px;
-                    background-repeat: no-repeat;
-                    position:absolute;    
-                    right: 90px;
-                    z-index: 100;
-                    top: 3px;"></div> -->
-                <!-- <paper-icon-button id="chatButton" icon="communication:forum" class="fab-edit" style="{{showChatButtonStyle}}" on-tap="chatToggle" hidden="{{!showTabsAndSettings}}">
-                    
-                </paper-icon-button> -->
-                
-                
-                <!-- <paper-icon-button id="chatButton" icon="communication:forum" class="fab-edit" style="{{showChatButtonStyle}}" on-tap="chatToggle" hidden="{{!showTabsAndSettings}}"></paper-icon-button> -->
-
-                <paper-icon-button id="settingsButton" icon="settings" class="fab-settings"  on-tap="openSettings" hidden="{{!showTabsAndSettings}}"></paper-icon-button>
-                <paper-icon-button id="fabLogout" icon="icons:exit-to-app" class="fab-exit" on-tap="logout" hidden="{{options.builtIn}}"></paper-icon-button>
-
-                <paper-tooltip for="fabAdd">Adicionar Widgets</paper-tooltip>
-                <paper-tooltip for="fabEdit">Editar Widgets</paper-tooltip>
-                <paper-tooltip for="settingsButton">Preferências</paper-tooltip>
-                <paper-tooltip for="fabLogout">Sair do Sistema</paper-tooltip>
+                  <paper-tooltip for="fabAdd">Adicionar Widgets</paper-tooltip>
+                  <paper-tooltip for="fabEdit">Editar Widgets</paper-tooltip>
+                  <paper-tooltip for="settingsButton">Preferências</paper-tooltip>
+                  <paper-tooltip for="fabLogout">Sair do Sistema</paper-tooltip>
                 </div>
-
                 <paper-progress id="loadingProgressBar" disabled="{{!isLoading}}" hidden="{{!isLoading}}" indeterminate bottom-item></paper-progress>
               </app-toolbar>
             </app-header>
             <iron-pages id="pagesMobile" class="flex pages fullHeight" selected="{{selectedMobilePage}}" style$="{{_computeIronPagesLayoutStyle(options)}}">
               <div class="pages fullHeight">
-                <iron-pages id="pages" class="flex pages fullHeight" style="{{_computePagesStyle(chatVisible)}}" selected="{{selectedPage}}">
+                <iron-pages id="pages" class="flex pages fullHeight" selected="{{selectedPage}}">
                   <template is="dom-repeat" items="{{params.pages}}">
                     <div page={{item.id}} class="column-holder">
                       <div id="page{{item.id}}" class$="{{_computeClassColumHolder(item)}}"> 
@@ -232,7 +216,6 @@ Elements Widgets - Home Screen
       </div>
     </div>
     <div id="backgroundTasks"></div>
-    <!-- <ew-expresso-messenger id="expressoIM"></ew-expresso-messenger> -->
 
     <ew-column-dialog is-mobile="{{isMobile}}"></ew-column-dialog>         
     <ew-confirm-dialog></ew-confirm-dialog>
@@ -247,7 +230,6 @@ Elements Widgets - Home Screen
       listeners: {
         'ew-show-message' : 'showMessage',
         'ew-column-added' : 'usedColumnsChanged',
-        // 'user-logged-in' : 'userLoggedIn',
         'ew-settings-column-saved' : 'setSettingsColumn',
         'ew-global-settings-save' : 'globalSettingsSave',
         'ew-register-background-task' : 'registerBackgroundTask',
@@ -345,11 +327,6 @@ Elements Widgets - Home Screen
           reflectToAttribute: false,
           notify: true
         }, 
-        showTabsAndSettings: {
-          type: Boolean,
-          value: true,
-          computed: '_showTabsAndSettings(usedColumns,isMobile)',
-        },
         messageToast: {
           type: String,
           value: ''
@@ -398,21 +375,9 @@ Elements Widgets - Home Screen
           notify: true,
           reflectToAttribute: true
         },
-        chatVisible: {
-          type: Boolean,
-          value: false,
-          reflectToAttribute: true,
-          notify: true
-        },
-        chatEnabled: {
-          type: Boolean,
-          value: true,
-          reflectToAttribute: true,
-          notify: true
-        },
         backgroundCssClass: { type: String, notify: true },
         showEditButtonStyle: { type: String, notify: true, computed: "_computeShowEditButton(usedColumns,isMobile,editMode,selectedPage)" },
-        showChatButtonStyle: { type: String, notify: true, computed: "_computeShowChatButton(isMobile,chatEnabled,chatVisible)" },
+        // showChatButtonStyle: { type: String, notify: true, computed: "_computeShowChatButton(isMobile,chatEnabled,chatVisible)" },
         showAddButtonStyle: { type: String, notify: true },
         backgroundTasks: {
           type: Array,
@@ -428,11 +393,6 @@ Elements Widgets - Home Screen
             return document.body;
           }
         },
-        loadedThemes: {
-          type: Array,
-          value: [],
-          notify: true,
-        },
 
       },
 
@@ -442,7 +402,6 @@ Elements Widgets - Home Screen
       */
       ready: function() {
         this.log('ew-home.ready');    
-
         ewidgets.debug = this.debug;   
 
         // listen for online/offline
@@ -455,64 +414,29 @@ Elements Widgets - Home Screen
         this.$.optionsLocalStorage.reload();
         this.$.expressoLocalStorage.reload();
 
-        // if (this.options != undefined) {
-        //   if (this.options.top) {
-        //     $('#widgetsApp').css('height','calc(100%)');
-        //   } 
-        // }
-
-        // this.$.drawerMessenger.close();
-
-        // console.warn(this.chatVisible);
-
         this._checkNavigator();
 
-        this.finishedLoadingWebComponents();
-
-        // this.lazyLoadComponents();
-      }, 
-
-      // lazyLoadComponents: function() {
-        // this.async(function() {
-        //   var _components = ["./app/src/ew-home/bundle-2.html"];
-        //   ewidgets.importLazyWidgets(_components);
-        // } ,3000);
-      // },
-
-      finishedLoadingWebComponents: function() {
-        this.log('ew-home.finishedLoadingWebComponents');
         this.$.expressoLocalStorage.reload();
-        // console.warn(this.loginResponse);
-        // this.log(this.loginResponse);
-
+        
         if (this.loginResponse != undefined) {
           if (this.loginResponse.auth != "") {
 
               this.isLogged = true;
               var is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
              
-              //   if (!is_chrome) {
-                 this.userLoggedIn({ detail: { auth: this.loginResponse.auth, profile: this.loginResponse.profile }});
-              //   }
+              this.userLoggedIn({ detail: { auth: this.loginResponse.auth, profile: this.loginResponse.profile }});
           }
         }
 
-      },
+      }, 
 
-      _computeButtonsStyle: function(chatVisible) {
-        if (chatVisible) {
-          return "margin-right: 260px;"
-        } else {
-          return "";
-        }
-      },
-      _computePagesStyle: function(chatVisible) {
-        if (chatVisible) {
-          return "width: calc(100% - 250px); -webkit-transition: right 0.5s; transition: right 0.5s;"
-        } else {
-          return "";
-        }
-      },
+      // _computePagesStyle: function(chatVisible) {
+      //   if (chatVisible) {
+      //     return "width: calc(100% - 250px); -webkit-transition: right 0.5s; transition: right 0.5s;"
+      //   } else {
+      //     return "";
+      //   }
+      // },
       _loginResponseChanged: function(_data) {
         
         if (this.isLogged == false) {
@@ -535,15 +459,7 @@ Elements Widgets - Home Screen
         this.$.ajaxGetUserData.generateRequest();
         this.loadedPages = [];
 
-        // this.$.drawer.fire('resize');
         this._checkNavigator();
-
-        // this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
-
-        if (!this.isMobile) {
-          // this.$.expressoIM.autoStart(event.detail.auth);
-        }
-
       },
 
       logout: function() {
@@ -552,22 +468,14 @@ Elements Widgets - Home Screen
         if (this.isLogged) {
        
           if (this.options.builtIn) {
-            //this.isLogged = false;
             window.localStorage.clear();
             window.location.reload();
             this.showMessage({detail: { message: 'Sua sessão expirou!'} });
           } else {
 
-              // if (this.isMobile) {
-              //   if (this.enabledMessenger) {
-              //     this.hasLoadedMessenger = false;
-              //     jsxc.xmpp.logout();
-              //   }
-              // }
               this.selectedPage = 0;
               this.loadedPages = [];
               this.packerys = [];
-              //this.isLogged = false;
               this.loginResponse = { "auth" : "" };
               this._initializeDefaultGlobalParams();
               var _tempOtions = this.options;
@@ -578,18 +486,17 @@ Elements Widgets - Home Screen
               this.clearColumns();
               this.clearBackgroundTasks();
 
-              
-              
               window.localStorage.clear();
-              window.location.href = '/Logout';
+
+              window.open('http://cidadao-cs.desenvolvimento.celepar.parana/centralcidadao/signout');
+
+              window.location.href = './';
+              // window.location.href = '/Logout';
 
           }
           
            /**/
         }
-      },
-      removeLoading: function(){ 
-        // document.body.classList.remove('loading');
       },
 
       /*
@@ -598,30 +505,17 @@ Elements Widgets - Home Screen
       _initializeDefaultOptions: function() {
         this.log('ew-home._initializeDefaultOptions');
         this.options = {}; 
-        this.options.builtIn = false; 
-        this.options.showLogo = true; 
-        this.options.logoSystem = "./img/logo_expresso.png"; 
-        this.options.top = 0; 
-      },
-      _initializeDefaultExpresso: function() {
-        this.log('ew-home._initializeDefaultExpresso');
-        this.loginResponse = { auth: "" };
+        this.options.builtIn = false;
+        this.options.top = 30; 
       },
       _initializeDefaultGlobalParams: function() {
         this.log('ew-home._initializeDefaultGlobalParams');
 
         this.params = {
           "forcePageReload" : false,
-          "showBackgroundImage":true, 
-          "showExpressoBanner" : true,
-          "backgroundImageUrl":"./app/src/ew-home/img/wallpapers/bg_16.jpg",
+          "wallpaper":"./app/src/ew-home/img/wallpapers/33.jpg",
           "theme":"celepar-theme",
-          "pages":[{"id":0,"name":"Página 1","icon":"icons:view-quilt"}],
-          "backgroundImageSource":"0",
-          "backgroundImageCategory":2,
-          "backgroundImageChange":"always",
-          "backgroundImageUrlComputed":"./app/src/ew-home/img/wallpapers/bg_16.jpg",
-          "wallpaper":"bg_16.jpg",
+          "pages":[{"id":0,"name":"Página 1","icon":"icons:view-quilt"}]
         };
 
       },
@@ -662,22 +556,7 @@ Elements Widgets - Home Screen
         }
         return retVal;
       },
-      // _computeClassNotifications: function(notificationsHidden) {
-      //   if (notificationsHidden) {
-      //     return 'animated flipInY displayNone'; 
-      //   } else {
-      //     return 'animated flipInY';
-      //   }
-      // },
-      _computeHomeWidgetsStyle : function(options) {
-        var cssClass =  " ";
-        if (options) {
-          if (options.top != 0) {
-            cssClass = ' top:' + options.top + 'px; width: 100%;';
-          }
-        }
-        return cssClass;
-      },
+
       _computeIronPagesLayoutStyle: function(options) {
         var cssClass =  " ";
         if (options) {
@@ -712,27 +591,8 @@ Elements Widgets - Home Screen
         }
         return cssClass;
       },
-      _computeShowChatButton: function(_isMobile,_chatEnabled,_chatVisible) {
-        var retColor = '';
-        if (_isMobile) {
-          return 'display: none;';
-        } else {
-          if (!_chatEnabled) {
-            return 'display: none;';
-          } else {
-            if (_chatVisible) {
-              return 'color: #F60;';
-            } else {
-              return '';
-            }
-          }
-        }
-      },
       _computeShowEditButton: function(usedColumns,_isMobile,editMode,_selectedPage) {
         var retColor = '';
-        // if (_selectedPage == 0) {
-        //   return 'display: none;';
-        // } else {
           if (_isMobile) {
             return 'display: none;';
           } else {
@@ -750,23 +610,12 @@ Elements Widgets - Home Screen
               return 'display: none;';
             }
           }
-        // }
       },
       _computeClassColumHolder: function(page) { 
         return 'column-holder  column-page' +  page.id;
       },
       _computeClassGridSizer: function(page) { 
         return 'grid-sizer grid-page' +  page.id;
-      },
-      _getBackgroundImageCategory: function(categoryID) {
-        var retVal = "nature";
-        if (categoryID == 0) { retVal = "buildings"; }
-        if (categoryID == 1) { retVal = "food"; }
-        if (categoryID == 2) { retVal = "nature"; }
-        if (categoryID == 3) { retVal = "people"; }
-        if (categoryID == 4) { retVal = "technology"; }
-        if (categoryID == 5) { retVal = "objects"; }
-        return retVal;
       },
       _computeBackgroundCssClass: function(newvalue) {
         this.log('ew-home._computeBackgroundCssClass');
@@ -782,17 +631,6 @@ Elements Widgets - Home Screen
           return retVal;
         }
       },
-      _showTabsAndSettings: function(usedColumns,isMobile) {
-        var retVal = true;
-        // if (this.hasUsedColumns(usedColumns) == 0) {
-        //   retVal = false;
-        // } 
-        // if (isMobile) {
-        //   retVal = false;
-        // }
-        // this.log('ew-home._showTabsAndSettings:' + retVal);
-        return retVal;
-      },
 
       /* CHECK NAVIGATOR */
       _checkNavigator: function() {
@@ -806,9 +644,7 @@ Elements Widgets - Home Screen
         var is_opera = navigator.userAgent.toLowerCase().indexOf("op") > -1;
         if ((is_chrome)&&(is_safari)) {is_safari=false;}
         if ((is_chrome)&&(is_opera)) {is_chrome=false;}
-        // if ((is_safari) && (is_iphone)) {
-        //   // $('#widgetsApp').css('height','calc(100% - 150px)'); 
-        // }
+        
         if (this.options != undefined) {
           if (this.options.forceMobile != undefined) {
             if (this.options.forceMobile == true) {
@@ -819,15 +655,7 @@ Elements Widgets - Home Screen
             this._mobileMode(true);
           } else {
             if ((is_chrome) || (is_safari)) {
-              if (!this.options.builtIn) {
                 $('#widgetsApp').css('height','calc(100%)');
-
-                
-              } else {
-                // document.getElementById('calendarid').src = './api/rest/Icon?id=6';
-                // document.getElementById('contactcenterid').src = './api/rest/Icon?id=5';
-                // document.getElementById('expressoMail12id').src = './bower_components/ew-home/img/icon-57.png';
-              }
             }
           }
         }
@@ -962,9 +790,7 @@ Elements Widgets - Home Screen
           if (this.$.backgroundTasks != undefined) {
             this.$.backgroundTasks.append(el);
           }
-          
-          // $('* /deep/ #backgroundTasks')[0].append(el);
-          // document.getElementById('body /deep/ #backgroundTasks').append(el);
+
         }
         
       },
@@ -979,9 +805,6 @@ Elements Widgets - Home Screen
       */
       openAddWidgets: function() {
         this.log('ew-home.openAddWidgets');
-        // if (this.selectedPage == 0) {
-        //   this.selectedPage = 1;
-        // }
         if (this.editMode) {
           this.editWidgets();
         }
@@ -992,68 +815,7 @@ Elements Widgets - Home Screen
         this.log('ew-home.openSettings');
         this.ew_showColumnDialog('ew-list-view', { route: "./api/Home/Settings" } );
       },
-
-      chatWithContacts: function() {
-
-        var that = this;
-        var onDialogClosed = function(event) {
-        if (!event.canceled) {
-            // console.log(event.returnData);
-            for (var i in event.returnData.selectedItems) {
-              var contact = event.returnData.selectedItems[i];
-              console.log(contact);
-              var contactID = decodeURIComponent(contact.hiddenValue);
-              contactID = contactID.split(',')[0].split('uid=')[1];
-
-              var usuario = contactID + '@im.pr.gov.br';
-              
-              that.ew_showMessage("Enviada solicitação para adicionar: " + usuario);
-              that.chatWith(usuario,contact.title);
-              // that.addRecipient(contact.email,contact.title);
-            }
-        }
-        };
-
-        this.ew_showColumnDialog('ew-list-view',{
-        route: './api/rest/ew-expresso-catalog/Contacts',
-        enableSelection: true, 
-        enableMultiSelection: true, 
-        enablePersonal: false, 
-        search: '',
-        searchEnabled: true,
-        } ,onDialogClosed);
-      },
-
-      chatToggle: function() {
-        this.chatVisible = !this.chatVisible;
-        var that = this;
-        var _callBack = function() {
-          if (that.chatVisible) {
-            jsxc.gui.roster.toggle('shown');
-          } else {
-            jsxc.gui.roster.toggle('hidden');
-          }
-        }
-        
-        this.$.expressoIM.load(this.loginResponse.auth,_callBack);
-        
-      },
-
-      chatWith: function(userBID,userName) {
-        var that = this;
-        var _callBackOnLoadJSXC = function() { 
-            if (jsxc != undefined) {
-                jsxc.xmpp.addBuddy(userBID,userName); 
-                setTimeout(function() {
-                    jsxc.gui.window.open(userBID);
-                } ,1500);
-            } else {
-                that.ew_showMessage('Você não está conectado ao Messenger!');
-            }
-        } 
-        this.$.expressoIM.load(this.loginResponse.auth,_callBackOnLoadJSXC);
-      },
-      
+            
       openNewsVersion: function() {
         var onClosed = function() { };
         var _newVersionParams = { route: "./api/Home/News" };
@@ -1076,18 +838,13 @@ Elements Widgets - Home Screen
         var selItem = e.detail.params;
         // console.log(selItem);
 
-        // if (ewidgets.selectedPage == 0) {
-        //   ewidgets.selectedPage = 1;
-        //   this.selectedPage = 1;
-        // }
-
         var _multiColumn = false;
         if (selItem.element == 'ew-expresso-mail') {
           _multiColumn = true;
         }
         var config = { 
             class: 'EWColumn',
-            widgetTitle: selItem.widgetTitle,
+            name: selItem.name,
             widgetId: selItem.id,
             description: selItem.description,
             width: selItem.width,
@@ -1111,8 +868,6 @@ Elements Widgets - Home Screen
             ewidgets.ewHome.editWidgets();
           }           
         }
-
-
 
         columnWidget.page = ewidgets.selectedPage;
         columnWidget.pageid = 'page' + ewidgets.selectedPage;
@@ -1280,9 +1035,9 @@ Elements Widgets - Home Screen
             if (globalParams.removed.length) {
               for (var i = 0; i < globalParams.removed.length; i++) {
                 var tempColumn = globalParams.removed[i];
-                var msgShow = 'O Widget "' + tempColumn.widgetTitle + '" foi removido da sua página pela administração.';
+                var msgShow = 'O Widget "' + tempColumn.name + '" foi removido da sua página pela administração.';
                 var _onConfirmed = function() {
-   
+  
                 };
                 this.ew_showDialog('Widget Removido',msgShow,_onConfirmed,'OK','');
               }
@@ -1346,38 +1101,11 @@ Elements Widgets - Home Screen
 
         }
       },
-      checkPage: function(event) {
-        if (this.params.pages != undefined) {
-          if (this.params.pages.length == 1) {
-            var that = this;
-            var title = 'Você sabia que pode adicionar mais páginas?';
-            var message = 'Você pode organizar seus widgets em diferentes páginas, Deseja adicionar mais páginas agora?';
-            var onConfirmed = function(event) {
-              if (event.confirmed) {
-                that.ew_showColumnDialog('ew-settings-page-editor',that.params);
-              } 
-            };
-            this.ew_showDialog(title,message,onConfirmed,'SIM','NÃO'); 
-          }
-        }
-      },
       selectPage: function(_page) {
         if (this.isLogged) {
 
-          // console.log(event.detail);
-          // console.log(this.selectedPage);
-
-          // console.log(event.detail.item.dataset.page);
-
           ewidgets.selectedPage = _page;
 
-          // this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
-        
-          // if (event.detail.item.page == undefined) {
-          //   ewidgets.selectedPage = this.selectedPage;
-          // } else {
-          //   ewidgets.selectedPage = event.detail.item.page;
-          // }
           this.log('ew-home.selectPage:' + ewidgets.selectedPage);
           this.$.usedColumnsLocalStorage.save();
           this.$.usedColumnsLocalStorage.reload();
@@ -1388,7 +1116,6 @@ Elements Widgets - Home Screen
               this.push('loadedPages',ewidgets.selectedPage);
             }
           }
-
           this.layoutSelectedPage();
         }
 
@@ -1413,7 +1140,6 @@ Elements Widgets - Home Screen
       },
       changeParams: function(event) {
         this.params = event.detail;
-        // this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
       },
       setSettingsColumn: function (e) {
         this.log('ew-home.setSettingsColumn:');
@@ -1454,27 +1180,13 @@ Elements Widgets - Home Screen
           'globalParams': this.params,  
         };
 
-        // console.log(userData);
-
         _params.userData = this._escapeJSON(JSON.stringify(userData));
-        // _params.userData = JSON.stringify(userData);
 
         Polymer.dom(this.$.snackBar).innerHTML = 'Salvando preferências...';
         this.$.snackBar.open();
 
         this.paramsSettings = _params;
         this.$.ajaxSettings.generateRequest();
-      },
-      /*
-        LOAD ANIMATIONS
-      */
-      loadAnimations: function(themeName) {
-        this.log('ew-home.loadAnimations');
-        // var cssImport = document.createElement("link");
-        // cssImport.id = "animationLoader";
-        // cssImport.rel = "stylesheet";
-        // cssImport.href = "./src/ew-home/css/animate.css";
-        // document.head.appendChild(cssImport);
       },
       /*
         LOAD THEME
@@ -1492,11 +1204,6 @@ Elements Widgets - Home Screen
         } else {
           cssImport.href = "./app/bower_components/polymer-themes/" + themeName + ".html";
         }
-        if (this.loadedThemes.indexOf(themeName) >= 0) {
-          this.forcePageReload = true;
-          this.themeAlreadyLoaded = true;
-        }
-        this.push('loadedThemes',themeName);
         document.head.appendChild(cssImport);
 
       },
@@ -1554,20 +1261,12 @@ Elements Widgets - Home Screen
               } else {
                 this.$.mobileView.element = 'ew-list-view';
               }  
-              if ((this.params.showAnimations == undefined) || (this.params.showAnimations == true) ){
-                this.loadAnimations();
-              }
 
               this.loadTheme(this.params.theme);
               this.setupSaveSettings();
-              
               this.$.mobileView.render();
 
             } else {
-
-              if ((this.params.showAnimations == undefined) || (this.params.showAnimations == true) ){
-                this.loadAnimations();
-              }
 
               this.loadTheme(this.params.theme);
               this.changeParams({ detail: this.params });
@@ -1575,7 +1274,6 @@ Elements Widgets - Home Screen
               this.setupSaveSettings();
 
               this.backgroundCssClass = this._computeBackgroundCssClass(this.params);
-              // this.adjustResolution();
             }
           }
         } 
@@ -1602,7 +1300,7 @@ Elements Widgets - Home Screen
             this.set('isDatabaseConnected',false);
             
           } else {
-            console.warn(retVal);
+            // console.warn(retVal);
             this.widgets = retVal;
             if (retVal.RELEASE_SHOWNEWS == "1")   {
               this.newsButtonTitle = retVal.RELEASE_BUTTON_TITLE;
@@ -1638,8 +1336,6 @@ Elements Widgets - Home Screen
 
       },
       windowResized: function() {
-        this.chatVisible = !this.chatVisible;
-        this.chatVisible = !this.chatVisible;
         this.notifyResize();
       },
       showMessage: function(event) {

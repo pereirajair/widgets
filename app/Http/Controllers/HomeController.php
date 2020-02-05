@@ -186,13 +186,13 @@ class HomeController extends WidgetController
                 unset($this->THEMES[$indexNewTheme]);
 
                 $view->addHeaderItem("Seu tema atual:");
-                $view->addImageItem($newTheme['image'],0,"150px","120px","contain",true,"margin-left: 30px;");
+                $view->addImageItem($newTheme['image'],0,"80px","80px","contain",true,"margin-left: 30px;");
             }
 
             $view->addHeaderItem("Escolha outro tema:");
             $item = new EWListViewItem();
             foreach ($this->THEMES as $image) {
-                $item->addActionButton("","ew_load",array("route" => $this->getParam("route"), "view" => "theme","send" => "1","nameTheme" => $image['name']),2,"","fabNone","",$image['image'],"160","120");
+                $item->addActionButton("","ew_load",array("route" => $this->getParam("route"), "view" => "theme","send" => "1","nameTheme" => $image['name']),2,"","fabNone","",$image['image'],"80","80");
             }
 
             $view->addItem($item->getItem());

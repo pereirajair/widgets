@@ -397,7 +397,7 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
                   <iron-image class="imageAvatar" src="{{item.image}}" width="{{item.imageWidth}}" height="{{item.imageHeight}}" sizing="{{item.imageSizing}}" slot="item-icon" item-icon></iron-image>
                 </template>
                 <template is="dom-if" if="{{item.email}}">
-                  <ew-expresso-catalog-contact-picture id="contactPhoto_{{item.id}}" class$="{{_computePictureCssClass(item)}}" item="{{item}}" letter="[[item.title.0]]" email="{{item.email}}" selected="{{item.selected}}" on-tap="_toggleItem"  multi-selection="{{multiSelection}}" on-transitionend="_eatEvent" local-photos="{{localPhotos}}" small="{{_computeSmallPicture(item)}}" slot="item-icon" item-icon></ew-expresso-catalog-contact-picture>
+                  <ew-contact-picture id="contactPhoto_{{item.id}}" class$="{{_computePictureCssClass(item)}}" item="{{item}}" letter="[[item.title.0]]" email="{{item.email}}" selected="{{item.selected}}" on-tap="_toggleItem"  multi-selection="{{multiSelection}}" on-transitionend="_eatEvent" local-photos="{{localPhotos}}" small="{{_computeSmallPicture(item)}}" slot="item-icon" item-icon></ew-contact-picture>
                 </template>
                 <paper-checkbox class="styled" checked="{{item.toggleEnabled}}" on-tap="_toggleItem" hidden="{{!item.toggle}}" style='position: absolute; right: 50px;'></paper-checkbox>
                 <paper-item-body two-line class$="{{item.itemCssClass}}">
@@ -637,7 +637,7 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
                 <!-- PICTURE -->
                 <template is="dom-if" if="{{item.email}}">
                   <div class="avatar_content">
-                    <ew-expresso-catalog-contact-picture class$="{{_computePictureCssClass(item)}}" item="{{item}}" letter="[[item.title.0]]" email="{{item.email}}" selected="{{item.selected}}" on-tap="_toggleItem"  multi-selection="{{multiSelection}}" on-transitionend="_eatEvent" local-photos="{{localPhotos}}" big={{_computeBigPicture(item)}} small="{{_computeSmallPicture(item)}}" slot="item-icon" item-icon></ew-expresso-catalog-contact-picture>
+                    <ew-contact-picture class$="{{_computePictureCssClass(item)}}" item="{{item}}" letter="[[item.title.0]]" email="{{item.email}}" selected="{{item.selected}}" on-tap="_toggleItem"  multi-selection="{{multiSelection}}" on-transitionend="_eatEvent" local-photos="{{localPhotos}}" big={{_computeBigPicture(item)}} small="{{_computeSmallPicture(item)}}" slot="item-icon" item-icon></ew-contact-picture>
                   </div>
                 </template>
             </template>

@@ -270,7 +270,7 @@ class WidgetController extends Controller {
 
 	public function requestRouteUserName($view) {
 		$route = $this->getCurrentRoute(); 
-		$view->runAction("ew-list-view",array("route" => $this->getRouteForClass("Admin\Login@load"), "routeID" => $route['id']),true);
+		$view->runAction("ew_load",array("route" => $this->getRouteForClass("Admin\Login@load"), "routeID" => $route['id']),true);
 	}
 
 

@@ -34,12 +34,7 @@ Elemento utilizado para executar um metodo da API por ajax.
 
 -->
 <dom-module id="ew-api-ajax">
-    <template>
-      <style></style>
-      <!-- <iron-localstorage id="expressoLocalStorage" name="expresso"
-          value="{{_expresso}}" on-iron-localstorage-load-empty="_initializeDefaultExpresso">
-      </iron-localstorage> -->
-    </template>
+    <template></template>
     <script>
       Polymer({
         is: 'ew-api-ajax',
@@ -285,28 +280,9 @@ Elemento utilizado para executar um metodo da API por ajax.
           if ((_expresso == undefined) || (_expresso == null)) {
             _expresso = this._initializeDefaultExpresso();
           }
-          // console.error(_expresso);
           this._expresso = _expresso;
-          // this.$.expressoLocalStorage.reload();
           if (this._expresso != undefined) {
-  
             _params.auth = this._expresso.auth;
-            // _params.auth = _auth;
-            // console.warn(_params);
-  
-            if ((this._expresso != null) && (this._expresso != undefined)) {
-              if ((this._expresso.externalAPI != '') && (this._expresso.externalAPI != undefined)) {
-                _params.externalAPI = this._expresso.externalAPI;
-              }
-              if ((this._expresso.profile != '') && (this._expresso.profile != undefined)) {
-                if (this._expresso.profile[0] != undefined) {
-                  if (this._expresso.profile[0].contactUIDNumber != undefined) {
-                    _params.user_id = this._expresso.profile[0].contactUIDNumber;
-                  }
-                }
-                
-              }
-            }
   
           }
   
