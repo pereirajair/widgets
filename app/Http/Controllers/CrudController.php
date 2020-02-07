@@ -26,12 +26,19 @@ class CrudController extends WidgetController
 		// 	$where = array_merge($this->WHERE,array($this->PRIMARY_KEY => $id));
         // }
         
-        $response = DB::table($this->TABLE_NAME)->select("*");
+		$response = DB::table($this->TABLE_NAME)->select("*");
+		
+		
         // $response = $response->orderBy($this->ORDER_BY);
         if ($id != '') {
             $response = $response->where($this->PRIMARY_KEY,$id);
             return $response->get()->first();
         } else {
+			if (isset($this->SECONDARY_KEY)) {
+				if ($this->SECONDARY_KEY != "") {
+					$response->where($this->SECONDARY_KEY,'=',$this->getParam($this->SECONDARY_KEY));
+				}
+			}
             return $response->get();
         }
         
@@ -58,7 +65,12 @@ class CrudController extends WidgetController
 			$widget['route'] = $this->ROUTE;
 			// $widget['table'] = $this->getParam("table");
             $widget['action'] = 'form';
-            $widget[$this->PRIMARY_KEY] = $itemValue[$this->PRIMARY_KEY];
+			$widget[$this->PRIMARY_KEY] = $itemValue[$this->PRIMARY_KEY];
+			if (isset($this->SECONDARY_KEY)) {
+				if ($this->SECONDARY_KEY != '') {
+					$widget[$this->SECONDARY_KEY] = $itemValue[$this->SECONDARY_KEY];
+				}
+			}	
 			// $widget['tabIcon'] = "create";
 			// $widget['tabID'] = 'edit_' . $this->getParam("table") . "_" . $widget[$this->PRIMARY_KEY];
 			// $widget['tabTitle'] = "Editar";
@@ -81,8 +93,12 @@ class CrudController extends WidgetController
 			}
 		}
 
-		$view->setFab("icons:add","Adicionar","ew-list-view",array("route" => $this->ROUTE, $this->PRIMARY_KEY => "", "action" => "form", "table" => $this->getParam("table"),"tabID" => "create_" . $this->getParam("table"), "tabTitle" => "Adicionar", "tabIcon" => "icons:add"));
-		$view->hideFab(false);
+		if (isset($this->SECONDARY_KEY)) {
+			$paramsToAdd = array("route" => $this->ROUTE, $this->PRIMARY_KEY => "", $this->SECONDARY_KEY => $this->getParam($this->SECONDARY_KEY), "action" => "form", "table" => $this->getParam("table"),"tabID" => "create_" . $this->getParam("table"), "tabTitle" => "Adicionar", "tabIcon" => "icons:add");	
+		} else {
+			$paramsToAdd = array("route" => $this->ROUTE, $this->PRIMARY_KEY => "", "action" => "form", "table" => $this->getParam("table"),"tabID" => "create_" . $this->getParam("table"), "tabTitle" => "Adicionar", "tabIcon" => "icons:add");
+		}
+		$view->setFab("icons:add","Adicionar","ew-list-view",$paramsToAdd);
 
 		return $view;
 	}
@@ -108,10 +124,16 @@ class CrudController extends WidgetController
 			if ($field['type'] == "textarea") {
 				$view->addTextAreaInput($field['name'],$field['title'],$value,$field['required']);	
 			}
+			if ($field['type'] == "texthtml") {
+				$view->addTextHTMLEditorInput($field['name'],$value);	
+			}
 			if ($field['type'] == "combo") {
 				$view->addPaperDropDownMenu($field['name'],$field['title'],$value,$field['options'],$field['required'],"","");
 			} 
 			if ($field['type'] == "hidden") {
+				if (isset($field['value'])) {
+					$value = $field['value'];
+				}
 				$view->addHiddenInput($field['name'],$value);	
 			}
 			if ($field['type'] == "file") {
@@ -278,7 +300,12 @@ class CrudController extends WidgetController
 			if ($has_files) {
 				$data[$file_fieldname] = $b64_content;
 			}
-			$result = $this->db_insert($this->TABLE_NAME, $data, array(), $this->EXCLUDE_FIELDS);
+			$dataToSave = $data;
+			foreach ($this->EXCLUDE_FIELDS as $field) {
+				unset($dataToSave[$field]);
+			}
+			DB::table($this->TABLE_NAME)->insert($dataToSave);
+			// $result = $this->db_insert($this->TABLE_NAME, $data, array(), $this->EXCLUDE_FIELDS);
 			
 		} else {
 			$data = $this->getDataFromDbFields($data);
@@ -367,7 +394,7 @@ class CrudController extends WidgetController
         // {   
         // 	if ($this->isAdmin()) {
 
-				$table = $this->getParam("table");
+				// $table = $this->getParam("table");
 				$action = $this->getParam('action');
 				
 				$this->WHERE = array();
@@ -400,7 +427,7 @@ class CrudController extends WidgetController
 						$view = $this->getAllWidgets();
 						break;
 				}
-				$view->addHiddenInput("table",$table);	
+				// $view->addHiddenInput("table",$table);	
         // 	}
 		// }
 		return response()->json($view);

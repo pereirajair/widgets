@@ -139,9 +139,9 @@
           </button> -->
           <slot name="sufix"></slot>
         </div>
-        <iframe id="editorBodyIframe" contenteditable="true" height="100%" width="100%" frameborder="0" scrolling="no" on-load="_editorBodyChanged"></iframe>
-        <!-- <div id="editorBody" contenteditable="true" on-keyup="_editorBodyChanged" on-click="_click"> -->
-        <!-- </div>  -->
+        <!-- <iframe id="editorBodyIframe" contenteditable="true" height="100%" width="100%" frameborder="0" scrolling="no" on-load="_editorBodyChanged"></iframe> -->
+        <div id="editorBody" contenteditable="true" on-keyup="_editorBodyChanged" on-click="_click">
+        </div> 
         <!-- <div id="bodyWordCount">[[_bodyWordCount(bodyText)]]</div> -->
       </div>
     </template>
@@ -159,14 +159,14 @@
             this.listen(element, 'tap', '_actionPressed');
           }, this);
 
-          ewidgets.editorBodyIframe = this.$.editorBodyIframe;
+          //ewidgets.editorBodyIframe = this.$.editorBodyIframe;
 
-          this.async(function () {
+          /*this.async(function () {
             function logKey(e) {
               ewidgets.editorBodyIframe.style.height = ewidgets.editorBodyIframe.contentWindow.document.body.scrollHeight + 'px';
             }
             ewidgets.editorBodyIframe.contentDocument.addEventListener('keydown', logKey);
-          },1500);
+          },1500); */
         },
         _actionPressed(event) {
           console.log(event);
@@ -174,21 +174,21 @@
           switch (action) {
             case 'link':
               const link = window.prompt('Inserir um link para a URL:');
-              if (link) this.$.editorBodyIframe.contentWindow.document.execCommand('createLink', false, link);
+              if (link) document.execCommand('createLink', false, link);
               break;
             case 'image':
               this._inputImageDialog();
               break;
             case 'clear-format':
-              this.$.editorBodyIframe.contentWindow.document.innerHTML = this.$.editorBodyIframe.contentWindow.document.innerText;
+              this.$.editorBody.innerHTML = this.$.editorBody.innerText;
               break;
             case 'h1':
             case 'h2':
             case 'p':
-              this.$.editorBodyIframe.contentWindow.document.execCommand('formatBlock', false, action);
+              document.execCommand('formatBlock', false, action);
               break;
             default:
-              this.$.editorBodyIframe.contentWindow.document.execCommand(action, false, null);
+              document.execCommand(action, false, null);
               break;
           }
           // this.editorBody.focus();
@@ -214,20 +214,22 @@
           // return false;
         },
         resizeIframe: function(e) {
-          this.$.editorBodyIframe.style.height = this.$.editorBodyIframe.contentWindow.document.body.scrollHeight + 'px';
+          // this.$.editorBodyIframe.style.height = this.$.editorBodyIframe.contentWindow.document.body.scrollHeight + 'px';
+          this.$.editorBody.style.height = this.$.editorBody.scrollHeight + 'px';
         },
         _editorBodyChanged(event) {
           console.log('changed');
           this.resizeIframe(this.$.editorBodyIframe);
         },
         setHTML(_html) {
-          this.$.editorBodyIframe.contentWindow.document.designMode = "on";
-          this.$.editorBodyIframe.contentWindow.document.body.innerHTML = _html;
+          // this.$.editorBodyIframe.contentWindow.document.designMode = "on";
+          // this.$.editorBodyIframe.contentWindow.document.body.innerHTML = _html;
+          this.$.editorBody.innerHTML = _html;
           this.resizeIframe();
         },
         get() {
-          return this.$.editorBodyIframe.contentWindow.document.body.innerHTML;
-          // return this.editorBody.innerHTML;
+          // return this.$.editorBodyIframe.contentWindow.document.body.innerHTML;
+          return this.$.editorBody.innerHTML;
         },
         reset() {
           this.set('editorBody.innerText', '');

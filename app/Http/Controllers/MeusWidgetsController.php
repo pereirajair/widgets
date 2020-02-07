@@ -27,33 +27,11 @@ class MeusWidgetsController extends WidgetController
 			if ($viewName == "links") 		 {	$view = $this->getLinksView(); $found = true; }
 			if ($viewName == "edit") 		 {	$view = $this->getEditView();  $found = true;  }
 			if ($viewName == "save") 		 {	$view = $this->getSaveView();  $found = true; }
-			// if ($viewName == "codediff")     {	$view = $this->getCodeDiffView(); $found = true; }
 			if ($viewName == "code") 		 {	$view = $this->getCodeView(); $found = true; }
 			if ($viewName == "publish") 	 {	$view = $this->getPublishView(); $found = true; }
 			if ($viewName == "send_publish") {	$view = $this->getSendPublishView(); $found = true; }
-			// if ($viewName == "info_review")  {	$view = $this->getInfoReviewView();	$found = true; }
 			if ($viewName == "admin_delete") 	 	 {	$view = $this->getAdminDeleteView();	}
 		}
-					
-			/*
-				if ($found == false) {
-
-					if ($this->checkRoles("EWIDGETS_ADMIN")) {
-						if ($viewName == "review") 	 	         {	$view = $this->getReviewView();			}
-						if ($viewName == "send_review")  		 {	$view = $this->getSendReviewView(); 	}
-						if ($viewName == "admin_review") 	 	 {	$view = $this->getAdminReviewView();	}
-						if ($viewName == "admin_database") 	 	 {	$view = $this->getAdminDatabaseView();	}
-						if ($viewName == "admin_send_review") 	 {	$view = $this->getAdminSendReviewView();	}
-						
-					} else {
-						$view = $this->getUnauthorizedView();
-					}
-				} 
-				*/
-
-			/*} else {
-				$view = $this->getUnauthorizedView();
-			}*/
 
 		$view->setBackgroundColor("amber");
 		$view->hideCode();
@@ -68,6 +46,7 @@ class MeusWidgetsController extends WidgetController
 
 		DB::table('routes')->delete($routeID);
 		DB::table('widgets')->delete($widgetID);
+		DB::table('config')->where('widget_id','=',$widgetID)->delete();
 
 		$view->runAction("ew_closeAndRefresh");
 		$view->runAction("ew_closeAndRefresh");
@@ -120,6 +99,15 @@ class MeusWidgetsController extends WidgetController
 			$routeID = $this->saveRoute("",$widgetData->route->url,$widgetData->route->class_method,$widgetData->route->code,$widgetData->route->groups_acl);
 			$widgetID = $this->saveWidget("",$widgetData->widget->name,$widgetData->widget->description,$widgetData->widget->icon,$widgetData->widget->width,$widgetData->widget->height,$routeID,$widgetData->widget->groups_acl);
 
+			if (isset($widgetData->config)) {
+				if (count($widgetData->config) != 0) {
+					foreach ($widgetData->config as $conf) {
+						DB::table('config')->insert(["name" => $conf->name, "value" => $conf->value, "widget_id" => $widgetID ]);
+					}
+					
+				}
+			}
+
 			return true;
 		}
 	}
@@ -130,9 +118,10 @@ class MeusWidgetsController extends WidgetController
 		} else {
 			$widget = DB::table('widgets')->where('id',$widgetID)->first();
 			$route  = DB::table('routes')->where('id',$widget->route_id)->first();
+			$config  = DB::table('config')->where('widget_id',$widgetID)->get();
 			$fileName = explode("@",$route->class_method)[0];
 
-			$data = $this->getExportInfo($widget,$route);
+			$data = $this->getExportInfo($widget,$route,$config);
 			$response = response($data, 200);
 			$response->header('Content-Type', 'application/json');
 			$response->header('Content-Disposition', 'attachment; filename="'. $fileName .'.json"');
@@ -141,7 +130,7 @@ class MeusWidgetsController extends WidgetController
 	}
 
 
-	public function getExportInfo($widget,$route) {
+	public function getExportInfo($widget,$route,$config) {
 		
 		$view = new EWListView("Exportar Widgets");
 
@@ -150,8 +139,12 @@ class MeusWidgetsController extends WidgetController
 			$sourceCodeOriginal = file_get_contents($fileName);
 			$route->code = base64_encode($sourceCodeOriginal);
 		}
+		$configs = array();
+		foreach ($config as $conf) {
+			array_push($configs,(array) $conf);
+		}
 
-		$exportInfo = json_encode(array("widget" => (array) $widget , "route" => (array) $route));
+		$exportInfo = json_encode(array("widget" => (array) $widget , "route" => (array) $route, "config" => (array) $configs));
 		return $exportInfo;
 	}
 
@@ -548,6 +541,10 @@ class ' . $nameSpace[1] . ' extends WidgetController {
 			if (Gate::allows('widgets-adm')) {
 				$view->addActionToolbarButton("delete", $this->action, $this->getRouteViewParams("admin_delete",$widgetID,$routeID));
 			}
+
+			$view->addActionToolbarButton("icons:receipt", $this->action, array( "route" => $this->getRouteForClass("Admin\WidgetPages@load"), "widget_id" => $widgetID));
+
+			$view->addActionToolbarButton("settings", $this->action, array( "route" => $this->getRouteForClass("Admin\Config@load"), "widget_id" => $widgetID));
 			
 			$requiredRoute = true;
 		}
@@ -671,21 +668,16 @@ class ' . $nameSpace[1] . ' extends WidgetController {
 		$URL_REDMINE = "https://redmine.expresso.celepar.parana/projects/ewidgets/repository";
 
 		$codeFiles = array(
-			"adapters/EWListView.php",
-		"adapters/EWListViewItem.php",
-		"adapters/BaseResource.php",
-		"demos/BitCoinV0.php",
-		"demos/BitCoinV1.php",
-		"demos/BitCoinV2.php",
-		"demos/BitCoinV3.php",
-		"demos/BitCoinV4.php",
+			"app/Utils/EWListView.php",
+		"app/Utils/EWListViewItem.php",
+		"app/Http/Controllers/WidgetController.php"
 	);
 
 		// $paramsRedmine = $this->getRedmineParams("issues");
 		$view->addHeaderItem("Widgets Úteis");
 		// $view->addPaperItemIcon("./api/rest/Icon?id=36","Redmine","Acompanhe as tarefas cadastradas no Redmine do projeto.",$this->action,$paramsRedmine);
 		// $view->addPaperItemImage("./api/rest/Icon?id=3","Documentação","Widget de Documentação.",$this->action,array("route" => "./api/rest/Docs"));
-		$view->addPaperItemIcon("./api/rest/Icon?id=29","Demonstração","Widget de Demonstração do ListView com códigos de exemplo.",$this->action,array("route" => "./api/rest/Demo"));
+		$view->addPaperItemIcon("","Demonstração","Widget de Demonstração do ListView com códigos de exemplo.",$this->action,array("route" => $this->getRouteForClass("Widgets\Demonstracao@load")));
 
 		$view->addHeaderItem("Código Fonte de Referência");
 		foreach ($codeFiles as $fileName) {
@@ -710,13 +702,13 @@ class ' . $nameSpace[1] . ' extends WidgetController {
 		$admin = false;
 
 		$data = DB::table('widgets AS w')
-			->join('routes AS r','r.id','=','w.route_id')
-			->select('w.*','r.url','r.class_method','r.code')
-			->where('w.enabled', true)
-			->where('w.groups_acl','!=','widgets-adm')
-			->orderBy('w.status_id','desc')
-			->orderBy('w.is_new','desc')
-			->get();
+				->join('routes AS r','r.id','=','w.route_id')
+				->select('w.*','r.url','r.class_method','r.code')
+				->where('w.enabled', true)
+				->where('w.groups_acl','!=','widgets-adm')
+				->orderBy('w.status_id','desc')
+				->orderBy('w.is_new','desc')
+				->get();
 
 		$view->addRefreshButton();
 		$view->addActionToolbarButton("icons:apps",'ew-list-view',$this->getRouteViewParams("links","","","icons:apps"));

@@ -18,6 +18,7 @@ class Routes extends CrudController
 		$this->TITLE = "Configuração das Rotas";
 		$this->TABLE_NAME = "routes";
 		$this->EXCLUDE_FIELDS = array("id");
+		$this->SENCODARY_KEY = '';
         $this->ORDER_BY = "id"; 
 		$this->LIST_VIEW_FIELDS = array("image" => "", "title" => "url", "description" => "class_method");
 		$this->FIELDS = array(  array("name" => "id", "title" => "", "alias" => "", "type" => "hidden"),

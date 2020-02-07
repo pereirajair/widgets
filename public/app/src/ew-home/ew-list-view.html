@@ -802,6 +802,21 @@ Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou a
                       this.styleDiv = '';
                     }
 
+                    var contentEditors = this._getItemsFromType(20);
+
+                    this.async(function() {
+                      var _editors = this.$.scrollList.getAllContentEditors();
+                      for (var contentEdit in contentEditors) {
+                        for (var x in _editors) { 
+                          if (_editors[x].id == 'ContentEditor' + contentEditors[contentEdit].name) {
+                            _editors[x].setHTML(contentEditors[contentEdit].value);
+                          }
+                        }
+                      }
+
+                    },500);
+
+                    
                     that.notifyResize();
 
                 // if (_params.autoScrollPages) {
@@ -969,7 +984,8 @@ Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou a
               _formData = this._getFormDataFromType(_formData,13); //DROPDOWN MENU
               _formData = this._getFormDataFromType(_formData,14); //CONTACT INPUT
               _formData = this._getFormDataFromType(_formData,15); //RADIO
-              _formData = this._getTextHTMLEditorContent(_formData,20); //RADIO
+              _formData = this._getFormDataFromType(_formData,20); //RADIO
+              // _formData = this._getTextHTMLEditorContent(_formData,20); //RADIO
               _formData = this._getMonacoEditorContent(_formData); //MONACO EDITOR
               this.files =  this.$.scrollList._getAllFiles(); // FILES
               
@@ -1035,6 +1051,14 @@ Exibe uma tela com uma lista de items. Cada item pode abrir outros widgets, ou a
                     if (_timeInputs[x].id == 'timeInput' + _input[i].name) {
                       // console.warn(_timeInputs[x].getInputValue());
                       value = _timeInputs[x].hour + ':' + _timeInputs[x].min;
+                    }
+                  }
+                }
+                if (_type == 20) {
+                  var _editors = this.$.scrollList.getAllContentEditors();
+                  for (var x in _editors) { 
+                    if (_editors[x].id == 'ContentEditor' + _input[i].name) {
+                      value = _editors[x].get();
                     }
                   }
                 }

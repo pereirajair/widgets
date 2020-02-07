@@ -27,6 +27,7 @@ class RoutesTableSeeder extends Seeder
         
 
         DB::table('routes')->insert(['url' => '/api/Admin/Widgets', 'class_method' => 'Admin\Widgets@load', 'groups_acl' => 'widgets-adm']);
+        DB::table('routes')->insert(['url' => '/api/Admin/WidgetPages', 'class_method' => 'Admin\WidgetPages@load', 'groups_acl' => 'widgets-adm']);
         DB::table('routes')->insert(['url' => '/api/Admin/Config', 'class_method' => 'Admin\Config@load', 'groups_acl' => 'widgets-adm']);
         DB::table('routes')->insert(['url' => '/api/Admin/Routes', 'class_method' => 'Admin\Routes@load', 'groups_acl' => 'widgets-adm']);
         DB::table('routes')->insert(['url' => '/api/Admin/AccessLog', 'class_method' => 'Admin\AccessLog@load', 'groups_acl' => 'widgets-adm']);

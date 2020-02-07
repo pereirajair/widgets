@@ -36,11 +36,13 @@ class Login extends WidgetController {
 		
 		if ($showForm) {
 
+            
+
             $view->addPaperItemImage("data:image/jpeg;base64," . $widget->icon,$widget->name,$widget->description);
             $view->addHiddenInput("route", $this->getParam("route"));
             $view->addHiddenInput("routeID", $this->getParam("routeID"));
             $view->addHiddenInput("send", "true");
-            $view->addTextInput("username","Usuário","",true,"Nome do usuário","lock-outline");
+            $view->addTextInput("username","Usuário","",true,"","lock-outline");
 			$view->addTextInput("password", "Senha", "", true, "", "lock-open", "password");
 			$view->setFab("done", "Autenticar", "ew_send", array());		
 		}

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateDashboardPages extends Migration
+class CreateWidgetPages extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,17 @@ class CreateDashboardPages extends Migration
      */
     public function up()
     {
-        //
-        Schema::create('dashboard_pages', function (Blueprint $table) {
+
+        Schema::create('widget_pages', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('user_id');
-            $table->integer('order');
+            $table->integer('widget_id');
             $table->string('name');
-            $table->string('icon');
+            $table->text('description');
+            $table->text('content');
             $table->timestamp('created_at')->default(\DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(\DB::raw('CURRENT_TIMESTAMP'));
         });
+
     }
 
     /**
@@ -32,7 +33,6 @@ class CreateDashboardPages extends Migration
      */
     public function down()
     {
-        //
-        Schema::dropIfExists('dashboard_pages');
+        Schema::dropIfExists('widget_pages');
     }
 }

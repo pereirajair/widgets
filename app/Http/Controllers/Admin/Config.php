@@ -12,6 +12,11 @@ use App\Utils\EWListView;
 class Config extends CrudController
 {
 	public function setupTable() {
+
+		if ($this->getParam('widget_id') != "") {
+			$this->SECONDARY_KEY = 'widget_id';
+		}
+
         $this->ROUTE = $this->getRouteForClass("Admin\Config@load");
         $this->PRIMARY_KEY = "id";
 		$this->ITEM_BUTTONS = ARRAY();
@@ -21,6 +26,7 @@ class Config extends CrudController
 		$this->ORDER_BY = "name"; 
 		$this->LIST_VIEW_FIELDS = array("image" => "", "title" => "name", "description" => "value");
 		$this->FIELDS = array(array("name" => "id", "title" => "", "alias" => "", "type" => "hidden"),
+								array("name" => "widget_id", "title" => "", "alias" => "", "type" => "hidden", "value" => $this->getParam('widget_id')),
 								array("name" => "name", "title" => "Nome", "alias" => "", "type" => "text", "required" => true),
 								array("name" => "value", "title" => "Valor", "alias" => "", "type" => "textarea", "required" => true) ,
 							);

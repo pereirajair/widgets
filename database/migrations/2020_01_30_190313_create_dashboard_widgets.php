@@ -16,7 +16,7 @@ class CreateDashboardWidgets extends Migration
         //
         Schema::create('dashboard_widgets', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('user_id');
+            $table->integer('user_id');
             $table->integer('widget_id');
             $table->integer('order');
             $table->integer('width');

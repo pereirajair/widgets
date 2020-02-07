@@ -16,6 +16,7 @@ class Widgets extends CrudController
 		$this->TABLE_NAME = "widgets";
 		$this->TITLE = "Administrar Widgets";
 		$this->EXCLUDE_FIELDS = array("id","multi_column","element","imgicon","concat('./api/rest/Icon?id=', id)","table","imagefile");
+		$this->SENCODARY_KEY = '';
 
 		$this->ITEM_BUTTONS = array( );
 		// 							array( "icon" => "icons:assignment-ind","action" => "ew-list-view", "params" => array("route" =>  $this->getRouteForClass("UsersPrivileges"), "table" => "ew_widgets", "tabID" => "user_privileges_widgets", "tabIcon" => "icons:assignment-ind", "tabTitle" => "Controle de Acesso" )),

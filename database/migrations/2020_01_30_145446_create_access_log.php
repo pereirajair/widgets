@@ -17,7 +17,7 @@ class CreateAccessLog extends Migration
 
         Schema::create('access_log', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('user_id');
+            $table->integer('user_id');
             $table->integer('route_id');
             $table->date('access_date');
             $table->integer('access_qtd');

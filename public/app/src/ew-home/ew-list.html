@@ -231,7 +231,7 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
         #editor-container {
           height: 100vh;
         }
-
+/*
         .msgBodyContent {
 		      background-color: #FFF;
 		      color: #000;
@@ -245,7 +245,7 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
 		      min-height: 400px; 
 		      height: 100%;
         }
-
+*/
         monaco-editor {
             flex: 1;
             display: block;
@@ -358,6 +358,19 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
           --paper-input: {
             width: 80px;
           }
+        }
+
+        .msgBodyContent {
+          background-color: #FFF !important;
+          color: #000 !important;
+          padding: 16px;
+          overflow-y: auto;
+          overflow-x: auto;
+        }
+        .messageBodyInput {
+          width: 100%; 
+          background-color: #fff !important;
+          color: #000 !important;
         }
         
         .textImportant {
@@ -642,11 +655,15 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
                 </template>
             </template>
             <template is="dom-if" if="{{_computeViewType(item,20)}}">
-              <input type="hidden" name="{{item.name}}" value="{{item.value}}"></input>
+              
+              <!-- <input type="hidden" name="{{item.name}}" value="{{item.value}}"></input> -->
               <!-- HTML WYISWYG EDITOR -->
-              <div class="msgBodyContent">
+              <div class='msgBodyContent'>
+                <adamantium-editor id="ContentEditor{{item.name}}" class="messageBodyInput">{{item.value}}</adamantium-editor>
+              </div>
+              <!-- <div class="msgBodyContent">
                 <div id="{{item.name}}Input" class="messageBodyInput" inner-h-t-m-l="{{item.value}}" contenteditable="true"></div>
-              </div>		          
+              </div>		           -->
             </template>
             <template is="dom-if" if="{{_computeViewType(item,21)}}">
               <template is="dom-if" if="{{item.listview}}">
@@ -722,6 +739,15 @@ Exibe um IRON-LIST com os elementos passados por array. Veja a documentação do
         }
         return retVal;
       },
+      getAllContentEditors: function() {
+        var _elements = this._getItemsFromType(20);
+        retVal = [];
+        for (var i in _elements) {
+          var _element = Polymer.dom(this.$.scrollList).querySelectorAll('#ContentEditor' + _elements[i].name)[0];
+          retVal.push(_element);
+        }
+        return retVal;
+      },  
       getAllDatePickers: function() {
         var _datePickers = this._getItemsFromType(7);
         retVal = [];

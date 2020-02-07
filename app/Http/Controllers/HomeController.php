@@ -116,6 +116,20 @@ class HomeController extends WidgetController
         }
     }
 
+    public function indexpolymer3()
+    {
+        // session_start();
+        $this->insertUser();
+
+        $userAuth = session_id();
+
+        if ($this->getConfigValue("DEVELOPMENT") == "1") {
+            return view('widgets_polymer3')->with('auth', $userAuth);
+        } else {
+            return view('widgets_polymer3')->with('auth', $userAuth);
+        }
+    }
+
     public function logout() {
         $data = $this->getApiData(config('central-seguranca.urlCentralCidadao.' . \App::environment() . '/signout'));
         print_r($data);
@@ -131,13 +145,13 @@ class HomeController extends WidgetController
 
         if (is_object($userSession)) {
 
-            $qtd = DB::table('users')->where('id',$userSession->id)->get()->count();
+            $qtd = DB::table('users')->where('id',$userSession->idCidadao)->get()->count();
 
             if ($qtd == 0) {
-                DB::table('users')->insert(array("id" => $userSession->id, "name" => $userSession->name, "email" => $userSession->email, "login" => $userSession->login, "idCidadao" => $userSession->idCidadao, "rg" => $userSession->rg, "cpf" => $userSession->cpf , "groups" => implode(";",$userSession->groups)  ));
+                DB::table('users')->insert(array("id" => $userSession->idCidadao, "name" => $userSession->name, "email" => $userSession->email, "login" => $userSession->login, "rg" => $userSession->rg, "cpf" => $userSession->cpf , "groups" => implode(";",$userSession->groups)  ));
             }
 
-            $_SESSION['user_id'] = $userSession->id;
+            $_SESSION['user_id'] = $userSession->idCidadao;
 
         } else {
             $_SESSION['user_id'] = 1;
@@ -580,7 +594,7 @@ class HomeController extends WidgetController
         $view->hideSearch(true);
         $view->addActionToolbarButton("icons:add-circle-outline", "ew_send", array("route" => $this->getParam("route"), "action" => "add"));
 
-        if ($action == "") {
+       if ($action == "") {
             unset($_SESSION['userDataPageEditor']);
         }
 
@@ -595,7 +609,7 @@ class HomeController extends WidgetController
             $userData['globalParams']['pages'] = json_decode($this->defaultPages,true);
         }
 
-        $qtdPages = count($userData['globalParams']['pages']);
+        $qtdPages = count((array) $userData['globalParams']['pages']);
         if (($qtdPages > 0) && ($action != "")) {
             $userData = $this->refreshNamePage($qtdPages, $userData);
         }
@@ -611,7 +625,7 @@ class HomeController extends WidgetController
                 $view->showMessage("Não é possível adicionar mais do que 10 páginas.");
             }
         }
-
+ 
         if ($action == 'setIcon') {
             $userData = $this->setIconPage($pageId, $icon, $userData);
         }
@@ -619,10 +633,10 @@ class HomeController extends WidgetController
         if ($action == 'save') {
             $view = $this->saveAndRefreshSettingsPageEditor($view, $userData);
         }
-        // $view->printArray($userData);
         $_SESSION['userDataPageEditor'] = $userData;
 
-        foreach ($userData['globalParams']['pages'] as $value) {
+        foreach ($userData['globalParams']['pages'] as $page) {
+            $value = (array) $page;
             $view->addTextInput("pageName_" . $value['id'], "", $value['name'], false, "", $value['icon']);
             $item = $view->getLastItem();
             $item->addActionButton("icons:create", "ew_send", array("route" => $this->getParam("route"), "action" => "showIcons", "id" => $value['id']), 1, "", "fabTheme", "", "", 120, 120, "contain", true);
@@ -640,10 +654,11 @@ class HomeController extends WidgetController
                 $view->updateLastItem($item);
             }
         }
+       // $view->printArray($userData);
 
         $saveParams = array("route" => $this->getParam("route"));
         $view->addHiddenInput("action", "save");
-        $view->setFab("done", "Salvar", "ew_send", $saveParams);
+        $view->setFab("done", "Salvar", "ew_send", $saveParams); 
 
         return response()->json($view);
     }
@@ -700,6 +715,7 @@ class HomeController extends WidgetController
 
     public function refreshNamePage($qtdPages, $userData)
     {
+        $userData['globalParams']['pages'] = (array) $userData['globalParams']['pages'];
         $name = "";
         for ($i = 0; $i < $qtdPages; $i++) {
             $name = $this->getParam("pageName_" . $i);

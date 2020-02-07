@@ -16,7 +16,7 @@ class CreateDashboardSettings extends Migration
         //
         Schema::create('dashboard_settings', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('user_id');
+            $table->integer('user_id');
             $table->string('name');
             $table->text('value');
             $table->timestamp('created_at')->default(\DB::raw('CURRENT_TIMESTAMP'));
