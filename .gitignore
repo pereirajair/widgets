@@ -10,3 +10,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 .env
+
+
+/public/app/p3
+/public/app/node_modules
