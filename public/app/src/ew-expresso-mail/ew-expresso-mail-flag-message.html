@@ -1,0 +1,211 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-mail-flag-message`
+
+Elemento utilizado para setar flags nas mensagens de email.
+
+Utiliza o metodo: Mail/FlagMessage da [API DO EXPRESSO](https://api.expresso.pr.gov.br/docs/)
+
+Exemplo:
+    
+### HTML
+
+    <ew-expresso-mail-flag-message id="flagMessage"></ew-expresso-mail-flag-message>
+
+### JAVASCRIPT
+
+Para muda a flag de uma mensagem: 
+
+    var flagType = 1;
+    var folderID = 'INBOX';
+    var msgId = 123;
+    this.$.flagMessage.flagMessage(folderID,msgId,flagType);
+
+Ou para marcar varias mensagens de uma unica vez:
+
+    var flagType = 1;
+    var messages = [{ folderID: 'INBOX', msgID: 123 }, { folderID: 'INBOX', msgID: 122 }] ;
+    this.$.flagMessage.flagMessages(messages,flagType);
+
+### TIPOS DE FLAGS
+
+FlagType | Descricao
+----------------|-------------
+1 | Importante
+2 | Normal
+3 | Lida
+4 | Nao lida
+5 | Respondida
+6 | Encaminhada
+
+
+### EVENTOS
+
+Os eventos abaixo sao disparados quando o elemento termina de realizar a acao nas mensagens.
+
+Evento | Descricao
+----------------|-------------
+`ew-expresso-mail-flag-message-error` | Ocorreu um erro ao setar a flag.
+`ew-expresso-mail-flag-message-success` | A flag foi setada com sucesso.
+
+-->
+<dom-module id="ew-expresso-mail-flag-message">
+    <template>
+      <ew-api-ajax
+          id="ajax"
+          resource="Mail/FlagMessage"
+          params="{{requestParams}}"
+          on-response="_handleResponse">        
+      </ew-api-ajax>
+    </template>
+  <script>
+    Polymer({
+        is: 'ew-expresso-mail-flag-message',
+        behaviors: [EWBehaviorWidgetBehavior],
+        properties: {
+            flagParams: { notify: true, value: {} },
+            response: { type: Object, value: {}, computed: '_computeResponse(data)' },
+            starred: { type: Boolean, value: false, notify: true, reflectToAttribute: true, },
+            unread: { type: Boolean, value: false, notify: true, reflectToAttribute: true, },
+            messagesSelected: { type: Array, value: [] },
+            showMessages: { type: Boolean, value: true },
+            multipleAction: { type: Boolean, value: false },
+            messagesCompleted: { type: Array, value: [] },
+            messagesWithError: { type: Array, value: [] },
+        },
+        flagMessage: function(_folderid,_msgid,_flagType) {
+
+          var requestParams = {};
+          requestParams.msgID = _msgid;
+          requestParams.folderID = _folderid;
+          requestParams.flagType = _flagType;
+          
+          this.set('requestParams',requestParams);
+
+          this.$.ajax.generateRequest();
+        },
+
+        flagMessages: function(messages,_flagType) {
+          this.messagesSelected = messages;
+          this.messagesCompleted = [];
+          this.messagesWithError = [];
+          this.multipleAction = true;
+          for (var i in messages) {
+            var message = messages[i];
+            this.flagMessage(message.folderID, message.msgID,_flagType);
+          }
+        },
+
+        _handleResponse: function(event) {
+          var response = event.detail.response;
+          var data = null;
+          if (response != undefined) {
+            if (response.result != undefined) {
+              data = response.result;
+            } 
+          } else {
+            data = event.detail;
+          }
+
+          var msgFail = "Não foi possível ";
+          var msgSuccess = "Mensagem marcada ";
+          var plural = "";
+          var normal = "normal";
+          if (this.multipleAction) {
+            plural = "s";
+            normal = "normais";
+            msgSuccess = "Mensagens marcadas ";
+          }
+
+          if (this.requestParams.flagType == 1) {
+              msgSuccess = msgSuccess + "como importante" + plural + ".";
+              msgFail = msgFail + "marcar a mensagem.";
+              this.starred = true;
+          }
+          if (this.requestParams.flagType == 2) {
+            msgSuccess = msgSuccess + " como " + normal + ".";
+            msgFail = msgFail + "desmarcar a mensagem.";
+            this.starred = false;
+          }
+
+          if (this.requestParams.flagType == 4) {
+            var msgSuccess =  msgSuccess + "como não lida" + plural + ".";
+            msgFail = msgFail + "marcar a mensagem.";
+          }
+
+          if (this.requestParams.flagType == 7) {
+            var msgSuccess =  msgSuccess + "como SPAM.";
+            msgFail = msgFail + "marcar a mensagem.";
+          }
+
+          if (this.requestParams.flagType == 8) {
+            var msgSuccess =  msgSuccess + "como NÃO É SPAM.";
+            msgFail = msgFail + "marcar a mensagem.";
+          }
+
+          if (this.multipleAction) {
+
+            if (data.error != undefined) {
+              this.messagesWithError.push(this.requestParams);
+            } else {
+              this.messagesCompleted.push(this.requestParams);
+            }
+
+            if ((this.messagesCompleted.length + this.messagesWithError.length) == this.messagesSelected.length) {
+
+              if (this.requestParams.flagType == 4) {
+
+                this.ew_signal('ew-expresso-mail-refresh-folders');
+              }
+
+              if (this.messagesCompleted.length == this.messagesSelected.length) {
+                if ((this.requestParams.flagType != 5) && (this.requestParams.flagType != 6)) { 
+                  if (this.showMessages) {
+                   this.ew_showMessage(msgSuccess);
+                  }
+                }
+               
+                this.fire('ew-expresso-mail-flag-message-success',data);
+              }
+
+              if (this.messagesWithError.length != 0) {
+                // if (this.messagesCompleted.length == 0) {
+                //   msg = "Não foi possível excluir " + this.messagesWithError.length + " mensagens.";
+                // } else {
+                //   msg = this.messagesCompleted.length + " mensagens foram excluída(s), porém não foi possível excluir " + this.messagesWithError.length + " mensagen(s).";
+                // }
+                this.ew_showMessage(msgFail);
+                this.fire('ew-expresso-mail-flag-message-error',data);
+              }
+
+            } 
+
+          } else {
+
+            if (data.error != undefined) {
+              if (this.showMessages) {
+                this.ew_showMessage(msgFail);
+              }
+              if ((this.requestParams.flagType == 1) || (this.requestParams.flagType == 2))  {
+                this.set('starred',!this.starred);
+              }
+            } else {
+              if (this.requestParams.flagType == 4) {
+                this.ew_signal('ew-expresso-mail-refresh-folders');
+                this.set('unread',!this.unread);
+              }
+              if ((this.requestParams.flagType != 5) && (this.requestParams.flagType != 6)) { 
+                if (this.showMessages) {
+                  this.ew_showMessage(msgSuccess);
+                }
+              }
+            }
+
+          }
+
+        },
+
+    });
+  </script>
+</dom-module>

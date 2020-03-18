@@ -1,0 +1,1180 @@
+<!--
+### WIDGET 
+
+`ew-expresso-mail-message`
+
+Widget utilizado para visualizar uma mensagem de email.
+
+Utiliza os metodos: Mail/Messages da [API DO EXPRESSO](https://api.expresso.pr.gov.br/docs/)
+
+### JAVASCRIPT
+
+Para visualizar uma mensagem de email: 
+  
+    var folderID = 'INBOX';
+    var msgID = 123;
+    this.ew_openWidget('ew-expresso-mail-message',{ 'folderID': folderID, 'msgID': msgID });
+
+Parametro | Descricao
+----------------|-------------
+`folderID` | ID da pasta 
+`msgID` | ID da mensagem.
+
+-->
+<dom-module id="ew-expresso-mail-message">
+    <template>
+        <style>
+    paper-card {
+      background: var(--paper-menu-background-color);
+      color: var(--paper-menu-color);
+      width: 100%;
+    } 
+
+    #thread {
+      padding: 16px;
+      border-bottom: 1px solid #e0e0e0;
+      will-change: transform, opacity;
+    }
+
+    @media screen and (max-width: 900px) { 
+      #actionicons {
+        display: none;
+      }
+    }
+
+    #lastline,
+    #actionicons,
+    time {
+      color: #9e9e9e;
+    }
+    .messagecount {
+      color: #9e9e9e;
+      margin-left: 5px;
+    }
+    header {
+      margin-left: 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    header span.name {
+      font-size: 18px;
+    }
+    header span.subject {
+      margin: 6px 0;
+    }
+    header span.snippet,
+    header span.subject,
+    header span.name {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: 90%;
+    }
+    header span.name {
+      max-width: 80%;
+    }
+    time {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      max-height: 12px;
+    }
+    #star {
+      cursor: pointer;
+    }
+    #star[starred] {
+      cursor: pointer;
+      color: var(--paper-yellow-700);
+    }
+
+    .unread .name,
+    .unread .subject,
+    .unread time {
+      font-weight: 500;
+      color: #F60;
+    }
+    .unread time {
+      color: #F60;
+    }
+    
+    .msgRecipient {
+      padding-left: 16px;
+      padding-right: 16px;
+      /* float: left; */
+      border-bottom: 1px solid #e0e0e0;
+      will-change: transform, opacity;
+      cursor: pointer;
+    }
+
+    .extraRecipientsInfo {
+      position: absolute;
+      right: 0px;
+      min-width: 250px;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: right;
+      padding-right: 50px;
+    }
+
+    .expanded-card {
+      margin-top: -48px;
+    }
+
+    app-header {
+      background-color: var(--paper-toolbar-background);
+      color: var(--paper-toolbar-color);
+    }
+
+    paper-fab.fabButton {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+    }
+
+    #msgBody {
+      -webkit-transform-origin:left top;
+      -webkit-transition:0.5s all;
+      -moz-transition:0.5s all;
+      background-color: #fff !important;
+      color: #000 !important;
+    }
+
+    #msgBodyCard {
+      background-color: #fff !important;
+      color: #000 !important;
+      padding: 16px;
+      overflow: hidden;
+      overflow-x: auto;
+
+      -webkit-transform-origin:left top;
+      -webkit-transition:0.5s all;
+      -moz-transition:0.5s all;
+    }
+
+    table {
+      color: #000 !important;
+    }
+
+    .recipient-item {
+      margin: 0px 0;
+      padding: 10px;
+      border-bottom: 1px solid #e0e0e0;
+      @apply(--layout-horizontal);
+    }
+    .recipient-title {
+      width: 80px;
+      padding-right: 20px;
+      text-align: right;
+      position: absolute;
+    }
+    .recipient-name {
+      font-weight: bold;
+      margin-left: 90px;
+      @apply(--layout-flex);
+    }
+
+
+    .ShowOnSmallResolutions {
+      display: none;
+    }
+
+    @media screen and (max-width: 900px) { 
+      .HideOnSmallResolutions {
+        display: none;
+      }
+
+      .ShowOnSmallResolutions {
+        display: block;
+      }
+    }
+
+    .keyboardHint {
+      font-size: 10px;
+      margin-left: 10px;
+    }
+
+    .cafe-light { 
+      color: #F60; 
+      margin: 5px; 
+    }
+     paper-card {
+      color: var(--paper-menu-color);
+      background: var(--paper-menu-background-color);
+    }
+    .news {
+      margin: 10px;
+      font-size: 12px;
+      width: calc(100% - 20px);
+    }
+
+
+    .reset-this {
+        animation : none;
+        animation-delay : 0;
+        animation-direction : normal;
+        animation-duration : 0;
+        animation-fill-mode : none;
+        animation-iteration-count : 1;
+        animation-name : none;
+        animation-play-state : running;
+        animation-timing-function : ease;
+        backface-visibility : visible;
+        background : 0;
+        background-attachment : scroll;
+        background-clip : border-box;
+        background-color : transparent;
+        background-image : none;
+        background-origin : padding-box;
+        background-position : 0 0;
+        background-position-x : 0;
+        background-position-y : 0;
+        background-repeat : repeat;
+        background-size : auto auto;
+        border : 0;
+        border-style : none;
+        border-width : medium;
+        border-color : inherit;
+        border-bottom : 0;
+        border-bottom-color : inherit;
+        border-bottom-left-radius : 0;
+        border-bottom-right-radius : 0;
+        border-bottom-style : none;
+        border-bottom-width : medium;
+        border-collapse : separate;
+        border-image : none;
+        border-left : 0;
+        border-left-color : inherit;
+        border-left-style : none;
+        border-left-width : medium;
+        border-radius : 0;
+        border-right : 0;
+        border-right-color : inherit;
+        border-right-style : none;
+        border-right-width : medium;
+        border-spacing : 0;
+        border-top : 0;
+        border-top-color : inherit;
+        border-top-left-radius : 0;
+        border-top-right-radius : 0;
+        border-top-style : none;
+        border-top-width : medium;
+        bottom : auto;
+        box-shadow : none;
+        box-sizing : content-box;
+        caption-side : top;
+        clear : none;
+        clip : auto;
+        color : inherit;
+        columns : auto;
+        column-count : auto;
+        column-fill : balance;
+        column-gap : normal;
+        column-rule : medium none currentColor;
+        column-rule-color : currentColor;
+        column-rule-style : none;
+        column-rule-width : none;
+        column-span : 1;
+        column-width : auto;
+        content : normal;
+        counter-increment : none;
+        counter-reset : none;
+        cursor : auto;
+        direction : ltr;
+        display : inline;
+        empty-cells : show;
+        float : none;
+        font : normal;
+        font-family : inherit;
+        font-size : medium;
+        font-style : normal;
+        font-variant : normal;
+        font-weight : normal;
+        height : auto;
+        hyphens : none;
+        left : auto;
+        letter-spacing : normal;
+        line-height : normal;
+        list-style : none;
+        list-style-image : none;
+        list-style-position : outside;
+        list-style-type : disc;
+        margin : 0;
+        margin-bottom : 0;
+        margin-left : 0;
+        margin-right : 0;
+        margin-top : 0;
+        max-height : none;
+        max-width : none;
+        min-height : 0;
+        min-width : 0;
+        opacity : 1;
+        orphans : 0;
+        outline : 0;
+        outline-color : invert;
+        outline-style : none;
+        outline-width : medium;
+        overflow : visible;
+        overflow-x : visible;
+        overflow-y : visible;
+        padding : 0;
+        padding-bottom : 0;
+        padding-left : 0;
+        padding-right : 0;
+        padding-top : 0;
+        page-break-after : auto;
+        page-break-before : auto;
+        page-break-inside : auto;
+        perspective : none;
+        perspective-origin : 50% 50%;
+        position : static;
+        quotes : '\201C' '\201D' '\2018' '\2019';
+        right : auto;
+        tab-size : 8;
+        table-layout : auto;
+        text-align : inherit;
+        text-align-last : auto;
+        text-decoration : none;
+        text-decoration-color : inherit;
+        text-decoration-line : none;
+        text-decoration-style : solid;
+        text-indent : 0;
+        text-shadow : none;
+        text-transform : none;
+        top : auto;
+        transform : none;
+        transform-style : flat;
+        transition : none;
+        transition-delay : 0s;
+        transition-duration : 0s;
+        transition-property : none;
+        transition-timing-function : ease;
+        unicode-bidi : normal;
+        vertical-align : baseline;
+        visibility : visible;
+        white-space : normal;
+        widows : 0;
+        width : auto;
+        word-spacing : normal;
+        z-index : auto;
+        all: initial;
+        all: unset;
+    }
+
+    #reset-this-root {
+        all: initial;
+        * {
+            all: unset;
+        }
+    }
+
+    #pageContent {
+      @apply(--layout-flex);
+      @apply(--layout-vertical);
+      height: calc(100%);
+    }
+
+      .flex {
+              @apply(--layout-flex);
+            }
+            .fit {
+              @apply(--layout-fit);
+            }
+            .horizontal {
+              @apply(--layout-horizontal);
+            }
+            .center {
+              @apply(--layout-center);
+            }
+            .justified {
+              @apply(--layout-justified);
+            }
+
+            .chips {
+              @apply --layout-horizontal;
+              @apply --layout-end;
+              @apply --layout-wrap;
+              max-width: 90%;
+            }
+
+     paper-listbox paper-item {
+            z-index: 9;
+            opacity: inherit;
+        }
+
+        paper-menu-button paper-icon-button {
+            z-index: 2;
+            opacity: unset;
+        }
+        </style>
+    <ew-api-ajax
+        id="ajaxM"
+        resource="Mail/Messages"
+        params="{{requestParams}}"
+        loading="{{isLoading}}"
+        on-response="ew_handleResponseToData">
+    </ew-api-ajax>
+    <ew-expresso-mail-flag-message id="flagMessage" starred$="{{starred}}" unread$="{{unread}}"></ew-expresso-mail-flag-message>
+    <ew-expresso-mail-del-message id="delMessage"></ew-expresso-mail-del-message>
+
+    <iron-localstorage id="expressoLocalStorage" name="expresso" value="{{expresso}}"></iron-localstorage>
+
+    <iron-signals on-iron-signal-ew-signal-reply-message="_onReply"></iron-signals>
+    <iron-signals on-iron-signal-ew-signal-reply-all-message="_onReplyAll"></iron-signals>
+    <iron-signals on-iron-signal-ew-signal-forward-message="_onForward"></iron-signals>
+    <iron-signals on-iron-signal-ew-signal-del-message="_onDelete"></iron-signals>
+
+    <iron-signals on-iron-signal-ew-expresso-mail-del-message="_checkIfmessageHasBeenDeleted"></iron-signals>
+
+    <ew-header id="mailDetail" title="{{_decodeHTMLEntities(message.msgSubject)}}" background-color="indigo">
+            <div slot='toolbar-buttons' class='toolbar-buttons'>
+              <template is="dom-if" if="{{!isMobile}}">
+                <template is="dom-if" if="{{!firstIndex}}">
+                  <paper-icon-button id="priorMessage" icon="icons:chevron-left" title="Mensagem Anterior" on-tap="priorMessage">Mensagem Anterior</paper-icon-button>
+                </template>
+                <template is="dom-if" if="{{!lastIndex}}">
+                  <paper-icon-button id="nextMessage" icon="icons:chevron-right" title="Próxima Mensagem" on-tap="nextMessage">Próxima Mensagem</paper-icon-button>
+                </template>
+              </template>
+
+              <paper-icon-button id="replyButton1" icon="reply" title="Responder" on-tap="_onReply">Responder</paper-icon-button>
+              <paper-icon-button id="replyAllButton1" icon="reply-all" title="Responder para Todos" on-tap="_onReplyAll">Responder p/ Todos</paper-icon-button>
+              <paper-icon-button id="forwardButton1" icon="forward" title="Encaminhar" on-tap="_onForward">Encaminhar</paper-icon-button>
+              <paper-icon-button id="deleteButton1" icon="delete" title="Excluir" on-tap="_onDelete">Excluir</paper-icon-button>
+              <paper-icon-button id="printButton1" icon="maps:local-printshop" title="Imprimir" on-tap="_onPrint" hidden="{{isMobile}}">Imprimir</paper-icon-button>
+              <paper-icon-button id="keyaboardShortcuts1" icon="hardware:keyboard" title="Teclas de Atalho" on-tap="openKeyboardShortcuts" hidden="{{isMobile}}">Imprimir</paper-icon-button>
+
+              <paper-tooltip for="replyButton1" position="bottom">Responder</paper-tooltip>
+              <paper-tooltip for="replyAllButton1" position="bottom">Responder p/ Todos</paper-tooltip>
+              <paper-tooltip for="forwardButton1" position="bottom">Encaminhar</paper-tooltip>
+              <paper-tooltip for="deleteButton1" position="bottom">Excluir</paper-tooltip>
+              <paper-tooltip for="printButton1" position="bottom">Imprimir</paper-tooltip>
+              <paper-tooltip for="keyaboardShortcuts1" position="bottom">Teclas de Atalho</paper-tooltip>
+            </div>
+            <div id="pageContent" slot='content' class="content" style="overflow: auto; height: 100%;" hidden$="{{!hasFinishedLoading}}">
+                    <paper-card style="width: 100%;" hidden$="{{!hasFinishedLoading}}">
+                      <!-- <paper-card class='news' hidden="{{isMobile}}">
+                          <p class="cafe-light"><iron-icon icon="hardware:keyboard"></iron-icon>&nbsp;Experimente usar as teclas de atalho para facilitar o uso do E-mail. <paper-button on-tap="openKeyboardShortcuts">Saiba mais...</paper-button>
+                          </p>
+                      </paper-card>  -->
+                      <div id="thread" class="layout horizontal">
+                        
+                        <div class="flex layout horizontal">
+                          <paper-item style="width: calc(100% - 20px);">
+                           <ew-expresso-catalog-contact-picture id="emailAvatar" letter="{{msgFromLetter}}" email="[[message.msgFrom.mailAddress]]" class="avatar" fixed load-by-email big auto></ew-expresso-catalog-contact-picture>
+                          <header class$="[[headerClasses]]" unread="{{unread}}">
+                            <span class="layout horizontal center justified">
+                              <span class="name">
+                                <span>{{_decodeHTMLEntities(message.msgFrom.fullName)}}</span>
+                              </span>
+                              <time class="HideOnSmallResolutions">{{message.msgDate}}&nbsp;({{msgSize}})</time>
+                            </span>
+                            <span class="subject">{{_decodeHTMLEntities(message.msgFrom.mailAddress)}}</span>
+                            <span id="lastline" class="layout horizontal center justified">
+                              <span class="snippet flex">&nbsp;</span>
+                              
+                              <iron-icon id="replyIcon" icon="icons:swap-horiz" hidden$="{{!answered}}"></iron-icon>
+                              <iron-icon id="forwardIcon" icon="icons:trending-flat" hidden$="{{!forwarded}}"></iron-icon>
+                              <paper-tooltip for="replyIcon" position="top">Você respondeu esta mensagem.</paper-tooltip>
+                              <paper-tooltip for="forwardIcon" position="top">Você encaminhou esta mensagem.</paper-tooltip>
+    
+                              <iron-icon id="unreadMark" icon="icons:markunread-mailbox" on-tap="_onMarkUnreadMessage" hidden="{{unread}}"></iron-icon>
+                              <paper-tooltip for="unreadMark" position="bottom">Marcar como não lida.</paper-tooltip>
+    
+                              <iron-icon id="star" icon="[[starredIcon]]" on-tap="_onHighlightStar" starred$="{{starred}}"></iron-icon>
+                              <paper-tooltip for="star" position="bottom">Marcar/Desmarcar como importante.</paper-tooltip>
+    
+                            </span>
+                          </header>
+                          </paper-item>
+                        </div>
+    
+                      </div>
+    
+                      <div class="recipient-item">
+                        <div class="recipient-title">Assunto:</div>
+                        <div class="recipient-name">{{_decodeHTMLEntities(message.msgSubject)}}</div>
+                      </div>
+    
+                      <div class="recipient-item ShowOnSmallResolutions">
+                        <div class="recipient-title">Data:</div>
+                        <div class="recipient-name">{{message.msgDate}}</div>
+                      </div>
+    
+                      <div class="recipient-item ShowOnSmallResolutions">
+                        <div class="recipient-title">Tamanho:</div>
+                        <div class="recipient-name">{{msgSize}}</div>
+                      </div>
+    
+                      <div id="recipientsMsgTo" inner-h-t-m-l="{{msgToRecipientsHTML}}"></div>
+                      <div id="recipientsMsgCc" inner-h-t-m-l="{{msgCcRecipientsHTML}}"></div>
+                      <div id="recipientsMsgBcc" inner-h-t-m-l="{{msgBccRecipientsHTML}}"></div>
+              
+                      <div id="msgBodyCard">
+                        <div id="msgBody" class='reset-this' inner-h-t-m-l="{{msgBodyHTML}}"></div>
+                      </div>
+
+                      <template is="dom-repeat" items="{{message.msgAttachments}}">
+                        <ew-expresso-mail-attachment folder-id="{{message.folderID}}" expresso="{{expresso}}" msg-id="{{message.msgID}}" attachment="{{item}}" is-loading="{{isLoading}}"></ew-expresso-mail-attachment>
+                      </template>
+    
+                      <div class="card-actions">
+                        <paper-icon-button id="replyButton2" icon="reply" title="Responder" on-tap="_onReply">Responder</paper-icon-button>
+                        <paper-icon-button id="replyAllButton2" icon="reply-all" title="Responder para Todos" on-tap="_onReplyAll">Responder p/ Todos</paper-icon-button>
+                        <paper-icon-button id="forwardButton2" icon="forward" title="Encaminhar" on-tap="_onForward">Encaminhar</paper-icon-button>
+                        <paper-icon-button id="deleteButton2" icon="delete" title="Excluir" on-tap="_onDelete">Excluir</paper-icon-button>
+                        <paper-icon-button id="printButton2" icon="maps:local-printshop" title="Imprimir" on-tap="_onPrint" hidden="{{isMobile}}">Imprimir</paper-icon-button>
+    
+                        <paper-tooltip for="replyButton2" position="top">Responder</paper-tooltip>
+                        <paper-tooltip for="replyAllButton2" position="top">Responder p/ Todos</paper-tooltip>
+                        <paper-tooltip for="forwardButton2" position="top">Encaminhar</paper-tooltip>
+                        <paper-tooltip for="deleteButton2" position="top">Excluir</paper-tooltip>
+                        <paper-tooltip for="printButton2" position="top">Imprimir</paper-tooltip>
+                      </div> 
+                    </paper-card>
+            </div>
+          </ew-header>
+
+          <ew-fab id="fabButton" icon='icons:reply' tooltip="Responder" on-tap='_onReply' hidden$="{{!hasFinishedLoading}}"></ew-fab>
+
+    </template>
+    <script>
+    Polymer({
+        is: 'ew-expresso-mail-message',
+        behaviors: [EWBehaviorWidgetBehavior,Polymer.IronResizableBehavior, window.Columns.EWColumn],
+        listeners: {
+            'ew-expresso-mail-del-message-error': 'whenMailDelete',
+            'ew-expresso-mail-del-message-success': 'whenMailDelete',
+        },
+        properties: {
+            params: { type: Object, value: { }, notify: true, reflectToAttribute: false },
+            response: { type: Object, value: {}, computed: '_computeResponse(data)' },
+            timeAgo: {
+            type: String, 
+            value: '',
+            },
+            isLoading: {
+            type: Number,
+            value: false,
+            notify: true,
+            reflectToAttribute: true
+            },
+            hasFinishedLoading: {
+            type: Number,
+            value: false,
+            reflectToAttribute: true,
+            notify: true, 
+            },
+            headerClasses: {
+                type: String,
+                value: '',
+                computed: '_computeHeaderClasses(unread)'
+            },
+            hasAttachments: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+            },
+            starred: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+            },
+            unread: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+            },
+            forwarded: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+            answered: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+            starredIcon: {
+            type: String,
+            value: '',
+            computed: '_computeStarredIcon(starred)'
+            },
+            firstIndex: {
+            type: Boolean,
+            value: true,
+            computed: '_computeIsFirstIndex(params)'
+            },
+            lastIndex: {
+            type: Boolean,
+            value: true,
+            computed: '_computeIsLastIndex(params)'
+            },
+            message: {
+            type: Object, 
+            value: {},
+            reflectAttribute: true
+            },
+            target: {
+            type: Object,
+            value: function() {
+                return document.body;
+            }
+            },
+            msgSize: {type: String, value: '', computed: '_computeMsgSize(message)' }, 
+            msgFromLetter: { type: String, value: '', computed: '_computeMsgFromLetter(message)' },
+        },
+        load: function() {
+            this.requestParams = {};
+            this.requestParams = this.params;
+            this.$.ajaxM.generateRequest();   
+            this.$.expressoLocalStorage.reload();
+        },
+        _checkIfmessageHasBeenDeleted: function(e) {
+        this.log('ew-expresso-mail-message._checkIfmessageHasBeenDeleted');
+        if (!this.isMobile) {
+          var _deletedMessages = e.detail;
+          // console.warn(_deletedMessages);
+          // console.warn(this.params);
+          for (var i= 0; i < _deletedMessages.length; i++) {
+            if ((_deletedMessages[i].msgID == this.params.msgID) && (_deletedMessages[i].folderID == this.params.folderID)) {
+              // console.log('deletedMessage:' + this.params.msgID);
+              this.ew_signal('multi-column-remove-tabid',{ tabID : this.params.tabID } );
+            }
+          }
+        }
+      },
+      _setZindex: function(event) {
+        // The <paper-menu-button>
+        const menu = event.target;
+        // The <paper-item>
+        const item = menu.parentNode;
+        item.style.zIndex = menu.opened ? 101 : null;
+      },
+      _decodeHTMLEntities: function(val) {
+        var t = document.createElement('textarea');
+        if (val != undefined) {
+          t.innerHTML = val;
+          return t.textContent;
+        } else {
+          return '';
+        }
+      },
+      _computeHeaderClasses: function(unread) {
+          return 'layout vertical flex ' + (unread ? 'unread' : '');
+      },
+      _computeMsgFromLetter: function(message) {
+          if (message.msgFrom != undefined) { 
+            if ((message.msgFrom.fullName != "") && (message.msgFrom.fullName)) { 
+              return message.msgFrom.fullName.substring(0,1);
+            } else {
+              return message.msgFrom.mailAddress.substring(0,1);
+            }
+          } else {
+              return '';
+          }
+      },
+
+      _computeStarredIcon: function(starred) {
+        return 'icons:star' + (starred ? '' : '-border');
+      },
+
+      _getActionReply: function() {
+        var randTabID = Math.floor((Math.random() * 10000) + 1);
+        return {action : 'ew-expresso-mail-create', params: { action: 'reply', folderID: this.message.folderID, msgID: this.message.msgID, 'tabID': 'mail_reply_' +  this.message.folderID + '_' + this.message.msgID,'tabIcon' : 'reply-all', 'tabTitle' : 'Re: ' + this.message.msgSubject }};
+      },
+      _getActionReplyAll: function() {
+        var randTabID = Math.floor((Math.random() * 10000) + 1);
+        return {action : 'ew-expresso-mail-create', params: { action: 'reply-all', folderID: this.message.folderID, msgID: this.message.msgID, 'tabID': 'mail_reply_all_' +  this.message.folderID + '_' + this.message.msgID,'tabIcon' : 'reply-all', 'tabTitle' : 'Re: ' + this.message.msgSubject }};
+      },
+      _getActionForward: function() {
+        return {action : 'ew-expresso-mail-create', params: { action: 'forward', folderID: this.message.folderID, msgID: this.message.msgID, attachments: this.message.msgAttachments, 'tabID': 'mail_fwd_' +  this.message.folderID + '_' + this.message.msgID,'tabIcon' : 'forward', 'tabTitle' : 'Fwd: ' + this.message.msgSubject }};
+      },
+
+      _onReply: function(event) {
+        event.stopPropagation();
+        var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'reply', folderID: this.message.folderID, msgID: this.message.msgID, 'tabID': 'mail_reply_' +  this.message.folderID + '_' + this.message.msgID,'tabIcon' : 'reply-all', 'tabTitle' : 'Re: ' + this.message.msgSubject });
+      },
+      _onForward: function(event) {
+        event.stopPropagation();
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'forward', folderID: this.message.folderID, msgID: this.message.msgID, attachments: this.message.msgAttachments, 'tabID': 'mail_fwd_' +  this.message.folderID + '_' + this.message.msgID,'tabIcon' : 'forward', 'tabTitle' : 'Fwd: ' + this.message.msgSubject });
+      },
+      _onReplyAll: function(event) {
+        event.stopPropagation();
+        var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'reply-all', folderID: this.message.folderID, msgID: this.message.msgID, 'tabID': 'mail_reply_all_' +  this.message.folderID + '_' + this.message.msgID,'tabIcon' : 'reply-all', 'tabTitle' : 'Re: ' + this.message.msgSubject });
+      },
+      _onDelete: function(event) {
+        this.$.delMessage.delMessage(this.message.folderID,this.message.msgID);
+      },
+      whenMailDelete: function() {
+        if (this.isMobile) {
+          this.ew_closeWidget();          
+        }
+        this.ew_refresh();
+      },
+
+      
+
+      getMsgRecipientsHTML: function(items, title) {
+        var html = '';
+
+        var limitRecipients = 5;
+
+        if (items != undefined) {
+          if (items.length != 0) {
+            html = html + '<div class="msgRecipient chips">';
+            html = html + "" + title + ":&nbsp;";
+            var firstRecipients = '';
+            for (var i= 0; i < items.length; i++) {
+              var recipient = items[i];
+              if ((items.length > limitRecipients) && (i == limitRecipients)) {
+                var qtdExtraRecipients = items.length - limitRecipients;
+                //html = html + '<div style=""><div class="extraRecipientsInfo">e mais ' + qtdExtraRecipients + ' pessoas...</div><div>';
+              }
+
+              if (recipient.fullName == undefined) {
+
+                html = html + recipient.mailAddress;
+
+              } else {
+                html = html + '<ew-expresso-mail-contact-button style="margin: 5px;" name="' + recipient.fullName + '" email="' + recipient.mailAddress + '"></ew-expresso-mail-contact-button>';
+
+              }
+
+              
+              if ((items.length > limitRecipients) && (i == items.length - 1)) {
+                html = html + '</div></div>';
+              }
+
+            }
+            html = html + "</div>";
+          }
+
+        }
+        return html;
+      },
+      openKeyboardShortcuts: function(e) {
+        this.ew_openWidget("ew-list-view",{route: "./api/rest/ew-expresso-mail/KeyboardSettings", "tabID" : "ew-expresso-mail-keyboard", "tabIcon" : "hardware:keyboard", "tabTitle" : "Teclas de Atalho"});
+      },
+
+      callPhone: function(e) {
+        this.ew_showColumnDialog('ew-list-view',{ 'route' : './api/rest/ew-celepar/AsteriscoParana', 'view': 'click2call', 'phone': e.detail.phone });
+      },
+
+      composeMail: function(e) {
+        // this.log("composeMail");
+        // this.log(e);
+        var randTabID = Math.floor((Math.random() * 10000) + 1);
+        this.ew_openWidget('ew-expresso-mail-create',{ 'action': 'create', 'msgTo':  [ { 'name': e.detail.name, 'email': e.detail.email } ], 'tabID': 'mail_create_' + randTabID ,'tabIcon' : 'create', 'tabTitle' : 'Nova Mensagem' });
+      },
+
+      _computeAttachmentsId: function(folderID,msgID) {
+
+        var elementID = "msgAttachmentsRecipients_" + folderID.replace('/','_').replace(' ','_') + "_" + msgID;
+        return elementID;
+      },
+
+      _onHighlightStar: function(e) {
+        e.stopPropagation();
+        this.set("starred",!this.starred);
+        var flagType = 2;
+        if (this.starred) {
+          flagType = 1;
+        }
+        this.$.flagMessage.flagMessage(this.message.folderID,this.message.msgID,flagType);
+      },
+      _onMarkUnreadMessage: function(e) {
+        e.stopPropagation();
+        if (!this.unread) {
+          console.log('_onMarkUnreadMessage');
+          this.set("unread",!this.unread);
+          var flagType = 4;
+          this.$.flagMessage.flagMessage(this.message.folderID,this.message.msgID,flagType);
+        } else {
+          this.ew_showMessage('Mensagem já está marcada como não lida.')
+        }
+        
+      },
+
+      bindHtml: function(elementToBind,htmlToBind,elementId) {
+
+
+        elementToBind.innerHTML = '';
+
+        var domBind = document.createElement('template', 'dom-bind');
+        domBind.id = elementId;
+
+        var doc = domBind.content.ownerDocument;
+        var elem = doc.createElement('div');
+        elem.innerHTML = htmlToBind;
+        domBind.content.appendChild(elem);
+        elementToBind.appendChild(domBind);
+
+        
+
+      },
+
+      _computeResponse: function(data) {
+
+        if (data.messages != undefined) {
+
+          var message = data.messages[0];
+          this.set("message",message);
+
+          if (message.msgFlagged == "1") {
+            this.starred = true;
+          } else {
+            this.starred = false;
+          }
+
+          if (message.msgForwarded == "1") {
+            this.forwarded = true;
+          } else {
+            this.forwarded = false;
+          }
+
+          if (message.msgAnswered == "1") {
+            this.answered = true;
+          } else {
+            this.answered = false;
+          }
+
+          this.msgToRecipientsHTML = "";
+          this.msgCcRecipientsHTML = "";
+          this.msgBccRecipientsHTML = "";
+
+          this.msgBodyHTML = this._replacePhones(this.message.msgBody);
+
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            this._replaceHTMLLinks();
+          });
+        //   this.bindHtml(this.$.msgBody,this.message.msgBody);
+
+        this.msgToRecipientsHTML = this.getMsgRecipientsHTML(this.message.msgTo,'Para');
+
+        //   this.bindHtml(this.$.recipientsMsgTo,this.getMsgRecipientsHTML(this.message.msgTo,'Para'));
+          if (this.message.msgCC != undefined) {
+            this.msgCcRecipientsHTML = this.getMsgRecipientsHTML(this.message.msgCC,'Cc');
+            // this.bindHtml(this.$.recipientsMsgCc,this.getMsgRecipientsHTML(this.message.msgCC,'Cc'));
+          }
+          if (this.message.msgBcc != undefined) {
+            this.msgBccRecipientsHTML = this.getMsgRecipientsHTML(this.message.msgBcc,'CCo');
+            this.bindHtml(this.$.recipientsMsgBcc,this.getMsgRecipientsHTML(this.message.msgBcc,'CCo'));
+          }
+
+          //HACK THAT CHANGES THE SCALE OF THE HTML CONTENT.
+          var that = this;
+          this.async(function() {
+
+            var bodyEl = that.$.msgBody;
+            var bodyCardEl = that.$.msgBodyCard;
+
+            var maxWidth  = $(bodyEl).width(); 
+
+            if (maxWidth >= 2000) {
+              maxWidth = 2000;
+            }
+            var maxHeight = 1000000000000000000000000;
+            var currentHeight = $(bodyEl).height();
+            // var maxHeight = $('#msgBody').height();
+
+            var $window = $(window);
+            var width = $window.width() - 32; //32 is the padding
+            var height = $window.height();
+            var scale;
+
+           if (maxWidth >= width) {
+              if(width >= maxWidth && height >= maxHeight) {
+                  $(bodyEl).css({'-webkit-transform': ''});
+                  $(bodyCardEl).css({ width: '', height: '' });
+              }
+
+              // scale = Math.min(width/maxWidth, height/currentHeight);
+              scale = width/maxWidth;
+
+              $(bodyEl).css({'-webkit-transform': 'scale(' + scale + ')'});
+              $(bodyCardEl).css({ width: maxWidth * scale, height: currentHeight * scale });
+           }
+
+            if (that.params.printVersion) {
+
+              this._injectCssPrintableVersion();
+
+              var _div = document.createElement('div');
+              _div.id = 'bodyPrintVersion';
+              _div.innerHTML = this.getPrintableVersion();
+              document.body.appendChild(_div);
+              window.print();
+              window.close();
+
+            }
+
+
+          },1000);
+
+        
+          this.hasFinishedLoading = true;
+
+          // console.log('ew-refresh-route:');
+          this.notifyResize();
+
+
+        } else {
+          this.ew_showMessage('Não foi possível abrir a mensagem.');
+          this.ew_closeWidget();
+        }
+        
+      },
+      _computeMsgSize: function(message) {
+          return this.bytesToSize(message.msgSize,0);
+      },
+
+      _replacePhones: function(htmlToBind) {
+        //TODO - NOT WORKING REGEXP.
+        var _phonesRegex0 = /\(\d{2}\)\d{4}-\d{4}/g;
+        var _phonesRegex1 = /\(\d{2}\)\d{5}-\d{4}/g;
+        // var _phonesRegex2 = /\d{5}-\d{4}/g;
+        var _phones0 = htmlToBind.match(_phonesRegex0);
+        var _phones1 = htmlToBind.match(_phonesRegex1);
+        // var _phones2 = htmlToBind.match(_phonesRegex2);
+
+        var _phones = Array.prototype.concat.apply([], [_phones0, _phones1]);
+
+        if (_phones != null) {
+          var uniqPhones = _phones.reduce(function(a,b){
+            if (a.indexOf(b) < 0 ) a.push(b);
+            return a;
+          },[]);
+          // console.log(uniqPhones);
+          
+          String.prototype.replaceAll = function(search, replacement) {
+              var target = this;
+              return target.split(search).join(replacement);
+          };
+
+          if (uniqPhones !=  undefined) {
+            for(var i=0;i<uniqPhones.length;i++){
+              htmlToBind = htmlToBind.replaceAll(uniqPhones[i],'<a href="tel:' + uniqPhones[i] + '">' + uniqPhones[i] + '</a>');
+            }
+          }
+          
+        }
+
+        return htmlToBind;
+      },
+
+      _replaceHTMLLinks: function() {
+        // console.log(this.$.msgBody);
+
+        var links = this.$.msgBody.querySelectorAll('a');
+        // console.log(links);
+        //REPLACE HREF=MAILTO: TO A COMPOSE MAIL LINK
+        for(var i=0;i<links.length;i++){
+          var a=links[i];
+          if(a.href.indexOf('mailto:')==0){
+            var composeTo = a.href;
+          
+            var that = this;
+            var fnClick = function() {
+              // console.log('fnClick');
+              composeTo = composeTo.replace('mailto:','');
+              composeTo = composeTo.replace('MAILTO:','');
+              // console.log(composeTo);
+              var evt = new CustomEvent("ew-compose-mail", { "detail": { name: composeTo, email: composeTo } });
+              that.composeMail(evt);
+            }
+
+            a.href = '#';
+            a.onclick = fnClick;
+
+          }
+
+          if(a.href.indexOf('tel:')==0){
+            var linkPhone = a.href;
+          
+            var that = this;
+            var fnClick = function() {
+              linkPhone = linkPhone.replace('tel:','');
+              linkPhone = linkPhone.replace('TEL:','');
+              var evt = new CustomEvent("ew-call-phone", { "detail": { phone: linkPhone } });
+              that.callPhone(evt);
+            }
+
+            a.href = '#';
+            a.onclick = fnClick;
+
+          }
+        }
+      },
+
+      bytesToSize: function(bytes, precision) {  
+          var kilobyte = 1024;
+          var megabyte = kilobyte * 1024;
+          var gigabyte = megabyte * 1024;
+          var terabyte = gigabyte * 1024;
+         
+          if ((bytes >= 0) && (bytes < kilobyte)) {
+              return bytes + ' B';
+       
+          } else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+              return (bytes / kilobyte).toFixed(precision) + ' KB';
+       
+          } else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+              return (bytes / megabyte).toFixed(precision) + ' MB';
+       
+          } else if ((bytes >= gigabyte) && (bytes < terabyte)) {
+              return (bytes / gigabyte).toFixed(precision) + ' GB';
+       
+          } else if (bytes >= terabyte) {
+              return (bytes / terabyte).toFixed(precision) + ' TB';
+       
+          } else {
+              return bytes + ' B';
+          }
+      },
+
+      _computeIsFirstIndex: function(_params) {
+        var retVal = false;
+        if (_params != undefined) {
+          var msgIDIndex = this.findMsgIDIndex(_params.msgID,_params);
+          if (msgIDIndex == 0) {
+            retVal = true;
+          }
+        }
+        return retVal;
+      },
+
+      _onPrint: function() {
+        console.log('_onPrint');
+        console.log(this.params);
+
+        var _newParams = { msgID: this.params.msgID, folderID: this.params.folderID, printVersion: true };
+
+        var _params = window.btoa(JSON.stringify(_newParams));
+        // console.log(_params);
+        var _modules = '';
+        var _url = 'index.php?mobile=1&element=ew-expresso-mail-message&module=' + _modules + '&params=' + _params;
+
+        var w = window.open(_url);
+
+      },
+
+      _computeIsLastIndex: function(_params) {
+        var retVal = false;
+        if (_params != undefined) {
+          var msgIDIndex = this.findMsgIDIndex(_params.msgID,_params); 
+          if (_params != undefined) {
+            if (_params.messages != undefined) {
+              if (msgIDIndex == (_params.messages.length + 1)) {
+                retVal = true;
+              }
+            }
+          } 
+        }
+        return retVal;
+      },
+
+      findMsgIDIndex: function(_msgID,_params) {
+        var index = 0;
+        if (_params != undefined) {
+          if (_params.messages != undefined) {
+            for (var i= 0; i < _params.messages.length; i++) {
+              if (_params.messages[i].msgID == _msgID) {
+                index = i;
+              }
+            }
+          }
+        }
+        return index;
+      },
+
+      loadMsgIndex: function(msgIDIndex) {
+        if (this.params.messages[msgIDIndex] != undefined) {
+
+          var newParams = { 
+            msgID: this.params.messages[msgIDIndex].msgID,
+            folderID: this.params.messages[msgIDIndex].folderID,
+            messages: this.params.messages,
+            tabID: 'mail_detail_' +  this.params.messages[msgIDIndex].folderID + '_' + this.params.messages[msgIDIndex].msgID ,
+            tabIcon: 'mail', 
+            tabTitle: this.params.messages[msgIDIndex].msgSubject
+          };
+          this.ew_openWidget('ew-expresso-mail-message',newParams);
+        } 
+        
+      },
+      //Próxima Mensagem
+      nextMessage: function() {
+        var msgIDIndex = this.findMsgIDIndex(this.params.msgID,this.params);
+        msgIDIndex = msgIDIndex + 1;
+        this.loadMsgIndex(msgIDIndex);
+      },
+      // Mensagem Anterior
+      priorMessage: function() {
+        var msgIDIndex = this.findMsgIDIndex(this.params.msgID,this.params);
+        msgIDIndex = msgIDIndex - 1;
+        
+        // this.ew_o
+        this.loadMsgIndex(msgIDIndex);
+      },
+
+      _injectCssPrintableVersion: function() {
+        var _css = '@media print { #ewidgetsBody * { visibility: hidden !important; } #bodyPrintVersion, #bodyPrintVersion * { visibility: visible !important; } body { overflow-x: visible; overflow-y: visible; } #bodyPrintVersion { left: 0px; top: 0px; position:absolute; } p { page-break-before: auto;} }';
+
+         var node = document.createElement('style');
+         node.innerHTML = _css;
+         document.body.appendChild(node);
+      },
+
+      //Retorna o HTML da Versão para Impressão.
+      getPrintableVersion: function() {
+        var html = '<h3>Expresso</h3>';
+        html = html + '<hr>';
+        html = html + this.getPrintableMsgRecipientsHTML([this.message.msgFrom],'Remetente');
+        html = html + this.getPrintableMsgRecipientsHTML(this.message.msgTo,'Para');
+        html = html + this.getPrintableMsgRecipientsHTML(this.message.msgCc,'Cc');
+        html = html + this.getPrintableMsgRecipientsHTML(this.message.msgCcO,'Cco');
+        html = html + '<br><span><b>Data:</b>&nbsp;' + this.message.msgDate + '</span>';
+        html = html + '<br><span><b>Assunto:</b>&nbsp;' + this._decodeHTMLEntities(this.message.msgSubject) + '</span>';
+        if (this.message.msgAttachments != undefined) {
+          if (this.message.msgAttachments.length != 0) {
+            html = html + '<br><span><b>Anexos:</b></span>&nbsp;';
+            for (var i in this.message.msgAttachments) {
+              html = html + this.message.msgAttachments[i].attachmentName + '&nbsp;(' + this.bytesToSize(this.message.msgAttachments[i].attachmentSize,0) + '),';
+            }
+            html = html.substr(0,html.length - 1);
+          }
+        }
+        html = html + '<hr>';
+        html = html + this.message.msgBody;
+
+        return html;
+      },
+      // Retorna o HTML dos campos PARA,CC,CCO,REMETENTE da versão para impressão.
+      getPrintableMsgRecipientsHTML: function(items, title) {
+        var html = '';
+        if (items != undefined) {
+          if (items.length != 0) {
+            html = html + '<br><span>';
+            html = html + "<b>" + title + ":</b>&nbsp;";
+            var firstRecipients = '';
+            for (var i= 0; i < items.length; i++) {
+              var recipient = items[i];
+              if ((recipient.fullName == undefined) || (recipient.fullName == '')) { 
+                html = html + "&lt;" + recipient.mailAddress + "&gt;,";
+              } else {
+                html = html + '"' + recipient.fullName + '" &lt;' + recipient.mailAddress + '&gt;,';
+              }
+            }
+            html = html.substr(0,html.length - 1);
+            html = html + "</span>";
+          }
+
+        }
+        return html;
+      }
+    });
+    </script>
+</dom-module>

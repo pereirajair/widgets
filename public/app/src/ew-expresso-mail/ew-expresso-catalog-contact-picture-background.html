@@ -1,0 +1,165 @@
+<dom-module id="ew-expresso-catalog-contact-picture-background">
+  <template> 
+    <style>            
+    </style>
+        <iron-signals on-iron-signal-ew-expresso-catalog-contact-picture-request-photo="_requestPhoto"></iron-signals>  
+        <iron-localstorage id="LocalPhotos" name="LocalPhotos" value="{{localPhotos}}" on-iron-localstorage-load-empty="initializeDefaultPhotos"></iron-localstorage>
+        <ew-api-ajax
+          id="ajax"
+          resource="Catalog/Photo"
+          params="{{requestParams}}"
+          loading="{{isLoading}}"
+          on-response="ew_handleResponseToData">        
+        </ew-api-ajax>
+    </template> 
+  <script> 
+ 
+    Polymer({
+        is: 'ew-expresso-catalog-contact-picture-background',
+        behaviors: [EWBehaviorWidgetBehavior],
+        properties: { 
+            requestParams: { value: {} ,notify: true, reflectToAttribute: true },
+            src: {
+                type: String,
+                value: null,
+                computed: '_computeSrc(data)'
+            },
+            waitingPhotos: { type: Array, value: [] ,notify: true, reflectToAttribute: false },
+            requestedPhotos: { type: Array, value: [] ,notify: true, reflectToAttribute: false },
+            localPhotos: { type: Array, value: [] ,notify: true, reflectToAttribute: false },
+        },
+        /**
+          Executa a tarefa em background.
+        */
+        ew_backgroundTask: function() {
+          this.debug = false;
+          this.log('ew-expresso-catalog-contact-picture-background.ew_backgroundTask');
+          this.$.LocalPhotos.reload();
+          this._requestWaitingPhotos();
+        },
+
+        _requestWaitingPhotos: function() {
+          var chunk = 5;
+          var i;
+          var _slice = this.waitingPhotos.slice(0,chunk);
+          for (i = 0; i < _slice.length; i++) { 
+            var _photo = _slice[i];
+            if (_photo != undefined) {
+              var _isRequestingPhoto = this.isEmailInArray(_photo.email,this.requestedPhotos);
+              if (_isRequestingPhoto == false) {
+                this.requestedPhotos.push(_photo);
+                this.requestPicture(_photo.email);
+              }
+            }
+            
+          }
+          this.waitingPhotos = this.waitingPhotos.slice(chunk,this.waitingPhotos.length);
+        },
+        _requestPhoto: function(e) {
+          this.log('ew-expresso-catalog-contact-picture-background._requestPhoto');
+          var _photo = e.detail;
+
+          var _isRequestingPhoto = this.isEmailInArray(_photo.email,this.requestedPhotos);
+          var _isWaitingPhoto = this.isEmailInArray(_photo.email,this.waitingPhotos);
+          var _photoIndex = this.getEmailIndexInArray(_photo.email,this.localPhotos);
+
+          if (_photoIndex == -1) {
+            if (_isWaitingPhoto == false) {
+              if (_isRequestingPhoto == false) {
+                if (this._canRequestEmailPhoto(_photo.email)) {
+                  this.waitingPhotos.push(_photo);
+                }
+              }
+            }
+
+            var _photo = this.localPhotos[_photoIndex];
+            this.ew_signal('ew-expresso-catalog-contact-picture-update-picture',_photo);
+          }
+
+        },
+        _canRequestEmailPhoto: function(_email) {
+          var retVal = false;
+          if (_email != undefined) {
+            if (_email != '') {
+              if (_email.indexOf('pr.gov.br') >= 0) {
+                retVal = true;
+              }
+            }
+          }
+         
+          return retVal;
+        },
+        initializeDefaultPhotos: function() {
+          this.localPhotos = [];
+        },
+        removeEmailFromArray: function(_email,_array) {
+          var _index = this.getEmailIndexInArray(_email,_array);
+          var _newArray = [];
+            for (key in _array) {
+              if (_index != -1) {    
+                if (key != _index) {
+                  _newArray.push(_array[key]);
+                }
+              }
+            }
+          return _newArray;
+        },
+        getEmailIndexInArray: function(_email,_array) {
+          var _index = -1;
+          for (key in _array) {
+            var photo = _array[key];
+            if (photo.email == _email) {
+              _index = key;
+            }
+          }
+          return _index;
+        },
+        isEmailInArray: function(_email, _array) {
+          var _index = this.getEmailIndexInArray(_email,_array);
+          var requested = false;
+          if (_index != -1) {
+            requested = true;
+          }
+          return requested;
+        },
+
+        requestPicture: function(_email) {
+          this.log('ew-expresso-catalog-contact-picture-background.requestPicture');
+          this.set('data',{});
+
+          this.requestParams = { email: _email.trim() };
+
+          this.$.ajax.generateRequest();
+        },
+        _computeSrc: function(data) {
+         
+             var picSource = null;
+
+             // console.log(data);
+
+            if (data.contacts != undefined) {
+              if (data.contacts[0] != undefined) {
+                if (data.contacts[0].contactPicture != undefined) {
+                  if (data.contacts[0].contactPicture != '') {
+                    picSource = 'data:image/gif;base64,' + data.contacts[0].contactPicture;
+                    this.isLoaded = true;
+                  }
+                  var _localPhoto = { email: data.contacts[0].contactMail.trim(), picture : data.contacts[0].contactPicture };
+                  this.requestedPhotos = this.removeEmailFromArray(_localPhoto.email,this.requestedPhotos);
+                  this.localPhotos.push(_localPhoto);
+
+                  this.ew_signal('ew-expresso-catalog-contact-picture-update-picture',_localPhoto);
+
+                  this.$.LocalPhotos.save();
+
+                }
+              }
+            } 
+
+            return picSource;
+        },
+
+      
+    });
+  </script>
+</dom-module>

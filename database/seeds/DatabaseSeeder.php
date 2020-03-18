@@ -23,7 +23,10 @@ class DatabaseSeeder extends Seeder
             TSNoticias::class,
             TSOrganograma::class,
             TSPontoCelepar::class,
-            TSPrevisaoTempo::class
+            TSPrevisaoTempo::class,
+            TSTeatroGuaira::class,
+            TSCorreios::class,
+            TSAplicacoesExternas::class,
         ]);
     }
 }

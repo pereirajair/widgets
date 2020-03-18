@@ -36,8 +36,6 @@ class Login extends WidgetController {
 		
 		if ($showForm) {
 
-            
-
             $view->addPaperItemImage("data:image/jpeg;base64," . $widget->icon,$widget->name,$widget->description);
             $view->addHiddenInput("route", $this->getParam("route"));
             $view->addHiddenInput("routeID", $this->getParam("routeID"));

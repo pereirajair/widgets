@@ -1,0 +1,175 @@
+<!--
+### BACKGROUND TASK 
+
+`ew-expresso-mail-messages-background`
+
+Este elemento executa uma tarefa em background, para retornar as mensagens de uma pasta, e verificar por novas mensagens.
+
+Quando o elemento verifica novas mensagens, ele envia uma mensagem para o usuario informando chegou uma nova mensagem.
+
+### JAVASCRIPT 
+
+    this.ew_registerBackgroundTask('ew-expresso-mail-messages-background',{  },70000);
+
+### EVENTOS
+
+Os eventos abaixo sao disparados quando o elemento termina de realizar a acao.
+
+Evento | Descricao
+----------------|-------------
+`ew-expresso-mail-messages-update-messages` | Atualizar a lista de mensagens na pasta.
+
+-->
+<dom-module id="ew-expresso-mail-messages-background">
+  <template>
+    <ew-api-ajax
+        id="ajax"
+        resource="Mail/Messages"
+        params="{{requestParams}}"
+        loading="{{isLoading}}"
+        on-response="ew_handleResponseToData">        
+    </ew-api-ajax>
+    <iron-signals on-iron-signal-ew-expresso-mail-clean-trash="cleanTrash"></iron-signals>
+    <iron-signals on-iron-signal-ew-expresso-mail-clean-spam="cleanSpam"></iron-signals>
+    <iron-signals on-iron-signal-ew-expresso-mail-refresh-folders="refreshMailFolders"></iron-signals>
+    <ew-expresso-mail-clean-trash id="mailClean"></ew-expresso-mail-clean-trash>
+  </template>
+  <script>
+ 
+    Polymer({
+        is: 'ew-expresso-mail-messages-background',
+        behaviors: [EWBehaviorWidgetBehavior],
+        properties: { 
+            data: { notify: true, observer: '_computeMessages' }, 
+            params: { type: Object, value: { folderID: "" }, notify: true, reflectToAttribute: true }, 
+            requestParams: { type: Object, value: { }, notify: true },
+            lastCheckDate: { type: Object, value: null, notify: true, reflectToAttribute: true },
+        },
+        attached: function() {
+          this.debug = false;
+        },
+        /**
+          Executa a tarefa em background.
+        */
+        ew_backgroundTask: function() {
+          this.log('ew-expresso-mail-messages-background.ew_backgroundTask');
+          this._loadPageBackground();
+          this.refreshMailFolders();
+        },
+        _loadPageBackground: function() {
+          this.log('ew-expresso-mail-messages-background.loadPageBackground');
+          this.params.page = 1;
+          this.requestParams = this._computeRequestParams(this.params);
+          this.$.ajax.generateRequest();
+        },
+        _computeRequestParams: function(params) {
+          this.log('ew-expresso-mail-messages-background._computeRequestParams');
+          var retval = {};
+          if (params != undefined)  {
+            if (params.page == undefined) {
+              params.page = 0;
+            }
+            if (params.search == undefined) {
+              params.search = '';
+            }
+            if ((params.folderID == undefined) || ((params.folderID == ""))){
+              params.folderID = 'INBOX';
+            }
+            retval.page = params.page;
+            retval.folderID = params.folderID;
+            retval.resultsPerPage = 25;
+            retval.search = params.search;
+          }
+          return retval;
+        },
+        _sendNotification: function(_message) {
+            console.log(_message);
+            var _userId = this.ew_getUserId();
+            this.notification = {};
+            this.notification.system_id = 3;
+
+            this.notification.title =  'Novo E-mail: ' + _message.msgSubject;
+            this.notification.desc_notif = 'De: <' + _message.msgFrom.mailAddress + '>';
+            this.notification.link = '';
+            
+            this.notification.users = [_userId];
+            this.notification.action = 'ew-expresso-mail-message';
+            this.notification.params = '{ "folderID": "' + _message.folderID + '", "msgID" : "' + _message.msgID + '"}';
+
+            this.ew_sendNotification(this.notification);
+
+        },
+        _computeMessages: function() {
+          this.log('ew-expresso-mail-messages-background._computeMessages');
+
+          var qtdUnreadMessages = 0;
+          var lastMessage = '';
+
+          var unreadMessages = [];
+
+          if (this.data != undefined) {
+            if (this.data.messages != undefined) {
+              for (var i in this.data.messages) {
+
+                var message = this.data.messages[i];
+                var date = moment(message.msgDate + ":59", "DD/MM/YYYY HH:mm:ss").unix();
+
+                if (this.lastCheckDate != null) {
+
+                  if (date > (this.lastCheckDate / 1000)) {
+
+                    qtdUnreadMessages = qtdUnreadMessages + 1;
+                    lastMessage = message;
+
+                    unreadMessages.push(message);
+
+                    this._sendNotification(message);
+                  }
+
+                }
+              }
+            }
+          }
+
+          if (qtdUnreadMessages > 0) {
+
+            // var msgRoute = ""; 
+            var msgTitle = "";
+
+            if (qtdUnreadMessages == 1) {
+              // msgRoute = "/Mail/Messages/1/" +  lastMessage.msgID + "/INBOX";
+              msgTitle = "Você tem 1 nova mensagem: " + lastMessage.msgSubject;
+            } else {
+              // msgRoute = "/Mail/Messages/1/0/INBOX";
+              msgTitle = "Você tem " + qtdUnreadMessages + " novas mensagens.";
+            }
+
+            this.ew_signal('ew-expresso-mail-messages-update-messages',{ 'folderID': this.requestParams.folderID, 'unreadMessages': unreadMessages , 'msgTitle': msgTitle } );
+            
+          }
+          this.lastCheckDate = Date.now();
+        },
+        /**
+Esvaziar a pasta "Lixeira"
+        */
+        cleanTrash: function(e) {
+          this.log('ew-expresso-mail-messages-background.cleanTrash');
+          this.$.mailClean.type = 1;
+          this.$.mailClean.cleanTrashAndConfirm();
+        },
+        /**
+Esvaziar a pasta "Spam"
+        */
+        cleanSpam: function(e) {
+          this.log('ew-expresso-mail-messages-background.cleanSpam');
+          this.$.mailClean.type = 2;
+          this.$.mailClean.cleanTrashAndConfirm();
+        },
+        refreshMailFolders: function() { 
+
+          this.ew_signal("ew-refresh-route",{ 'route' : './api/rest/ew-expresso-mail/MailFolders', params : {} });
+        }
+
+    });
+  </script>
+</dom-module>

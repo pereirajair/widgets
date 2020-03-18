@@ -1,0 +1,513 @@
+<!--
+### WIDGET MULTI-COLUMN
+
+`ew-expresso-mail`
+
+Widget do Expresso Mail. Uma nova interface de Email. Este e um widget Multi-column (Com visualizacao para tablets).
+
+
+Este widget nao pode ser aberto por outros widgets, porque widgets do tipo multi-column geralmente agregam dois ou mais widgets em uma visualizacao para tablets/desktop.
+
+Widgets | Descricao
+----------------|-------------
+`ew-expresso-mail-folders` | Pastas.
+`ew-expresso-im` | Messenger
+`ew-expresso-mail-messages` | Mensagens de Email
+ 
+--> 
+<dom-module id="ew-expresso-mail">
+  <template>
+    <style>
+
+        :host {
+          background-color: var(--paper-menu-background-color);
+          height: 100%;
+        } 
+        paper-toolbar[align-bottom] {
+          position: absolute;
+          margin-top: -64px;
+          width: 100%;
+        }
+        paper-tabs[align-bottom] {
+          width: 100%;
+        }
+
+        paper-tabs {
+          position: absolute;
+          left: 0px;
+          bottom: 0px;
+        }
+
+        iron-pages {
+          background-color: var(--paper-menu-background-color);
+          padding: 0px;
+          height: 100%;
+        }
+
+        .page {
+          background-color: var(--paper-menu-background-color);
+          height: 100%;
+        }
+
+        #chatDesktop {
+          margin-bottom: 48px;
+          background-color: var(--paper-menu-background-color);
+        }
+
+        .content {
+          height: 100%;
+        }
+
+         .elementView {
+          position: absolute; 
+          width: 100%;
+          height: calc(100%); 
+        }
+
+        ew-view {
+          height: calc(100% - 51px) !important;
+        } 
+
+      </style>
+      <ew-api-ajax
+        id="ajax"
+        resource="Preferences/UserPreferences"
+        params="{{prefParams}}"
+        loading="{{isLoading}}"
+        on-response="ew_handleResponseToPreferences">        
+      </ew-api-ajax>
+
+      <iron-signals on-iron-signal-ew-signal-reply-message="_onReply"></iron-signals>
+      <iron-signals on-iron-signal-ew-signal-reply-all-message="_onReplyAll"></iron-signals>
+      <iron-signals on-iron-signal-ew-signal-forward-message="_onForward"></iron-signals>
+      <iron-signals on-iron-signal-ew-signal-del-message="_onDelete"></iron-signals>
+
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+w" on-keys-pressed="_onReplyAll"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+r" on-keys-pressed="_onReply"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+e" on-keys-pressed="_onForward"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+i" on-keys-pressed="_onHighlightStar"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+u" on-keys-pressed="_onMarkUnreadMessage"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+d" on-keys-pressed="_onDelete"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+right" on-keys-pressed="nextMessage"></iron-a11y-keys>
+      <iron-a11y-keys target="[[target]]" keys="ctrl+alt+left" on-keys-pressed="priorMessage"></iron-a11y-keys>
+      
+      <ew-header title="{{currentFolder.folderName}}" background-color="indigo">
+        <div slot='toolbar-buttons' class='toolbar-buttons'> 
+            <paper-tabs selected="{{selected}}" class="bottom self-end">
+              <paper-tab><iron-icon icon="communication:email"></iron-icon></paper-tab>
+              <paper-tab><iron-icon icon="icons:view-quilt"></iron-icon></paper-tab>
+              <paper-tab><iron-icon icon="social:people"></iron-icon></paper-tab>
+              <paper-tab><iron-icon icon="icons:date-range"></iron-icon></paper-tab>
+              <paper-tab><iron-icon icon="icons:info-outline"></iron-icon></paper-tab>
+            </paper-tabs>
+         </div>
+        <div slot='content'> 
+          <iron-pages class="flex" selected="{{selected}}" style="height: 100%;">
+            <div class="page">
+              <ew-view id="mailFolders" params="{{paramsMailFoldersNew}}" class="elementView"></ew-view> 
+            </div>
+            <div class="page">
+              <ew-view id="widgets" params="{{paramsWidgets}}" class="elementView"></ew-view>
+            </div>
+            <div class="page">
+              <ew-view id="expressoCatalog" params="{{paramsContactsNew}}" class="elementView"></ew-view>
+            </div>
+            <div class="page">
+              <ew-view id="expressoCalendar" params="{{paramsCalendarEvents}}" class="elementView"></ew-view>
+            </div>
+            <div class="page">
+              <ew-view id="expressoDivulgacao"  params="{{paramsDivulgacao}}" class="elementView"></ew-view>
+            </div>
+          </iron-pages>
+        </div>
+      </ew-header>   
+    </template>
+  <script>
+    Polymer({
+        is: 'ew-expresso-mail',
+        behaviors: [EWBehaviorWidgetBehavior, window.Columns.EWColumn, Polymer.IronResizableBehavior],
+        properties: {
+            data: { notify: true, reflectToAttribute: true },
+            prefParams: {
+              type: Object,
+              value: { 'module' : 'mail' },
+            },
+            preferences: {
+              type: Object,
+              value: { },
+            },
+            params: { type: Object, value: { 
+                configured: true, 
+                folderID: "INBOX", 
+                title: 'Email', 
+                showCreateMailButton: false, 
+                showFoldersAndParentFolders: true, 
+                showQuota: true, 
+                showSearch: true, 
+                enableChat: true, 
+                autoLoadChat: true,
+                viewType: 0
+              } , 
+              notify: true, 
+              reflectToAttribute: true 
+            },
+
+            paramsDivulgacao: { 
+              type: Object, 
+              value: {  
+                route: './api/rest/ew-expresso-mail/Divulgacao'
+              } 
+            },
+
+            paramsCalendarEvents: { 
+              type: Object, 
+              value: {  
+                route: './api/rest/ew-expresso-calendar/Events',
+              } 
+            },
+
+            paramsWidgets: { 
+              type: Object, 
+              value: {  
+                route: './api/rest/UserWidgets',
+                openWidget: true,
+              } 
+            },
+
+            paramsMail: { type: Object, value: { 
+                configured: true, 
+                folderID: "INBOX", 
+                title: 'Email', 
+                showCreateMailButton: false, 
+                showFoldersAndParentFolders: true, 
+                showQuota: true, 
+                showSearch: true, 
+                enableChat: true, 
+                autoLoadChat: true,
+                viewType: 0
+              } , 
+              notify: true, 
+              reflectToAttribute: true 
+            },
+
+            paramsContacts: { 
+              type: Object, 
+              value: {  
+                closeWhenSelected: false, 
+                selectedPage: 0, 
+                hideTabs: true,
+                showSmallContacts: true,
+                searchEnabled: false, 
+                searchValue: '' ,
+                autoOpenFirstContact: true, 
+              } 
+            },
+
+            paramsContactsNew: { 
+              type: Object, 
+              value: {  
+                route: './api/rest/ew-expresso-catalog/Contacts',
+                medium: true,
+              } 
+            },
+
+            paramsMailFoldersNew: {
+              type: Object, 
+              value: {  
+                route: './api/rest/ew-expresso-mail/MailFolders',
+                itemSize: "small",
+              } 
+            },
+
+            paramsCalendar: { 
+              type: Object, 
+              value: {  
+                showCreateEvent: false,
+                selectedPage: 0,
+                showTitle: true,
+                showTabMonth: false,
+                showTabWeek: false,
+                showTabDay: false,
+              } 
+            },
+
+            target: {
+              type: Object,
+              value: function() {
+                return document.body;
+              }
+            },
+
+            widgetTitle: { type: String, value: "E-mail" },
+            description: { type: String, value: "Adicione uma nova interface de e-mail do expresso." },
+            width: { type: Number, value: 7 },
+            height: { type: Number, value: 7 },
+            thumb: { type: String, value: "./bower_components/ew-expresso-mail/img/icon.png" },
+            link: { type: String, value: "https://www.expresso.pr.gov.br" },
+            element: { type: String, value: "ew-expresso-mail" },
+            import: { type: String, value: "./bower_components/ew-expresso-mail/import.html" },
+            multiColumn: { type: Boolean, value: true },
+            hasLoadedMailFolders: { type: Boolean, value: false },
+
+            enabledMessenger: { type: Boolean, value: true, notify: true },
+
+            selected: { type: Number, value: 0, notify: true, observer: '_pageChange' },
+            // paramsChanged: { type: Boolean, value: false, computed: '_configureParams(params)'}
+        },
+
+        ew_handleResponseToPreferences: function(event) {
+          this.log("ew-expresso-mail.ew_handleResponseToPreferences");
+          var response = event.detail.response;
+          if (response != undefined) {
+            if (response.result != undefined) {
+              this.preferences = response.result;
+            } 
+          } else {
+            this.preferences = event.detail;
+          }
+
+          this.log(this.preferences);
+
+          var _newParams = this.paramsMail;
+
+          if (this.preferences != undefined) {
+            if (this.preferences.mail != undefined) {
+              var _preferences = this.preferences.mail;
+
+              _newParams.showFoldersAndParentFolders = true;
+              if (_preferences.showFoldersAndParentFolders == "0") {
+                _newParams.showFoldersAndParentFolders = false;
+              }
+
+              _newParams.showQuota = true;
+              if (_preferences.showQuota == "0") {
+                _newParams.showQuota = false;
+              }
+
+              _newParams.enabledMessenger = false;
+              if (_preferences.messenger_auto_start == "1") {
+                _newParams.enabledMessenger = true;
+                // this.$.expressoIM.params = { showToolbar: false };
+                // this.$.expressoIM.load();
+              }
+              this.enabledMessenger = _newParams.enabledMessenger;
+
+              if (_preferences.viewType != undefined) {
+                if (_preferences.viewType == "1") {
+                  _newParams.viewType = 0;
+                } else {
+                  if (_preferences.viewType == "") {
+                    _newParams.viewType = 0;
+                  } else {
+                    _newParams.viewType = 1;
+                  }
+                }
+              } else {
+                _newParams.viewType = 0;
+              }
+              
+            }
+          }
+
+          _newParams.showToolbar = true;
+          _newParams.showMenu = false;
+          _newParams.itemSize = 'small';
+          _newParams.route = './api/rest/ew-expresso-mail/MailFolders';
+
+          this.set('selected',0);
+
+          
+          var _testNewMailMessages = false;
+
+          if (!_testNewMailMessages) {
+            this.ew_openWidget('ew-expresso-mail-messages',{
+                              
+                              "tabID" : "mail_messages_INBOX", 
+                              "folderID" : "INBOX", 
+                              "folderName" : "Caixa de Entrada", 
+                              "tabIcon": "inbox",
+                              "viewType": _newParams.viewType,
+                              "tabTitle": "Caixa de Entrada",
+                              "currentFolder" : {
+                                  "folderID" : "INBOX", 
+                                  "folderName" : "Caixa de Entrada", 
+                                  "folderType" : 0, 
+                                }
+                              
+                          });
+
+          } else {
+            this.ew_openWidget('ew-list-view',{
+                              "route" : './api/rest/MailMessages',
+                              "tabID" : "mail_messages_INBOX", 
+                              "folderID" : "INBOX", 
+                              "folderName" : "Caixa de Entrada", 
+                              "tabIcon": "inbox",
+                              "viewType": _newParams.viewType,
+                              "tabTitle": "Caixa de Entrada",
+                              "currentFolder" : {
+                                  "folderID" : "INBOX", 
+                                  "folderName" : "Caixa de Entrada", 
+                                  "folderType" : 0, 
+                                }
+                              
+                          });
+          }
+
+          this.$.mailFolders.set('params',_newParams);
+          this.$.mailFolders.load();
+
+        },
+        _pageChange: function(_page) {
+          this.log('ew-expresso-mail._pageChange:' + _page);
+          var _element = "ew-list-view";
+
+          if (_page == 0) {
+            if (this.hasLoadedMailFolders == false) {
+              this.$.mailFolders.element = _element;
+              this.$.mailFolders.render();  
+              this.hasLoadedMailFolders = true;
+            } 
+          }
+          if (_page == 1) {
+            this.$.widgets.element = _element;
+            this.$.widgets.render();
+
+          }
+          if (_page == 2) {
+            this.$.expressoCatalog.element = _element;
+            this.$.expressoCatalog.render();
+
+          }
+          if (_page == 3) {
+            this.$.expressoCalendar.element = _element;
+            this.$.expressoCalendar.render();
+
+            this.ew_openWidget('ew-expresso-calendar',{ 
+              showTitle: false,
+              showTabMonth: false, 
+              selected: 1,
+              tabID: 'ew_expresso_calendar', 
+              tabTitle: 'Agenda', 
+              tabIcon: 'icons:event'});
+          }
+          if (_page == 4) {
+            this.$.expressoDivulgacao.element = _element;
+            this.$.expressoDivulgacao.render();
+
+          }
+        },
+        load: function() {
+          this.debug = false;
+          this.prefParams = { 'module' : 'mail' };
+          // if (POLYMER != 2) {
+            this.$.ajax.generateRequest();
+          // }
+        },
+        _callActionOnMessage: function(action,e) {
+          var that = this;
+          var _callback = function(multiColumn) {
+            var _selPage = multiColumn.getSelectedPage();
+
+            if (_selPage.element == 'ew-expresso-mail-message') {
+
+              var _holder = multiColumn.getHolder(_selPage.id);
+              var _holderEl = _holder.getItemColumn().getHolder(0);
+              var childNode = _holderEl.firstChild;
+
+              if (childNode) {
+                if (action == '_onReplyAll') {
+                  if (childNode._onReplyAll != undefined) {
+                    childNode._onReplyAll(e);
+                  }                  
+                }
+
+                if (action == '_onReply') {
+                  if (childNode._onReply != undefined) {
+                    childNode._onReply(e);
+                  }                  
+                }
+
+                if (action == '_onForward') {
+                  if (childNode._onForward != undefined) {
+                    childNode._onForward(e);
+                  }                  
+                }
+
+                if (action == '_onHighlightStar') {
+                  if (childNode._onHighlightStar != undefined) {
+                    childNode._onHighlightStar(e);
+                  }                  
+                }
+
+                if (action == '_onMarkUnreadMessage') {
+                  if (childNode._onMarkUnreadMessage != undefined) {
+                    childNode._onMarkUnreadMessage(e);
+                  }                  
+                }
+
+                if (action == '_onDelete') {
+                  if (childNode._onDelete != undefined) {
+                    childNode._onDelete(e);
+                  }                  
+                }
+
+                if (action == 'nextMessage') {
+                  if (childNode.nextMessage != undefined) {
+                    childNode.nextMessage(e);
+                  }                  
+                }
+
+                if (action == 'priorMessage') {
+                  if (childNode.priorMessage != undefined) {
+                    childNode.priorMessage(e);
+                  }
+                }
+
+              }
+
+            } else {
+              that.ew_showMessage('Abra uma mensagem para realizar esta ação.');
+            }
+
+          }
+
+          this.ew_getMultiColum(_callback);
+        },
+
+        _onReplyAll: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('_onReplyAll',e);
+        },
+        _onReply: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('_onReply',e);
+        },
+        _onForward: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('_onForward',e);
+        },
+        _onDelete: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('_onDelete',e);
+        },
+        _onHighlightStar: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('_onHighlightStar',e);
+        },
+        _onMarkUnreadMessage: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('_onMarkUnreadMessage',e);
+        },
+        nextMessage: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('nextMessage',e);
+        },
+        priorMessage: function(e) {
+          e.stopPropagation();
+          this._callActionOnMessage('priorMessage',e);
+        },
+        
+    });
+  </script>
+</dom-module>

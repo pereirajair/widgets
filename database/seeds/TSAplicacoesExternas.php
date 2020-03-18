@@ -1,0 +1,20 @@
+<?php
+
+use Illuminate\Database\Seeder;
+
+class TSAplicacoesExternas extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+
+        //WIDGETS
+        $route_id = DB::table('routes')->insertGetId(['url' => '/api/widgets/AplicacoesExternas', 'class_method' => 'Widgets\AplicacoesExternas@load']);
+        DB::table('widgets')->insert(['name' => 'Aplicações Externas', 'description' => 'Exibe as Aplicações Externas.', 'icon' => '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', 'width' => 3, 'height' => 7,'route_id' => $route_id, 'is_new' => false, 'enabled' => true]);  
+        
+    }
+}

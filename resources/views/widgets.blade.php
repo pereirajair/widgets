@@ -231,11 +231,14 @@ div.containerBrowser {
 
     var AUTH = '{{$auth}}';
 
+    var ROUTE = '{{$route}}';
+    var MULTI = {{$multi}};
+
     // window.localStorage.setItem('expresso','{{htmlspecialchars_decode($auth)}}');
 
-    window.localStorage.setItem('expresso','{ "auth": "' + AUTH + '", "externalAPI" : "", "serverAPI" : "", "profile": { "contactID" : "12345", "contactMails" : "pereira.jair@celepar.pr.gov.br" } }');
+    window.localStorage.setItem('expresso','{ "auth": "' + AUTH + '", "route" : "' + ROUTE + '", "multi": ' + MULTI + ', "externalAPI" : "", "serverAPI" : "", "profile": { "contactID" : "12345", "contactMails" : "pereira.jair@celepar.pr.gov.br" } }');
 
-    window.localStorage.setItem('options','{ "builtIn": false, "showLogo": false, "logoSystem": "/app/src/ew-home/img/logo_expresso.png", "top": 0 }');
+    window.localStorage.setItem('options','{ "builtIn": false, "showLogo": false, "logoSystem": "/app/src/ew-home/img/logo_expresso.png", "top": 0,  "forceMobile": true  }');
 
   </script>
   </script>

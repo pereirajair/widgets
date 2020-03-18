@@ -1,0 +1,132 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-catalog-contact-badge`
+
+Elemento usado na agenda, para exibir um contato do catalogo geral, e indicar se ele aceitou ou nao participar de um evento.
+
+### HTML
+
+Para exibir apenas os dados do contato no catalogo geral.
+
+    <ew-expresso-catalog-contact-badge contact-id="83173"></ew-expresso-catalog-contact-badge>
+
+Para exibir a resposta de um evento.
+
+    <ew-expresso-catalog-contact-badge contact-id="83173" response="0"></ew-expresso-catalog-contact-badge>
+ 
+ 
+-->
+<dom-module id="ew-expresso-catalog-contact-badge">
+<template>
+<style>
+    .flex {
+      @apply(--layout-flex);
+    }
+    .fullSize {
+      width: 100%;
+    }
+    .horizontal {
+      @apply(--layout-horizontal);
+    }
+    .center {
+      @apply(--layout-center);
+    }
+    .justified {
+      @apply(--layout-justified);
+    }
+    .text {
+      margin-top: 20px;
+      color: #000;
+      font-weight: bold;
+    }
+</style>
+
+    <ew-api-ajax
+      id="ajax"
+      resource="Catalog/Contacts"
+      params="{{requestParams}}"
+      loading="{{isLoading}}"
+      on-response="ew_handleResponseToData">        
+    </ew-api-ajax>
+    <div class="flex horizontal">
+      <div class="fullSize">
+        <ew-expresso-catalog-contacts-item item="{{item}}" contact-type="2"></ew-expresso-catalog-contacts-item>
+      </div>
+      <div class="text">
+      <template is="dom-if" if="{{response}}">
+        {{computedResponse}}
+      </template>
+      </div>
+    </div>
+</template>
+<script>
+  
+
+Polymer({
+    is: 'ew-expresso-catalog-contact-badge',
+    behaviors: [EWBehaviorWidgetBehavior],
+    properties: {
+      contactId: {
+        type: String,
+        value: '',
+        notify: true,
+        reflectToAttribute: true,
+        observer: 'contactIdChanged',
+      },
+
+      response: {
+        type: Number,
+        value: null,
+      },
+
+      computedResponse: {
+        type: String,
+        value: null,
+        computed: '_computeResponse(response)',
+      },
+
+      item: {
+        type: Object,
+        value: { },
+        notify: true,
+        computed: '_computeItem(data)',
+      },
+
+      requestParams: {
+        type: Object,
+        value: { 'contactType': '2', 'contactID': '' },
+      },
+
+    },
+
+    _computeResponse: function(_response) {
+      var retVal = '';
+      if (_response == 1) {
+        var retVal = 'Aceito';
+      }
+      if (_response == 0) {
+        var retVal = 'Não respondido';
+      }
+      return retVal;
+    },
+
+    _computeItem: function(_data) {
+    	var retVal = false;
+    	if (_data.contacts) {
+    		if (_data.contacts.length) {
+    			retVal = _data.contacts[0];
+    		} 
+    	}
+    	return retVal;
+    },
+
+    contactIdChanged: function() {
+    	if (this.contactId != undefined) {
+    		this.requestParams = { 'contactType': '2', 'contactID': this.contactId };
+    		this.$.ajax.generateRequest();
+    	}
+    },
+  });
+</script>
+</dom-module>

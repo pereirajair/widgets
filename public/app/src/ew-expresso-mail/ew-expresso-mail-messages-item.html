@@ -1,0 +1,1166 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-mail-messages-item`
+
+Elemento Utilizado para exibir uma mensagem da lista de mensagens.
+
+### JAVASCRIPT:
+    
+    <ew-expresso-mail-messages-item item="[[item]]" data-thread-index$="{{item.index}}" selected="{{item.selected}}" archived="{{item.archived}}" hide-action-icons="{{hideActionIcons}}"></ew-expresso-mail-messages-item>
+
+-->
+<dom-module id="ew-expresso-mail-messages-item">
+  <template>
+    <style>
+
+            :host {
+              display: block;
+              position: relative;
+              /*background-color: var(--paper-green-800);*/
+              transition: max-height 200ms ease-in-out 200ms;
+            }
+            :host(:focus) {
+              z-index: 1;
+              position: relative;
+            }
+            :host(.shrink) {
+              max-height: 0;
+              position: absolute;
+            }
+
+            .shrink {
+              max-height: 0 !important;
+              position: absolute;
+            }
+            :host([selected]) #thread {
+              color: var(--paper-toolbar-color);
+              background-color: var(--paper-toolbar-background);
+              transition: opacity 200ms ease-in-out 400ms;
+              height: 111px;
+              max-height: 111px;
+              min-height: 111px;
+            }
+
+            :host([selected]) .messageTimeAgo {
+              background-color: var(--paper-toolbar-background);
+            }
+
+            #messageBackground {
+              background-color: var(--paper-menu-background); /* var(--paper-red-800); */
+            }
+
+            .avatar {
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                display: inline-block;
+                text-align: center;
+                padding-top: 4px;
+                top: 12px;
+                left: 21px;
+                text-transform: uppercase;
+            }
+
+            .ShowOnSmallResolutions {
+              display: none;
+            }
+
+
+            :host([archived]) #archived {
+              opacity: 1;
+              transition: opacity 200ms ease-in-out 400ms;
+            }
+            #container {
+              position: relative;
+              z-index: 0;
+            } 
+            #bottomLineMobile {
+              position: absolute;
+              top: 110px;
+              border-bottom: 1px solid #e0e0e0;
+              width: 100%;
+            }
+            #bottomLineDesktop {
+              position: absolute;
+              top: 36px;
+              border-bottom: 1px solid #e0e0e0;
+              width: 100%;
+            }
+            #thread {
+              /*color: #000;*/
+              background-color: var(--paper-menu-background-color);
+              /*padding: 16px;*/
+              /*border-bottom: 1px solid #e0e0e0;*/
+              will-change: transform, opacity;
+              
+            }
+            .mobileView {
+              height: 111px;
+              max-height: 111px;
+              min-height: 111px;
+            }
+            .desktopView {
+              height: 37px;
+              max-height: 37px;
+              min-height: 37px;
+            }
+            #lastline,
+            #actionicons
+            {
+              color: #9e9e9e;
+            }
+
+            #actionicons
+            {
+              min-width: 130px;
+              max-width: 130px;
+            }
+            .messagecount {
+              color: #9e9e9e;
+              margin-left: 5px;
+              font-size: 12px;
+            }
+            header {
+              margin-left: 16px;
+              font-size: 14px;
+              cursor: pointer;
+            }
+            .unread .name,
+            .unread .subject,
+            .unread time {
+              font-weight: 600;
+              color: #F60;
+            }
+            .unread time {
+               color: #F60;
+            }
+            .name {
+              font-size: 18px;
+            }
+            .subject {
+              margin: 6px 0;
+              /*min-width: 300px;*/
+            }
+            .snippet,
+            .subject,
+            .name {
+              /*color: #9e9e9e;*/
+              color: var(--primary-text-color);
+              text-overflow: ellipsis;
+              overflow: hidden;
+              white-space: nowrap;
+              max-width: 60%;
+            }
+            .name {
+              max-width: 80%;
+            }
+            time {
+              font-size: 12px;
+              font-weight: 400;
+              letter-spacing: 1px;
+              max-height: 12px;
+              white-space: nowrap;
+              color: var(--paper-checkbox-checked-ink-color);
+            }
+            #star {
+              cursor: pointer;
+            }
+            #star[starred] {
+              cursor: pointer;
+              color: var(--paper-yellow-700);
+            }
+            .messageIcons {
+              float: right;
+            }
+            .undo {
+              @apply(--gmail-undo-action);
+              cursor: pointer;
+              font-weight: 500;
+            }
+            #archived {
+              color: white;
+              z-index: -1;
+              opacity: 0;
+              will-change: opacity;
+            }
+            #archived > * {
+              padding: 16px;
+            }
+            .labels label {
+              font-size: 10px;
+              /*background-color: #bdbdbd;*/
+              padding: 3px 5px;
+              color: #fff;
+              border-radius: 2px;
+              margin-right: 5px;
+            }
+            .offscreen {
+              transition: all 200ms ease-in-out;
+            }
+            
+            .offscreen.right {
+              -webkit-transform: translate3d(-100%, 0, 0);
+                  transform: translate3d(-100%, 0, 0);
+            }
+            .fade {
+              opacity: 0 !important;
+            }
+            .swiping {
+              -webkit-user-select: none;
+                  -moz-user-select: none;
+                  -ms-user-select: none;
+                  user-select: none;
+            }
+            .snapback {
+              transition: all 200ms ease-in-out;
+              -webkit-transform: none !important;
+              transform: none !important;
+              opacity: 1 !important;
+            }
+            label.pink {
+              @apply(--label-pink);
+            }
+            label.orange {
+              @apply(--label-orange);
+            }
+            label.green {
+              @apply(--label-green);
+            }
+            label.blue {
+              @apply(--label-blue);
+            }
+            label.yellow {
+              @apply(--label-yellow);
+            }
+            label.teal {
+              @apply(--label-teal);
+            }
+            label.purple {
+              @apply(--label-purple);
+            }
+            .inherit {
+              color: inherit;
+              background-color: inherit;
+            }
+
+            .flex {
+              @apply(--layout-flex);
+            }
+            .fit {
+              @apply(--layout-fit);
+            }
+            .horizontal {
+              @apply(--layout-horizontal);
+            }
+            .center {
+              @apply(--layout-center);
+            }
+            .justified {
+              @apply(--layout-justified);
+            }
+
+            #mobile {
+              width: 100%;
+              margin: 16px; 
+            }
+
+            #desktop {
+              width: 100%;
+              margin: 8px;
+              margin-bottom: -8px;
+            } 
+
+            #desktop .subject {
+              font-size: 12px;
+              width: 50%;
+              margin: 0px;
+              margin-top: 3px;
+              height: 14px;
+              cursor: pointer;
+            }
+            #desktop .unread {
+              font-weight: 500;
+              color: #F60; 
+            }
+            #desktop .name {
+              font-size: 12px; 
+              width: 35%;
+            }
+            #desktop .smallText {
+              font-size: 12px; 
+              width: 10%; 
+              margin-top: 3px;
+              text-align: right;
+            }
+            #desktop .attachment {
+                width: 30px;
+                color: #9e9e9e;
+                min-width: 30px;
+                height: 25px;
+            }
+            #desktop .reply-answered {
+              width: 30px;
+              color: #9e9e9e;
+              min-width: 30px;
+              height: 25px;
+            } 
+            #desktop .actionicons
+            {
+              width: 140px;
+              white-space: nowrap;
+              margin-top: -6px;
+              padding: 0px;
+              height: 32px;
+              position: absolute;
+              right: 0px;
+
+            }
+            .actioniconsDesktop {
+              top: -5px;
+            }
+            ew-expresso-mail-contact-button {
+              top: 0px;
+            }
+
+            /*#actionicons {
+              display: none;
+            }*/
+
+
+            #actionicons {
+
+              background-color: #9e9e9e;
+              margin-top: 40px;
+              display: none;
+              right: 10PX;
+              border-radius: 20PX;
+              color: #FFF;
+              margin-left: 10px;
+            }
+
+            #thread:hover #actionicons {
+              display: inline;
+            }
+
+            @media screen and (max-width: 900px) { 
+              .HideOnSmallResolutions {
+                display: none;
+              }
+
+              #thread:hover .snippet {
+                display: none;
+              }
+
+              .ShowOnSmallResolutions {
+                display: block;
+              }
+            }
+
+            @media screen and (max-width: 900px) { 
+              #actionicons {
+                display: none;
+              }
+            }
+            
+            .messageTimeAgo {
+              float: right; 
+              position: absolute; 
+              right: 80px; 
+              color: var(--paper-menu-color); 
+              background-color: var(--paper-menu-background-color);
+              padding-left: 10px;
+              padding-top:10px;
+              padding-bottom: 10px;
+            }
+
+            .chips {
+              @apply --layout-horizontal;
+              @apply --layout-end;
+              @apply --layout-wrap;
+              max-width: 90%;
+            }
+
+
+            
+    </style> 
+    
+        <ew-expresso-mail-flag-message id="flagMessage" starred="{{starred}}"></ew-expresso-mail-flag-message>
+        <ew-expresso-mail-del-message id="delMessage"></ew-expresso-mail-del-message>
+
+        <template is="dom-if" if="{{item.isFolder}}">
+          <ew-expresso-mail-folder-item data="{{item}}"></ew-expresso-mail-folder-item>
+        </template>
+
+        <div id="messageBackground" class$="{{_computeContainerClass(desktop)}}" hidden="{{item.isFolder}}">
+          <div id="container" class$="{{_computeContainerClass(desktop)}}" hidden="{{hasBeenArchived}}">
+            <div id="archived" class="layout horizontal center justified fit" aria-hidden="true">
+              <span>Mensagem movida para a pasta: "Lixeira"</span>
+            </div>
+            <div id="thread" class$="{{_computeThreadClass(desktop,hasBeenArchived)}}">
+              <template id="desktopViewThread" is="dom-if" if="{{_computeViewType(desktop,0)}}">
+                <div id="bottomLineMobile" hidden="{{desktop}}"></div>
+                <div id="mobile" hidden="{{desktop}}" class="layout horizontal"> 
+                  <ew-expresso-catalog-contact-picture id="emailAvatar" letter="[[item.msgFrom.fullName.0]]" email="[[item.msgFrom.mailAddress]]" selected="{{selected}}" local-photos="{{localPhotos}}" class="avatar" on-tap="_onSelectMessageItem" on-transitionend="_eatEvent"></ew-expresso-catalog-contact-picture>
+                  <paper-tooltip for="emailAvatar" position="right">Clique para Selecionar esta mensagem.</paper-tooltip>
+                  <div class="flex layout horizontal" on-tap="openMessage">
+                    <header class$="[[headerClasses]]" unread="{{unread}}" on-down="_onDown" on-up="_onUp" style="width: 50px; max-width: 100%; ">
+                      <span class="layout horizontal center justified" on-tap="openMessage" style='position: absolute; width: calc(100%);'>
+                        <div class="messageTimeAgo">
+                          <template is="dom-if" if="{{_computeDraft(item)}}"><span style='color: #FF0000;'>Rascunho</span></template>
+                          <time hidden="{{hideActionIcons}}" class="HideOnSmallResolutions">{{timeAgo}}&nbsp;({{msgSize}})</time>
+                          <time hidden="{{hideActionIcons}}" class="ShowOnSmallResolutions">{{timeAgo}}</time>
+                        </div>
+                        <span class="name" style="position: absolute; top: 0px;">
+                          <span>{{_decodeHTMLEntities(item.msgFrom.fullName)}}</span>
+                          <span class="messagecount">{{item.msgFrom.mailAddress}}</span> 
+                        </span>
+                      </span>
+                      <span class="subject" on-tap="openMessage" style='position: absolute; top: 40px; left: 63px;'>{{_decodeHTMLEntities(item.msgSubject)}}</span>
+                      <span id="lastline" class="layout horizontal center justified" style="width: 100%;">
+                        <div style='width: 100%; float: right; margin-top: 50px;'>
+                          <iron-icon id="star" class='messageIcons' icon="[[starredIcon]]" on-tap="_onHighlightStar" starred$="{{starred}}"></iron-icon>
+                          <template is="dom-if" if="{{hasAttachments}}">
+                            <iron-icon id="attachment" class='messageIcons' icon="icons:attachment" hidden$="{{!hasAttachments}}"></iron-icon>
+                          </template>
+                          <template is="dom-if" if="{{forwarded}}">
+                          <iron-icon id="forwardIcon" class='messageIcons' icon="icons:trending-flat" hidden$="{{!forwarded}}"></iron-icon>
+                          </template>
+                          <template is="dom-if" if="{{answered}}">
+                            <iron-icon id="replyIcon" class='messageIcons' icon="icons:swap-horiz" hidden$="{{!answered}}"></iron-icon>
+                          </template>
+                          <paper-tooltip for="replyIcon" position="left">Você respondeu esta mensagem.</paper-tooltip>
+                          <paper-tooltip for="forwardIcon" position="left">Você encaminhou esta mensagem.</paper-tooltip>
+                          <paper-tooltip for="attachment" position="left">Esta mensagem possui anexos.</paper-tooltip>
+                          <paper-tooltip for="star" position="left">Marcar/Desmarcar como importante.</paper-tooltip>
+                        </div>
+                        <span style='position: absolute; top: 72px; left: 63px;' class="snippet" on-tap="openMessage">
+                         [[_decodeHTMLEntities(item.msgBodyResume)]] 
+                        </span>
+                        
+                      </span>
+                    </header> 
+                    <div id="actionicons" on-transitionend="_eatEvent" class="self-start animated flipInY" hidden="{{hideActionIcons}}">
+                      <paper-icon-button id="replyButton1" icon="reply" on-tap="replyMessage"></paper-icon-button>
+                      <paper-icon-button id="replyAllButton1" icon="reply-all" on-tap="replyAllMessage"></paper-icon-button>
+                      <paper-icon-button id="forwardButton1" icon="forward" on-tap="forwardMessage"></paper-icon-button>
+                      <paper-tooltip for="replyButton1" position="top">Responder</paper-tooltip>
+                      <paper-tooltip for="replyAllButton1" position="top">Responder p/ Todos</paper-tooltip>
+                      <paper-tooltip for="forwardButton1" position="top">Encaminhar</paper-tooltip>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template is="dom-if" if="{{_computeViewType(desktop,1)}}">
+                <div id="bottomLineDesktop" hidden="{{!desktop}}"></div>
+                <div id="desktop" hidden="{{!desktop}}" class="layout horizontal">
+                  <div>
+                    <paper-checkbox checked="{{item.selected}}" on-tap="_onSelectMessageItem"></paper-checkbox>
+                  </div>
+                  <div id="msgSubjectDesktop" class$="[[subjectClasses]]" on-tap="openMessage">{{_decodeHTMLEntities(item.msgSubject)}}</div>
+
+                  <div class="attachment">
+                    <iron-icon id="attachment" icon="icons:attachment" hidden$="{{!hasAttachments}}"></iron-icon>
+                  </div>
+                  
+                  <div class="important">
+                    <ew-expresso-mail-flag-message-important starred="{{starred}}" item="{{item}}"></ew-expresso-mail-flag-message-important>
+                  </div>
+
+                  <div class="reply-answered">
+                    <iron-icon id="replyIcon" icon="icons:swap-horiz" hidden$="{{!answered}}"></iron-icon>
+                    <iron-icon id="forwardIcon" icon="icons:trending-flat" hidden$="{{!forwarded}}"></iron-icon>
+                  </div>
+
+                  <div class="name chips">
+                    <ew-expresso-mail-contact-button name="[[item.msgFrom.fullName]]" email="[[item.msgFrom.mailAddress]]" style="top: -14px; position: relative;"></ew-expresso-mail-contact-button>
+                  </div>
+                  <div id="msgDateDesktop" class$="[[smallTextClasses]]"> 
+                    {{timeAgo}}
+                  </div>
+                  <div class$="[[smallTextClasses]]">
+                    {{msgSize}}
+                  </div>
+                  <div id="actionicons" class="actionicons animated flipInY" on-transitionend="_eatEvent">
+                    <paper-icon-button id="replyButton2" class='actioniconsDesktop' icon="reply" on-tap="replyMessage"></paper-icon-button>
+                    <paper-icon-button id="replyAllButton2" class='actioniconsDesktop'  icon="reply-all" on-tap="replyAllMessage"></paper-icon-button>
+                    <paper-icon-button id="forwardButton2" class='actioniconsDesktop'  icon="forward" on-tap="forwardMessage"></paper-icon-button>
+
+                    <paper-tooltip for="replyButton2" position="left">Responder</paper-tooltip>
+                    <paper-tooltip for="replyAllButton2" position="left">Responder p/ Todos</paper-tooltip>
+                    <paper-tooltip for="forwardButton2" position="left">Encaminhar</paper-tooltip> 
+                  </div>
+   
+                  <paper-tooltip for="msgSubjectDesktop" position="right">[[_decodeHTMLEntities(item.msgBodyResume)]]</paper-tooltip>
+                  <paper-tooltip for="msgDateDesktop" position="right">{{item.msgDate}}</paper-tooltip>
+                </div>
+              </div>
+            </template>
+            
+          </div>
+
+        </div>
+  </template>
+    
+  <script>
+ 
+    Polymer({
+        is: 'ew-expresso-mail-messages-item',
+
+        behaviors: [EWBehaviorWidgetBehavior],
+
+        _HOLD_DELAY: 800, // wait delay (ms) to fire hold event.
+        _didUp: false, // True if the user relased the thread (up event was fired).
+
+        listeners: {
+          'ew-expresso-mail-del-message-error': 'messageNotArchived',
+          'ew-expresso-mail-del-message-success' : 'messageArchived',
+          'track': '_onTrack',
+          'transitionend': 'snapBack'
+        },
+        properties: { 
+            item: { type: Object, value: {}, observer: 'itemChanged' },
+            msgFromLetter: { type: String, value: '', computed: '_computeMsgFromLetter(item)' },
+            folderID: { type: String, value: '', computed: '_computeFolderID(item)' },
+            msgSize: {type: String, value: '', computed: '_computeMsgSize(item)' }, 
+            timeAgo: {type: String, value: '', computed: '_computeTimeAgo(item)' }, 
+            unread: {
+                type: Boolean,
+                value: true,
+                reflectToAttribute: true
+            },
+            msgDraft: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true
+            },
+            desktop: {
+                type: Number,
+                notify: true,
+                reflectToAttribute: true
+            },
+            selected: {
+                type: Boolean,
+                value: false,
+                notify: true,
+                reflectToAttribute: true
+            },
+            messages: {
+              type: Array,
+              value: [],
+              notify: true,
+              reflectToAttribute: false,
+            },
+            /**
+            * True if the thread has been archived.
+            */
+            archived: {
+                type: Boolean,
+                value: false,
+                notify: true,
+                reflectToAttribute: true,
+                observer: '_archivedChanged'
+            },
+            hasBeenArchived: {
+              type: Boolean,
+              value: false,
+              notify: true,
+              reflectToAttribute: true,
+            },
+            headerClasses: {
+                type: String,
+                value: '',
+                computed: '_computeHeaderClasses(item)'
+            },
+            subjectClasses: {
+                type: String,
+                value: '',
+                computed: '_computeSubjectClasses(item)'
+            },
+            smallTextClasses: {
+                type: String,
+                value: '',
+                computed: '_computeSmallTextClasses(item)'
+            },
+            starred: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+            forwarded: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+            answered: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+            starredIcon: {
+                type: String,
+                value: '',
+                computed: '_computeStarredIcon(starred)'
+            },
+            hasAttachments: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+                computed: '_computeHasAttachments(item)'
+            },
+            hideActionIcons: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+                notify: true, 
+            },
+
+            SWIPE_OFF_THREASHOLD: {
+              type: Number,
+              value: 10,
+              readOnly: true
+            },
+            Y_MAX_FOR_SCROLL: {
+              type: Number,
+              value: 5,
+              readOnly: true
+            },
+            /**
+             * If `true`, the item does not snap back into place if has not been
+             * dragged far enough.
+             */
+            noSnapBack: {
+              type: Boolean,
+              value: false
+            },
+            /**
+             * If `true`, the item does not fade as it is swiped.
+             */
+            noDissolve: {
+              type: Boolean,
+              value: false
+            },
+            /**
+             * The target node for track events. If none is provided, the parentElement
+             * of this element is used as the target.
+             *
+             * @attribute target
+             * @type DOMElement
+             * @default null
+             */
+            target: {
+              value: null,
+              observer: '_targetChanged'
+            },
+            /**
+             * The class to apply to the element when it is being dragged.
+             */
+            swipingClass: {
+              type: String,
+              value: 'swiping'
+            },
+            /**
+             * True when the element has been swiped all the way offscreen.
+             */
+            swipeOff: {
+              type: Boolean,
+              value: false,
+              observer: '_swipeOffChanged'
+            },
+            /**
+             * True when the element has been swiped all the way offscreen.
+             */
+            allowSwipe: {
+              type: Boolean,
+              value: false
+            },
+            /**
+             * True when the element has been swiped all the way offscreen.
+             */
+            swipeEnabled: {
+              type: Boolean,
+              value: true,
+            },
+        },
+        _computeViewType: function(desktop,_type) {
+          var retVal = false;
+          if (parseInt(desktop) == parseInt(_type)) {
+            retVal = true;
+          }
+          return retVal;
+        },
+        created: function() {
+          this.hasBeenArchived = false;
+        },
+        attached: function() {
+          this.hasBeenArchived = false;
+          if (!this.swipeEnabled) {
+            return;
+          }
+          this.width = this.$.thread.offsetWidth; // cache it.
+        },
+        ready: function() {
+          if (!this.swipeEnabled) {
+            return;
+          }
+          this.setScrollDirection('y', this);
+          if (this.$) {
+            this.target = this.$.thread;
+          }
+        },
+        _computeContainerClass: function(isDesktop) {
+          if (isDesktop) {
+            return 'desktopView';
+          } else {
+            return 'mobileView';
+          }
+        },
+        _computeThreadClass: function(isDesktop,hasBeenArchived) {
+          if (isDesktop) {
+            if (hasBeenArchived) {
+              return 'layout horizontal desktopView shrink';
+            } else {
+              return 'layout horizontal desktopView';
+            }
+          } else {
+            if (hasBeenArchived) {
+              return 'layout horizontal mobileView shrink';
+            } else {
+              return 'layout horizontal mobileView';
+            }
+          }
+        },
+        itemChanged: function() {
+
+          this.log('ew-expresso-mail-messages-item.itemChanged:' + this.archived);
+          if (!this.item.isFolder) {     
+            this.swipeEnabled = true;
+            this.hasBeenArchived = false;
+            this.archived = false;
+            this.swipeOff = false;
+            Polymer.dom(this).classList.add('swipeable-item');
+            if (this.archived) {
+              Polymer.dom(this.$.thread).classList.add('shrink');
+              // this.toggleClass('shrink', true);
+              Polymer.Base.transform('translate3d(-100%, 0, 0)', this.$.thread);
+              this.$.thread.style.opacity = 0;
+              Polymer.dom(this.$.thread).classList.add('offscreen', 'right');
+            } else {
+              Polymer.dom(this.$.thread).classList.remove('shrink');
+              // this.toggleClass('shrink', false);
+              Polymer.Base.transform('translate3d(0px, 0, 0)', this.$.thread);
+              this.$.thread.style.opacity = 1;
+              Polymer.dom(this.$.thread).classList.remove('offscreen', 'right');
+            }
+          } else {
+            this.swipeEnabled = false;
+            Polymer.dom(this).classList.remove('swipeable-item');
+          }
+        },
+        messageNotArchived: function(e) {
+          this.log('ew-expresso-mail-messages-item.messageNotArchived:');
+          Polymer.dom(this.$.thread).classList.remove('shrink');
+          // this.toggleClass('shrink', false);
+          this.hasBeenArchived = false;
+          e.stopPropagation();
+        },
+        messageArchived: function(e) {
+          this.log('ew-expresso-mail-messages-item.messageArchived:');
+          Polymer.dom(this.$.thread).classList.add('shrink');
+          // this.toggleClass('shrink', true);
+          this.hasBeenArchived = true;
+          e.stopPropagation();
+          var that = this;
+          that.fire('ew-expresso-mail-messages-splice-archived',{});
+        },
+        _computeMsgFromLetter: function(item) {
+            if (item.msgFrom != undefined) { 
+                return item.msgFrom.fullName.substring(0,1);
+            } else {
+                return '';
+            }
+        },
+        _computeHasAttachments: function(item) {
+            if (item) {
+                var starred = false;
+                if (item.msgFlagged == "1") {
+                    starred = true;
+                }
+                this.set('starred',starred);
+            }
+            if (item) {
+                var val = false;
+                if (item.msgForwarded == "1") {
+                    val = true;
+                }
+                this.set('forwarded',val);
+            }
+            if (item) {
+                var val = false;
+                if (item.msgAnswered == "1") {
+                    val = true;
+                }
+                this.set('answered',val);
+            }
+            if (item) {
+                var retVal = false;
+                if (item.msgHasAttachments == "1") {
+                    retVal = true;
+                } 
+                return retVal;
+            }
+        },
+        _computeStarredIcon: function(starred) {
+          return 'icons:star' + (starred ? '' : '-border');
+        },
+        _computeSmallTextClasses: function(item) {
+            if (item) {
+                var unread = false;
+                if (item.msgSeen == "0") {
+                    unread = true;
+                } 
+            }
+            return 'smallText ' + (unread ? 'unread' : '');
+        },
+        _computeSubjectClasses: function(item) {
+            if (item) {
+                var unread = false;
+                if (item.msgSeen == "0") {
+                    unread = true;
+                } 
+            }
+            return 'subject ' + (unread ? 'unread' : '');
+        },
+        _computeHeaderClasses: function(item) {
+            if (item) {
+                var unread = false;
+                if (item.msgSeen == "0") {
+                    unread = true;
+                } 
+            }
+            return 'layout vertical flex ' + (unread ? 'unread' : '');
+        },
+        _onSelectMessageItem: function(e) {
+          e.stopPropagation();
+          this.log('ew-expresso-mail-messages-item._onSelectMessageItem');
+          // if (Polymer.dom(e).localTarget === this.$.emailAvatar) {
+            e.stopPropagation();
+            this.selected = !this.selected;
+
+            // var message = { msgid: this.item.msgID, folderid: this.item.folderID, subject: this.item., from: this.get('from'), fromemail: this.get('fromemail'),
+            //   selected: this.selected };
+
+            this.item.selected = this.selected;
+
+            if (this.selected) {
+              this.fire('ew-expresso-mail-messages-item-select', {eventData: this.item});
+            } else {
+              this.fire('ew-expresso-mail-messages-item-unselect',{eventData: this.item});
+            }
+          // }
+        },
+        _archivedChanged: function() {
+          if (!this.isAttached) {
+            return;
+          }
+          //this.item.archived = this.archived;
+          this.log('ew-expresso-mail-messages-item._archivedChanged:' + this.archived);
+          if (this.archived) {
+
+            Polymer.dom(this.$.thread).classList.add('offscreen', 'right');
+            this.fire('thread-archive', {thread: this, showUndo: this.undo});
+
+            Polymer.Base.transform('translate3d(-100%, 0, 0)', this.$.thread);
+            this.target.style.opacity = 0;
+
+            Polymer.dom(this.$.thread).classList.add('shrink');
+
+          } else {
+            Polymer.dom(this.$.thread).classList.remove('offscreen', 'right');
+            Polymer.dom(this.$.thread).classList.remove('shrink');
+            // this.toggleClass('shrink', false);
+
+            this.fire('thread-archive', {thread: this, showUndo: this.undo});
+          }
+          
+        },
+        
+        created: function() {
+          this.debug = false;
+          this.log('ew-expresso-mail-messages-item.created');
+          
+        },
+        _computeFolderID: function(item) {
+            var folderID = item.folderID; 
+            if ((folderID == '') || (folderID == undefined)) {
+                folderID = 'INBOX';
+            }
+            return folderID;
+        },
+        draftMessage: function(event) {
+          // event.stopPropagation();
+          var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'draft', folderID: this.folderID, msgID: this.item.msgID, 'tabID': 'mail_create_' +  this.folderID + '_' + this.item.msgID ,'tabIcon' : 'drafts', 'tabTitle' : this.item.msgSubject });
+        },
+        replyMessage: function(event) {
+          event.stopPropagation();
+          var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'reply', folderID: this.folderID, msgID: this.item.msgID, 'tabID': 'mail_reply_' +  this.folderID + '_' + this.item.msgID ,'tabIcon' : 'reply', 'tabTitle' : 'Re: ' + this.item.msgSubject });
+        },
+        forwardMessage: function(event) {
+          event.stopPropagation();
+          var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'forward', folderID: this.folderID, msgID: this.item.msgID, 'tabID': 'mail_fwd_' +  this.folderID + '_' + this.item.msgID,'tabIcon' : 'forward', 'tabTitle' : 'Fwd: ' + this.item.msgSubject });
+        },
+        replyAllMessage: function(event) {
+          event.stopPropagation();
+          var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ action: 'reply-all', folderID: this.folderID, msgID: this.item.msgID, 'tabID': 'mail_reply_all_' +  this.folderID + '_' + this.item.msgID,'tabIcon' : 'reply-all', 'tabTitle' : 'Re: ' + this.item.msgSubject });
+        },
+        _decodeHTMLEntities: function(val) {
+          if (val != undefined) {
+            var t = document.createElement('textarea');
+            t.innerHTML = val;
+            return t.textContent;
+          } else {
+            return '';
+          }
+        },
+        _onUp: function(e) {
+          this.log('ew-expresso-mail-messages-item._onUp');
+          this._didUp = true;
+        },
+
+        _onDown: function(e) {
+          this.log('ew-expresso-mail-messages-item._onDown');
+          this._didUp = false;
+          // e.detail.prevent('tap');
+          // e.detail.prevent('track');
+
+
+          this.async(function() {
+            // Select thread if it isn't being swiped off or the user lifted their
+            // finger before the "hold" event.
+            if (!this._didUp && !this.$.thread.classList.contains(this.swipingClass)) {
+              
+              Polymer.dom(this.$.thread).querySelector("#emailAvatar").fire('tap'); // select thread.
+            }
+          }, this._HOLD_DELAY);
+        },
+        _eatEvent: function(e) {
+          this.log('ew-expresso-mail-messages-item._eatEvent');
+          e.stopPropagation();
+        },
+        _swipeOffChanged: function() {
+          this.log('ew-expresso-mail-messages-item._swipeOffChanged:' + this.swipeOff);
+          // Show in-place UNDO for a swipe. Don't show it for multi-select archive.
+
+          if (this.swipeOff) {
+
+            this.undo = this.swipeOff;
+            this.archived = this.swipeOff;
+
+            if (this.archived) {
+              if (!this.hasBeenArchived) {
+                this.$.delMessage.delMessage(this.item.folderID,this.item.msgID);
+              }
+            }
+
+          }
+        },
+        openMessage: function(event) {
+          event.stopPropagation();
+          this.log('ew-expresso-mail-messages-item.openMessage');
+          var _folderType = 0;
+          if (this.item.folderType != undefined) {
+            _folderType = this.item.folderType;
+          }
+          if (this.item.msgDraft == "1") {
+            this.draftMessage();
+          } else {
+            if (this.item.msgSeen == "0") {
+              if (!this.isMobile) {
+                this.ew_signal('ew-expresso-mail-refresh-folders');
+              }
+            }
+            var newItem = JSON.parse(JSON.stringify(this.item));;
+            newItem.msgSeen = "1;"
+            this.set('item',newItem);
+            this.set('unread',false);
+            var currentMessages = this.messages;
+            this.ew_openWidget('ew-expresso-mail-message',{ folderID: this.item.folderID, msgID: this.item.msgID, messages: currentMessages, tabID: 'mail_detail_' +  this.item.folderID + '_' + this.item.msgID ,tabIcon: 'mail', tabTitle: this.item.msgSubject });
+          }
+          
+        },
+        _onHighlightStar: function(e) {
+          this.log('ew-expresso-mail-messages-item._onHighlightStar');
+          e.stopPropagation();
+          this.set("starred",!this.starred);
+          var flagType = 2;
+          if (this.starred) {
+            flagType = 1;
+          }
+          this.$.flagMessage.flagMessage(this.item.folderID,this.item.msgID,flagType);
+        },
+
+        _computeTimeAgo: function(message) {
+          var mmtDate = moment(message.msgDate,"DD/MM/YYYY hh:mm"); 
+          return mmtDate.fromNow(true);
+        },
+
+        _computeMsgSize: function(message) {
+          return this.bytesToSize(message.msgSize,0);
+        },
+        _computeDraft: function(message) {
+          if (message.msgDraft == "1") {
+            return true;
+          } else {
+            return false;
+          }
+        },
+
+        bytesToSize: function(bytes, precision) {  
+            var kilobyte = 1024;
+            var megabyte = kilobyte * 1024;
+            var gigabyte = megabyte * 1024;
+            var terabyte = gigabyte * 1024;
+           
+            if ((bytes >= 0) && (bytes < kilobyte)) {
+                return bytes + ' B';
+         
+            } else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+                return (bytes / kilobyte).toFixed(precision) + ' KB';
+         
+            } else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+                return (bytes / megabyte).toFixed(precision) + ' MB';
+         
+            } else if ((bytes >= gigabyte) && (bytes < terabyte)) {
+                return (bytes / gigabyte).toFixed(precision) + ' GB';
+         
+            } else if (bytes >= terabyte) {
+                return (bytes / terabyte).toFixed(precision) + ' TB';
+         
+            } else {
+                return bytes + ' B';
+            }
+        },
+        _targetChanged: function() {
+          this.target = this.target || this.parentElement;
+        },
+        _onTrackStart: function(e) {
+          this.allowSwipe = false;
+          // Prevent the item from being swiped if user is not strictly swiping
+          // horizontally. Don't want to mistake fling scrolling for a swipe off.
+          if (Math.abs(e.detail.dy) <= this.Y_MAX_FOR_SCROLL) {
+            this.allowSwipe = true;
+            Polymer.dom(this.$.thread).classList.add(this.swipingClass);            
+          } 
+          Polymer.dom(this.$.messageBackground).node.style = 'background-color: var(--paper-red-800); ';
+        },
+        _onTrack: function(e) {
+          switch(e.detail.state) {
+            case 'start':
+              if (!this.swipeEnabled) {
+                return;
+              }
+              this._onTrackStart(e);
+              break;
+            case 'track':
+              if (!this.swipeEnabled) {
+                return;
+              }
+              if (!this.allowSwipe) {
+                return;
+              }
+              this._last_ddx = e.detail.ddx;
+              Polymer.Base.transform('translate3d(' + e.detail.dx + 'px, 0, 0)', this.$.thread);
+              if (!this.noDissolve) {
+                this.$.thread.style.opacity = 1 - (Math.abs(e.detail.dx) / this.width);
+              }
+              // console.log("track");
+              // console.log(Polymer.dom(this.$.messageBackground));
+              break;
+            case 'end':
+              if (!this.allowSwipe) {
+                return;
+              }
+              this._onTrackEnd(e);
+              break;
+          }
+        },
+        _onTrackEnd: function(e) {
+          if (!this.swipeEnabled) {
+            return;
+          }
+          Polymer.dom(this.$.messageBackground).node.style = 'background-color: var(--paper-toolbar-background); ';
+          Polymer.dom(this.target).classList.remove(this.swipingClass);
+          var info = {dx: e.detail.dx, ddx: this._last_ddx, direction: e.detail.dx > 0 ? 1 : -1};
+          // Swipe the item offscreen if it was fast.
+          if (Math.abs(this._last_ddx) > this.SWIPE_OFF_THREASHOLD) {
+            this.swipe(true, info);
+            // acceleration (this.last_ddx_) instead.
+            this.target.style.transition = 'all 100ms linear';
+            return;
+          }
+          // Slide all the way off (left/right) if we're 50% total width.
+          if (Math.abs(e.detail.dx) >= this.width / 2) {
+            this.swipe(true, info);
+          } else if (!this.noSnapBack) {
+            Polymer.dom(this.$.thread).classList.add('snapback');
+            this.async(function() {
+              Polymer.Base.transform('', this.$.thread);
+              this.$.thread.style.opacity = '';
+              Polymer.dom(this.$.thread).classList.remove('snapback');
+            },500);
+          }
+        },
+        snapBack: function(e) {
+          e.stopPropagation(); // Prevent transitionend event from bubbling up further.
+          // If item is already swiped offscreen, don't snap it back.
+          // use Polymer.dom().classList.contains when ready. github.com/Polymer/polymer/issues/1907
+          if (!this.swipeEnabled) {
+            return;
+          }
+          if (this.$.thread.classList.contains('offscreen')) {
+            return;
+          }
+          if (e != undefined) { 
+          if (e.propertyName != undefined) {
+            if (e.propertyName.indexOf('transform') != -1) {
+                Polymer.Base.transform('', this.$.thread);
+                this.$.thread.style.opacity = '';
+                Polymer.dom(this.$.thread).classList.remove('snapback');
+              }
+            }
+            
+          }
+        },
+        swipe: function(goAway, obj) {
+          if (!this.swipeEnabled) {
+            return;
+          }
+          var style = this.$.thread.style;
+          var target = Polymer.dom(this.$.thread);
+          this.swipeOff = goAway;
+          if (goAway) {
+            target.classList.add('offscreen');
+            if (!this.noDissolve) {
+              target.classList.add('fade');
+            }
+            Polymer.Base.transform(
+                'translate3d(' + (obj.direction * this.width) + 'px, 0, 0)', this.$.thread);
+            this.fire('swipe-away', {direction: obj.direction});
+          } else {
+            style.transition = '';
+            Polymer.Base.transform('translate3d(' + this.width + 'px, 0, 0)', this.$.thread);
+            target.classList.remove('offscreen', 'fade');
+            // Native app always comes back from right. Need to wait one rAF for
+            // .offscreen to have been applied.
+            this.async(function() {
+              target.classList.add('snapback');
+            });
+          }
+        }
+    });
+  </script>
+</dom-module>

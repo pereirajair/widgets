@@ -1,0 +1,243 @@
+<script src="../../bower_components/fullcalendar/dist/fullcalendar.min.js"></script>
+<script src="../../bower_components/fullcalendar/dist/lang/pt-br.js"></script>
+<dom-module id="ew-expresso-calendar">
+    <template>
+      <style>
+        /* .actions { display: flex; justify-content: space-between; align-items: center; } */
+
+        .fc-time-grid .fc-slats {
+            position: relative !important;
+        }
+        </style>
+        <ew-api-ajax
+            id="ajax"
+            resource="Calendar/Events"
+            params="{{params}}"
+            loading="{{isLoading}}"
+            on-response="ew_handleResponseToData">        
+        </ew-api-ajax> 
+        <ew-header id="header" title="{{title}}" background-color="indigo">
+            <div slot='toolbar-buttons'>
+                <paper-icon-button id="previous" icon="chevron-left" on-tap="_previous"></paper-icon-button>
+                <paper-icon-button id="next" icon="chevron-right" on-tap="_next"></paper-icon-button>
+            </div>
+        <div id="contentSlot" slot='content' style="height: calc(100vh - 50px);"> 
+             <fullcalendar-calendar 
+                id="calendar"
+                options="[[options]]"
+                on-view-render="setTitle"
+                on-event-click="eventClick"></fullcalendar-calendar> 
+        </div>
+        </ew-header>  
+        <ew-fab icon='icons:add' tooltip="Novo Evento" on-tap='createEvent'></ew-fab>
+    </template>
+    <script>
+    Polymer({
+		is: 'ew-expresso-calendar',
+		behaviors: [EWBehaviorWidgetBehavior, Polymer.IronResizableBehavior, window.Columns.EWColumn],
+		properties: {
+
+            selected: {
+                type: Number,
+                value: 0,
+                // observer: '_selectedChanged'
+            },
+	        options: { 
+	        	type: Object,	
+	        	notify: true, 
+	        	reflectToAttribute: true,
+            },
+            
+            data: { 
+	        	type: Object,
+	        	value: {},
+	        	notify: true, 
+	        	reflectToAttribute: true,
+	        	observer: 'dataChanged',
+	        },
+        },
+
+        requestPeriod: function(start, end, timezone, callback) {
+            // console.log('requestPeriod');
+
+            if (!this.isLoading) {
+                var dateStart = start.subtract(1, 'month');
+                var dateEnd = end.add(1, 'month');
+
+                var _params = { 
+                                    "dateStart" : dateStart.format('DD/MM/YYYY'), 
+                                    "dateEnd" : dateEnd.format('DD/MM/YYYY')
+                                };
+
+                this.params = _params;
+                this.callbackFinished = callback;
+                this.$.ajax.generateRequest();
+            }
+        },
+        load: function() {
+			this.events = [];
+            this.selected = 0;
+            
+            this.viewNames = ['month','agendaWeek','agendaDay','basicWeek','basicDay'];
+            // this.viewNames = ['month','basicWeek','basicDay'];
+
+            var _view = "month";
+            if (parseInt(this.params.viewType) == 0) {
+                _view = "month";
+            }
+            if (parseInt(this.params.viewType) == 1) {
+                _view = "agendaWeek";
+            }
+            if (parseInt(this.params.viewType) == 2) {
+                _view = "agendaDay";
+            }
+            
+            var that = this;
+            var _calendarHeight = $(this.$.contentSlot).height();
+            if (!this.isMobile) {
+                _calendarHeight = _calendarHeight - 100;
+            }
+
+            this.options = {
+                    locale: 'pt-br',
+                    droppable: false,
+                    header: false,
+                    navLinks: false,
+                    allDayText: 'Dia Inteiro',
+                    defaultView: _view,
+                    // nowIndicator: true,
+                    handleWindowResize: false,
+                    height: _calendarHeight,
+                    eventRender: function(event, element, view){
+                        if (!(new String(view.name).valueOf() == new String("month").valueOf())) {
+
+                            if (event.allDay == false) {
+                                // console.warn(element);
+                                // console.warn(event);
+
+                                var start = event.start;
+                                var end = event.end;
+
+                                var rowHeight = 48;
+                                var padding = 0;
+                                var startTop = 0;
+
+                                var topHour = start.hour();
+                                if (topHour < this.startHour) topHour = this.startHour;
+                                var botHour = end.hour();
+       
+                                var topMin = (rowHeight / 60 * start.minutes()); 
+                                var botMin = (rowHeight / 60 * end.minutes()); 
+                                
+                                var top =  startTop + topMin + (((topHour + 1) * rowHeight) - padding) - rowHeight;
+                                var bottom =  startTop + botMin + (((botHour + 1) * rowHeight) - (padding)) - rowHeight;
+
+                                var height = bottom - top;
+
+                                $(element[0]).css('margin-top',top + 'px');
+                                $(element[0]).css('height',height + 'px');
+
+                            }
+                        }
+                    },
+                    // eventAfterAllRender: function(view) {
+
+                    // },
+                    eventSources: [
+                        {
+                            events: function(start, end, timezone, callback) {
+                                
+                                var _params = { 
+                                    "dateStart" : start.format('DD/MM/YYYY'), 
+                                    "dateEnd" : end.format('DD/MM/YYYY')
+                                };
+
+                                that.params = _params;
+                                that.callbackFinished = callback;
+                                that.$.ajax.generateRequest();
+                                
+                            }, 
+                            // color: 'yellow', 
+                            // textColor: 'black'
+                        }
+
+                    ],
+           };
+
+		},
+        dataChanged: function() {
+
+            var arr_items = [];
+            if (this.data != undefined) {
+                for(var x in this.data.events) {
+
+
+                    var _event = this.getEventObject(this.data.events[x]);
+                    var found = false;
+                    for(var z in arr_items) {
+                        if ((arr_items[z].id == _event.id) && (arr_items[z].start.isSame(_event.start))) {
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        arr_items.push(_event);
+                    }
+                    
+                }
+            }
+
+            if (this.callbackFinished != undefined) {
+                // console.log(arr_items);
+                this.callbackFinished(arr_items);
+                this.$.calendar._calendar.fullCalendar( 'rerenderEvents' ); //.rerenderEvents();
+            }
+
+        },
+        getEventObject: function(item) {
+
+            var _allDay = false;
+            if ( item["eventAllDay"] == '1') {
+                _allDay = true;
+            }
+	        var attrs = {
+                id: item["eventID"], 
+                title: this.htmlEntitieDecode(item["eventName"] + ' - ' +  item["eventDescription"]),
+                editable: false,
+                durationEditable: false,
+                startEditable: false,
+                constraint:  item["eventID"], 
+                allDay: _allDay,
+                // rendering: 'background',
+                start: moment(item["eventStartDate"],["DD/MM/YYYY h:m"]),
+                end: moment(item["eventEndDate"],["DD/MM/YYYY h:m"]),
+	        };
+
+	        return attrs;
+        },
+        htmlEntitieDecode: function(str) {
+            var Title = $('<textarea />').html(str).text();
+            return Title;
+        },
+        _previous: function() {
+            this.$.calendar.previous();
+        },
+        _next: function() {
+            this.$.calendar.next();
+        },
+        setTitle: function(event) {
+            this.title = event.detail.view.title;
+        },
+        eventClick: function(e) {
+            this.log('ew-expresso-calendar.eventClick:');
+            this.log(e.detail.event);
+            this.ew_openWidget('ew-list-view', { route: "./api/rest/ew-expresso-calendar/CalendarDetail", eventID: e.detail.event.id, 'tabID': 'calendar_event_' + e.detail.event.id ,'tabIcon' : 'icons:event', 'tabTitle' : 'Evento'} );
+        },
+		createEvent: function(event) {
+          this.log('ew-expresso-calendar.createEvent:');
+
+          var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-list-view',{ route: "./api/rest/ew-expresso-calendar/Create", 'tabID': 'calendar_create_' + randTabID ,'tabIcon' : 'icons:event', 'tabTitle' : 'Novo Evento'  });
+        },
+	});
+    </script>
+  </dom-module>

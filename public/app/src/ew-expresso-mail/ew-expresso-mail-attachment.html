@@ -1,0 +1,362 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-mail-attachment`
+
+Elemento Utilizado para exibir um anexo de uma mensagem.
+
+Utiliza o metodo: Mail/Attachment da [API DO EXPRESSO](https://api.expresso.pr.gov.br/docs/)
+
+### HTML
+    
+    <ew-expresso-mail-attachment folder-id="{{message.folderID}}" msg-id="{{message.msgID}}" attachment="{{item}}" is-loading="{{isLoading}}"></ew-expresso-mail-attachment>
+
+-->
+<dom-module id="ew-expresso-mail-attachment">
+    
+    <template>
+      <style>
+        paper-card {
+          width: 200px;
+          max-width: 200px;
+          margin: 10px;
+        }
+        .card-content {
+          background-color: #000;
+          color: #FFF;
+          opacity: 0.8;
+        }
+        .attachment-header {
+          font-size: 12px;
+        }
+        .attachment-icon {
+          position: absolute;
+          top: -10px;
+          transform: rotate(270deg);
+          left: 0px;
+        }
+      </style>
+      <ew-api-ajax
+          id="ajax"
+          resource="{{resource}}"
+          params="{{params}}"
+          loading="{{isLoading}}"
+          on-response="handleResponseToData">        
+      </ew-api-ajax>
+      
+      <paper-card image="{{dataImage}}">
+        <template is="dom-if" if="{{isVideo}}">
+          <video controls>
+            <source type="video/mp4" src="{{dataVideo}}">
+          </video>
+        </template>
+        <div class="card-content">
+          <div class="attachment-header">
+            <div>
+              <template is="dom-if" if="{{isCreatingEmail}}">
+               <paper-icon-button icon="icons:close" on-tap="removeAttachment"></paper-icon-button>
+              </template>
+              <paper-icon-button icon="icons:file-download" on-tap="downloadBrowser"></paper-icon-button>
+              <iron-icon icon="icons:attachment" class="attachment-icon"></iron-icon>
+              <span>{{params.attachmentName}}&nbsp;({{fileSize}})</span>
+            </div>
+          </div>
+        </div>
+      </paper-card>
+    </template>
+  <script>
+
+    Polymer({
+        is: 'ew-expresso-mail-attachment',
+        behaviors: [EWBehaviorWidgetBehavior],
+        properties: {
+            //Parametros iniciais do widget
+            params: { type: Object, value: {}, notify: true, computed: '_computeParams(attachment,folderId,msgId)' },
+            //Objeto com as propriedades do anexo
+            attachment: { type: Object, value: {}, notify: true, reflectToAttribute: true },
+            //Id da pasta da mensagem
+            folderId: { type: String, value: '' },
+            //Id da mensagem que contém o Anexo.
+            msgId: { type: String, value: '' },
+            //Metodo utilizado da API
+            resource: { type: String, value: 'Mail/Attachment', notify: true },
+
+            expresso: { type: Object, value: {}, notify: true, reflectToAttribute: true },
+
+            //Tamanho do arquivo anexado
+            fileSize: {type: String, value: '', computed: '_computeFileSize(params)' }, 
+            //Propriedade booleana que informa se esta criando novo email
+            isCreatingEmail: {type: Boolean, value: false, notify: true },
+
+            isImage: {type: Boolean, value: false, notify: true }, 
+            isVideo: {type: Boolean, value: false, notify: true },
+            downloadWhenFinished: {type: Boolean, value: false, notify: true }, 
+            fileArrayBuffer: { type: Object, value: {} },
+
+            dataVideo: { type: String, value: '', notify: true },
+
+            dataImage: { type: String, value: '', notify: true },
+
+            tempImage: {type: String, value: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACWCAIAAADWjhTKAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NTM5M0Q3REYxQzdCMTFFM0EwNDZBMjNFODBDRUM5RjEiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NTM5M0Q3RTAxQzdCMTFFM0EwNDZBMjNFODBDRUM5RjEiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo1MzkzRDdERDFDN0IxMUUzQTA0NkEyM0U4MENFQzlGMSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo1MzkzRDdERTFDN0IxMUUzQTA0NkEyM0U4MENFQzlGMSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkAGwEYAABelSURBVHja7F3NjyTJ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', notify: true }, 
+        },
+        ready: function() {
+          this.dataImage = this.tempImage;
+          this.set('fileArrayBuffer',{});
+          if ((this.isImage) || (this.isCreatingEmail)) {
+            this.$.ajax.generateRequest();
+          }
+          
+        },
+        removeAttachment: function() {
+          this.fire('ew-remove-attachment',this.params);
+        },
+        _computeFileSize: function(params) {
+          return this.bytesToSize(params.attachmentSize,0);
+        },
+
+        _computeDownloadURL: function(_params) {
+
+          if (this.expresso != undefined) {
+            _params.auth = this.expresso.auth;
+
+            if ((this.expresso != null) && (this.expresso != undefined)) {
+              if ((this.expresso.externalAPI != '') && (this.expresso.externalAPI != undefined)) {
+                _params.externalAPI = this.expresso.externalAPI;
+              }
+              if ((this.expresso.profile != '') && (this.expresso.profile != undefined)) {
+                if (this.expresso.profile[0] != undefined) {
+                  if (this.expresso.profile[0].contactUIDNumber != undefined) {
+                    _params.user_id = this.expresso.profile[0].contactUIDNumber;
+                  }
+                }
+                
+              }
+            }
+
+          }
+
+          var downloadURL = '';
+          downloadURL = downloadURL + window.btoa(_params.auth) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.user_id) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.externalAPI) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.folderID) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.msgID) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.attachmentID) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.attachmentIndex) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.attachmentName) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.attachmentEncoding) +  '/';
+          downloadURL = downloadURL + window.btoa(_params.attachmentSize);
+
+          return downloadURL;
+
+        },
+        download: function() {
+          
+          // console.log('DownloadAttachment:'); 
+          // console.log(this.downloadURLValue);
+
+          // window.open('./api/rest/DownloadAttachment/' + this.downloadURLValue, 'Download');
+
+          if (this.isImage) {
+            this.downloadBrowser();
+          } else {
+            this.downloadWhenFinished = true;
+            this.resource = "";
+            this.resource = "Mail/Attachment";
+            this.$.ajax.generateRequest();
+          }
+         
+        },
+        _computeParams: function(_attachment,_folderId,_msgId) {
+          var retval = {};
+          retval.folderID = _folderId;
+          retval.msgID = _msgId;
+          retval.attachmentID = _attachment.attachmentID;
+          retval.attachmentIndex = _attachment.attachmentIndex;
+          retval.attachmentName = _attachment.attachmentName;
+          retval.attachmentEncoding = _attachment.attachmentEncoding;
+          retval.attachmentSize = _attachment.attachmentSize;
+
+          this.downloadURLValue = this._computeDownloadURL(retval);
+
+          var fileExtension = retval.attachmentName.toLowerCase().substr(retval.attachmentName.length - 3, 3);
+
+          var isImage = false;
+          var isVideo = false;
+          switch (fileExtension) {
+              case "png":
+                  isImage = true;
+                  break;
+              case "jpg":
+                  isImage = true;
+                  break;
+              case "peg":
+                  isImage = true;
+                  break;
+                  /* 
+              //VIDEO PREVIEW DISABLED, BECAUSE IT'S NOT WORKING YET.
+              case "mp4":
+                  isImage = true;
+                  isVideo = true; 
+                  break; 
+              */
+          }
+          this.set('isImage', isImage);
+          this.set('isVideo', isVideo);
+
+
+          return retval;
+        },
+        handleResponseToData: function(event) {
+          var response = event.detail;
+
+          var arrBuffer = this.stringToArrayBuffer(response);
+          this.set('fileArrayBuffer',arrBuffer);
+
+          var base64 = this.base64ArrayBuffer(arrBuffer);
+
+          if (this.isImage) {
+            if (this.isVideo) {
+              this.set('dataImage',"");
+              this.set('dataVideo',"data:video/mp4;base64," + base64);
+            } else {
+              this.set('dataImage',"data:image/png;base64," + base64);
+            }
+            
+          }
+
+          if (this.downloadWhenFinished) {
+            this.downloadBrowser();
+          }
+          
+        },
+
+        getBlob: function() {
+          var fileExtension = this.params.attachmentName.toLowerCase().substr(this.params.attachmentName.length - 3, 3);
+
+          var fileType = "application/octet-stream";
+
+          switch (fileExtension) {
+              case "png":
+                  fileType = "image/png";
+                  break;
+              case "jpg":
+                  fileType = "image/jpeg";
+                  break;
+              case "jpge":
+                  fileType = "image/jpge";
+                  break;
+              case "pdf":
+                  fileType = "application/pdf";
+                  break;
+          }
+
+          var blob = new Blob([this.fileArrayBuffer], {
+              type: fileType
+          });
+
+          return blob;
+        },
+
+        getFile: function() {
+          var blob = this.getBlob();
+          // var fileType = "application/*";
+          var file = new File([blob],this.params.attachmentName);
+
+          return file;
+        },
+        
+        downloadBrowser: function() {
+
+          this.downloadWhenFinished = false;
+
+          window.open('./api/rest/DownloadAttachment/' + this.downloadURLValue, 'Download');
+
+      },
+      bytesToSize: function(bytes, precision) {  
+          var kilobyte = 1024;
+          var megabyte = kilobyte * 1024;
+          var gigabyte = megabyte * 1024;
+          var terabyte = gigabyte * 1024;
+         
+          if ((bytes >= 0) && (bytes < kilobyte)) {
+              return bytes + ' B';
+       
+          } else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+              return (bytes / kilobyte).toFixed(precision) + ' KB';
+       
+          } else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+              return (bytes / megabyte).toFixed(precision) + ' MB';
+       
+          } else if ((bytes >= gigabyte) && (bytes < terabyte)) {
+              return (bytes / gigabyte).toFixed(precision) + ' GB';
+       
+          } else if (bytes >= terabyte) {
+              return (bytes / terabyte).toFixed(precision) + ' TB';
+       
+          } else {
+              return bytes + ' B';
+          }
+      },
+      stringToArrayBuffer: function(str){
+
+          var arr = new Uint8Array(str.length);
+          for(var i=str.length; i--; )
+              arr[i] = str.charCodeAt(i); 
+          return arr.buffer;
+      },
+      base64ArrayBuffer: function(arrayBuffer) {
+          var base64 = ''
+          var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+          var bytes = new Uint8Array(arrayBuffer)
+          var byteLength = bytes.byteLength
+          var byteRemainder = byteLength % 3
+          var mainLength = byteLength - byteRemainder
+
+          var a, b, c, d
+          var chunk
+
+          // Main loop deals with bytes in chunks of 3
+          for (var i = 0; i < mainLength; i = i + 3) {
+              // Combine the three bytes into a single integer 
+              chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2]
+
+              // Use bitmasks to extract 6-bit segments from the triplet
+              a = (chunk & 16515072) >> 18 // 16515072 = (2^6 - 1) << 18
+              b = (chunk & 258048) >> 12 // 258048   = (2^6 - 1) << 12
+              c = (chunk & 4032) >> 6 // 4032     = (2^6 - 1) << 6
+              d = chunk & 63 // 63       = 2^6 - 1
+
+              // Convert the raw binary segments to the appropriate ASCII encoding
+              base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d]
+          }
+
+          // Deal with the remaining bytes and padding
+          if (byteRemainder == 1) {
+              chunk = bytes[mainLength]
+
+              a = (chunk & 252) >> 2 // 252 = (2^6 - 1) << 2
+
+              // Set the 4 least significant bits to zero
+              b = (chunk & 3) << 4 // 3   = 2^2 - 1
+
+              base64 += encodings[a] + encodings[b] + '=='
+          } else if (byteRemainder == 2) {
+              chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1]
+
+              a = (chunk & 64512) >> 10 // 64512 = (2^6 - 1) << 10
+              b = (chunk & 1008) >> 4 // 1008  = (2^6 - 1) << 4
+
+              // Set the 2 least significant bits to zero
+              c = (chunk & 15) << 2 // 15    = 2^4 - 1
+
+              base64 += encodings[a] + encodings[b] + encodings[c] + '='
+          }
+
+          return base64
+      },
+       
+    });
+  </script>
+</dom-module>

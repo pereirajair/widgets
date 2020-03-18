@@ -108,11 +108,12 @@ class HomeController extends WidgetController
         $this->insertUser();
 
         $userAuth = session_id();
+        // $userAuth = '';
 
         if ($this->getConfigValue("DEVELOPMENT") == "1") {
-            return view('widgets')->with('auth', $userAuth);
+            return view('widgets')->with('auth', $userAuth)->with('route','/api/Home/MobileMenu')->with('multi','true');
         } else {
-            return view('widgets_build')->with('auth', $userAuth);
+            return view('widgets_build')->with('auth', $userAuth)->with('route','/api/Home/MobileMenu')->with('multi','true');
         }
     }
 
@@ -130,6 +131,43 @@ class HomeController extends WidgetController
         }
     }
 
+    public function loginIndex() {
+        $userAuth = session_id();
+        // $userAuth = '';
+
+        if ($this->getConfigValue("DEVELOPMENT") == "1") {
+            return view('widgets')->with('auth', $userAuth)->with('route','/api/Login')->with('multi','false');
+        }
+    }
+
+    public function loginForm() {
+
+		$view = new EWListView("Login",true);
+
+        // $routeID = $this->getParam("routeID");
+        $send = $this->getParam("send");
+        
+        // $route = \DB::table('routes')->where('id','=',$routeID)->get()->first();
+        // $widget = \DB::table('widgets')->where('route_id','=',$routeID)->get()->first();
+
+        $showForm = true;
+
+        if ($send == true) {
+        
+            return redirect()->to('/'); 
+        }
+		
+		if ($showForm) {
+
+            $view->addHiddenInput("send", "true");
+            $view->addTextInput("username","Usuário","",true,"","lock-outline");
+			$view->addTextInput("password", "Senha", "", true, "", "lock-open", "password");
+			$view->setFab("done", "Autenticar", "ew_send", array());		
+		}
+
+		return response()->json($view);
+	}
+
     public function logout() {
         $data = $this->getApiData(config('central-seguranca.urlCentralCidadao.' . \App::environment() . '/signout'));
         print_r($data);
@@ -137,6 +175,177 @@ class HomeController extends WidgetController
 
     public function uploadFile() {
         return response()->json(true);
+    }
+
+    public function mobileMenu() {
+        $view = new EWListView("");
+
+			if ($this->isDarkMode()) {
+				$view->addImageItem("./app/src/ew-home/img/logo_expresso_branco.png",0,"100%","50px","contain");
+			} else {
+				$view->addImageItem("./app/src/ew-home/img/logo_expresso.png",0,"100%","50px","contain");
+			}
+			// $view->addActionToolbarButton("communication:forum","ew_js","jsxc.gui.roster.toggle();");
+
+			$view->addActionToolbarButton("settings","ew-list-view", array("route" => $this->getRouteForClass("HomeController@settings")));
+			$view->addActionToolbarButton("exit-to-app","ew_signal", array("signal" => "ew-auth-invalid"));
+
+		//	$view->runAction("ew-expresso-mail-messages",array("currentFolder" => array("folderID" => "INBOX", "folderName" => "Caixa de Entrada", "folderType" => "0", "viewType" => "0" ), "folderID" => "INBOX" ));
+/*
+			$profile = (array) $_SESSION['profile'];
+
+			$item = new EWListViewItem();
+			$item->setId($profile[0]->contactUIDNumber);
+				$paramsContact = array(
+					"route" => "./api/rest/ew-expresso-catalog/ContactDetail", 
+					"contactType" => 2, 
+					"contactID"=> $profile[0]->contactUIDNumber,
+					"hideOptions" => true
+				);
+
+			$item->setAction("ew-list-view",$paramsContact);
+			$item->setTitle($profile[0]->contactFullName);
+			$item->setDescription($profile[0]->contactMails[0]);
+			$item->setEmail($profile[0]->contactMails[0]);			
+			$view->addItem($item->getItem());
+*/
+			$view->addHeaderItem("Expresso",true,0,"icons:mail");
+
+			$item = new EWListViewItem();
+			$item->addActionButton("create","ew-expresso-mail-create",array(),2,"Nova Mensagem","fabTheme fabRound");
+			$view->addItem($item->getItem());
+
+		
+			$view->addPaperItemImage("","Caixa de Entrada","","ew-expresso-mail-messages",array("currentFolder" => array("folderID" => "INBOX", "folderName" => "Caixa de Entrada", "folderType" => "0", "viewType" => "0" ), "folderID" => "INBOX" ),true,"medium",array());
+
+			$view->addPaperItemImage("","Minhas Pastas","",'ew-list-view',array("route" => $this->getRouteForClass("Expresso\MailFolders"), "title" => "Minhas Pastas"),true,"medium",array());
+
+			$view->addPaperItemImage("","Contatos","",'ew-list-view',array("route" => $this->getRouteForClass("CatalogContacts"),"hideCreateContact" => false,"isMobile" => $this->getParam("isMobile")),true,"medium",array());
+		   
+
+		   $view->addPaperItemImage("","Agenda","",'ew-list-view',array("route" => $this->getRouteForClass("CalendarEvents"), "folderID" => "INBOX"),true,"medium",array());
+		   // $view->addPaperItemImage('./bower_components/ew-expresso-messenger/img/icon.png',"Messenger","",'ew-expresso-messenger',array(),true,"medium",array("./bower_components/ew-expresso-messenger/import.html"));
+		   $view->addPaperItemImage("","Divulgações","",'ew-list-view',array("route" => $this->getRouteForClass("Divulgacao")),true,"medium");
+
+		//    if ($this->isAdmin(false)) {
+
+		// 	   $view->addHeaderItem("Em Desenvolvimento");
+		// 	   $view->addPaperItemImage("","Caixa de Entrada","",'ew-list-view',array("route" => $this->getRouteForClass("MailMessages"), "folderID" => "INBOX"),true,"medium",array());
+        //    }
+        
+        $data = DB::table('widgets as w')->join('routes AS r','r.id','=','w.route_id')->select('w.*','r.url','r.groups_acl as route_acl')->where('w.enabled', true)->orderBy('w.is_new','desc')->get();
+        
+        $hasAddedNewsHeader = false;
+        $hasAddedOtherHeader = false;
+
+        $qtd = 0;
+
+        foreach ($data as $widget) {
+            if ($widget->is_new == 't') {
+                if (!$hasAddedNewsHeader) {
+                    $view->addHeaderItem("Novos Widgets");
+                    $hasAddedNewsHeader = true;
+                }
+            } else {
+                if ($hasAddedNewsHeader) {
+                    if (!$hasAddedOtherHeader) {
+                        $view->addHeaderItem("Outros Widgets");
+                        $hasAddedOtherHeader = true;
+                    }
+                }
+            }
+
+            if ($widget->icon != "") {
+				$icon = $widget->icon;
+			} else {
+				$icon = $this->getConfigValue("DEFAULT_ICON");
+			}
+
+            $image = "data:image/jpeg;base64," . $icon;
+            $action = "ew_signal";
+            $arrayWidget = (array) $widget;
+            $arrayWidget['params'] = array("route" => $widget->url) ; //"{ 'route' : '" . $widget->url . "'}";
+            $arrayWidget['element'] = 'ew-list-view';
+            $params = array("signal" => "ew-home-add-widget", "params" => $arrayWidget,"close" => true);
+
+            $view->addPaperItemImage($image,$widget->name,"","ew-list-view",$arrayWidget['params'],true,"medium");
+            $qtd = $qtd + 1;
+
+            if ($qtd == 1) {
+                $view->runAction("ew-list-view",$arrayWidget['params']);
+            }
+
+
+        }
+
+/*
+		   $removedWidgets = array(26,6,5,4,2);
+
+		   $response = $expresso->getEnabledUserWidgets(true,$this->isAdmin(false));
+
+			$hasAddedHeader = false;
+
+			
+			$hasAddedNewsHeader = false;
+			$hasAddedOtherHeader = false;
+		   	foreach ($response['widgets'] as $widget) {
+
+				if (!in_array($widget['id'],$removedWidgets)) {
+
+					if (!$hasAddedHeader) {
+						$view->addHeaderItem("Widgets",true,false,"view-quilt");
+						$hasAddedHeader = true;
+					}
+	
+				if ($widget['new_widget'] == 't') {
+					if (!$hasAddedNewsHeader) {
+						$view->addHeaderItem("Novos Widgets");
+						$hasAddedNewsHeader = true;
+					}
+				} else {
+					if ($hasAddedNewsHeader) {
+						if (!$hasAddedOtherHeader) {
+							$view->addHeaderItem("Outros Widgets");
+							$hasAddedOtherHeader = true;
+						}
+					}
+				}
+
+				// $image = "./api/rest/Icon?id=" . $widget['id'];
+
+				$image = "data:image/jpeg;base64," . $widget['icon'];
+
+
+				$action = $widget['element'];
+				$params = (array) $widget['params'];
+				$params['tabID'] = "widget_" . $widget['id'];
+				// $params['tabIcon'] = "icons:view-quilt";
+				$params['tabImage'] = $image;
+				$params['tabTitle'] = $widget['widgettitle'];
+				$params['enablePush'] = true;
+
+				$description = "";
+				$size = "medium";
+
+				$view->addPaperItemImage($image,$widget['widgettitle'],$description,$action,$params,true,$size);
+
+				}
+
+			}
+*/
+		   $html = "<br><br>";
+		   $view->addHTML($html);
+		   $view->addImageItem("http://www.pr.gov.br/logos/brasao_80x98.png",0,"100%","50px","contain");
+		   $view->addHTML($html);
+		   if ($this->isDarkMode()) {
+			    $view->addImageItem("http://www.pr.gov.br/logos/celepar/logo-celepar-simples-white.svg",0,"100%","50px","contain");
+		   } else {
+			    $view->addImageItem("http://www.pr.gov.br/logos/celepar/logo-celepar-v-m.png",0,"100%","50px","contain");
+		   }
+		   
+		   $view->addHTML($html);
+
+        return response()->json($view);
     }
 
     public function insertUser() {
@@ -408,10 +617,6 @@ class HomeController extends WidgetController
             } else {
                 $view->addPaperItemImage($image,$widget->name,$widget->description,$action,$params,true);
             }
-
-            
-            
-            
 
         }
 

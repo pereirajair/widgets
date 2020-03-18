@@ -1,0 +1,89 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-mail-contact-button`
+
+Elemento Utilizado para exibir um paper-button com o email ou nome do contato.
+
+### JAVASCRIPT:
+    
+    <ew-expresso-mail-contact-button name="{{name}}" email="{{email}}"></ew-expresso-mail-contact-button>
+
+-->
+<dom-module id="ew-expresso-mail-contact-button">
+  <template>
+    <style>
+        .badge-recipient {
+          margin: 7px;
+          font-size: 10px;
+          background-color: #EFEFEF; 
+          color: #000;
+          border-radius: 20px;
+          padding: 2px;
+        }
+        #chips {
+				@apply --layout-horizontal;
+				@apply --layout-end;
+				@apply --layout-wrap;
+				max-width: 90%;
+			}
+        .chip {
+				border-radius: 500px;
+				background-color: #e0e0e0;
+				margin: 1px 4px 1px 0;
+				white-space: nowrap;
+				overflow: hidden;
+				@apply --layout-horizontal;
+				@apply --layout-center;
+			}
+			.chip > span {
+				color: #424242;
+				margin-left: 10px;
+				font-size: 13px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.chip iron-icon {
+				margin: 2px 4px;
+				color: #cdcdcd;
+				background-color: #a6a6a6;
+				border-radius: 500px;
+				cursor: pointer;
+				min-width: 16px;
+				width: 16px;
+				min-height: 16px;
+				height: 16px;
+			}
+    </style> 
+    <div class="chip"><ew-expresso-catalog-contact-picture letter="[[email.0]]" email="{{email}}" small="true"></ew-expresso-catalog-contact-picture></ew-expresso-catalog-contact-picture><span>{{_displayName}}</span><iron-icon icon="mail" on-click="composeMail"></iron-icon><iron-icon icon="social:public" on-tap="openContactDetail"></iron-icon></div>
+  </template>
+  <script>
+  Polymer({ 
+    is: 'ew-expresso-mail-contact-button',
+    behaviors: [EWBehaviorWidgetBehavior],
+    properties: { 
+      email: { type: String, value: '', notify: true, reflectToAttribute: true },
+      name: {type: String, value: '', notify: true, reflectToAttribute: true },
+      _displayName: {type: String, value: '', computed: '_computeDisplayName(email,name)' },
+    },
+    _computeDisplayName: function(_email,_name) {
+      var retVal = _email;
+      if (_name.trim() != '') {
+          retVal = _name;
+      }
+      return retVal;
+    },
+    /**
+    Abre o widget para escrever um email para o contato.
+    */
+    composeMail: function(event) {
+      event.stopPropagation();
+      var randTabID = Math.floor((Math.random() * 10000) + 1);
+      this.ew_openWidget('ew-expresso-mail-create',{ 'action': 'create', 'msgTo':  [ { 'name': this.name, 'email': this.email } ], 'tabID': 'mail_create_' + randTabID ,'tabIcon' : 'create', 'tabTitle' : 'Nova Mensagem' });
+    },
+    openContactDetail: function(event) {
+      this.ew_showColumnDialog('ew-list-view',{ 'route' : './api/rest/ew-expresso-catalog/ContactDetail','contactType': '2', 'contactMail':  this.email});
+    }
+  });
+  </script>
+</dom-module>

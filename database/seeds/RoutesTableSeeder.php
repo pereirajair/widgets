@@ -22,6 +22,7 @@ class RoutesTableSeeder extends Seeder
         DB::table('routes')->insert(['url' => '/api/Home/SaveSettings', 'class_method' => 'HomeController@saveSettings']);
         DB::table('routes')->insert(['url' => '/api/Home/UserWidgets', 'class_method' => 'HomeController@userWidgets']);
         DB::table('routes')->insert(['url' => '/api/Home/UserAccount', 'class_method' => 'HomeController@userAccount']);
+        DB::table('routes')->insert(['url' => '/api/Home/MobileMenu', 'class_method' => 'HomeController@mobileMenu']);
 
         DB::table('routes')->insert(['url' => '/api/Home/Login', 'class_method' => 'Admin\Login@load']);
         

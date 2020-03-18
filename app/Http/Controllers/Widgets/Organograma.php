@@ -9,8 +9,6 @@ use App\Utils\EWListViewItem;
 
 class Organograma extends WidgetController 
 {
-
-
     private $production = true;
 
 	private $URL_PROD = "https://soap.workflow.pr.gov.br/";

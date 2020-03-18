@@ -20,9 +20,9 @@ class MeusWidgetsController extends WidgetController
 
 		$viewName = $this->getParam("view");
 
-		if(Gate::denies('widgets-adm')){
-			$view = $this->getUnauthorizedView();
-		} else {
+		// if(Gate::denies('widgets-adm')){
+		// 	$view = $this->getUnauthorizedView();
+		// } else {
 			if ($viewName == "") 			 {	$view = $this->getMyWidgetsView(); $found = true; }
 			if ($viewName == "links") 		 {	$view = $this->getLinksView(); $found = true; }
 			if ($viewName == "edit") 		 {	$view = $this->getEditView();  $found = true;  }
@@ -31,7 +31,7 @@ class MeusWidgetsController extends WidgetController
 			if ($viewName == "publish") 	 {	$view = $this->getPublishView(); $found = true; }
 			if ($viewName == "send_publish") {	$view = $this->getSendPublishView(); $found = true; }
 			if ($viewName == "admin_delete") 	 	 {	$view = $this->getAdminDeleteView();	}
-		}
+		// }
 
 		$view->setBackgroundColor("amber");
 		$view->hideCode();

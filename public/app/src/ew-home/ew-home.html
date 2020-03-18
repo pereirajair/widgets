@@ -161,7 +161,7 @@ Elements Widgets - Home Screen
 
 
     <div id="backgroundImage" class="background-image" style$="{{backgroundCssClass}}"></div>
-    <ew-login id="loginForm" login-response="{{loginResponse}}" is-logged="{{isLogged}}"></ew-login>
+    <!-- <ew-login id="loginForm" login-response="{{loginResponse}}" is-logged="{{isLogged}}"></ew-login> -->
     <div class="ew-content fullHeight"> 
       <div id="homeWidgets" class="fullHeight">
         <app-drawer-layout fullbleed style$="{{_computeHeaderLayoutStyle(options)}}">
@@ -242,7 +242,7 @@ Elements Widgets - Home Screen
         },
         menuViewParams: {
           type: Object,
-          value: { route: './api/Home/UserWidgets', isMobile: true },
+          value: { route: './api/Home/MobileMenu', isMobile: true },
         },
         hideNews: {
           type: Boolean,
@@ -419,13 +419,19 @@ Elements Widgets - Home Screen
         this.$.expressoLocalStorage.reload();
         
         if (this.loginResponse != undefined) {
-          if (this.loginResponse.auth != "") {
 
-              this.isLogged = true;
-              var is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
-             
-              this.userLoggedIn({ detail: { auth: this.loginResponse.auth, profile: this.loginResponse.profile }});
+          if (this.loginResponse.route != '') {
+            this.$.mobileView.multi = this.loginResponse.multi;
+            this.menuViewParams.route = this.loginResponse.route;
           }
+
+        //   if (this.loginResponse.auth != "") {
+
+        //       this.isLogged = true;
+        //       var is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
+             
+        //       this.userLoggedIn({ detail: { auth: this.loginResponse.auth, profile: this.loginResponse.profile }});
+        //   }
         }
 
       }, 

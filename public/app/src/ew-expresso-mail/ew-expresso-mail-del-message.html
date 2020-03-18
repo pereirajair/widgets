@@ -1,0 +1,194 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-mail-del-message`
+
+Elemento utilizado para excluir uma mensagem.
+
+Utiliza o metodo: Mail/DelMessage da [API DO EXPRESSO](https://api.expresso.pr.gov.br/docs/)
+
+Exemplo:
+    
+### HTML
+
+    <ew-expresso-mail-del-message id="delMessage"></ew-expresso-mail-del-message>
+
+### JAVASCRIPT
+
+Para executar a acao sem solicitar a confirmacao do usuario: 
+
+    var folderID = 'INBOX/Pessoal';
+    var msgID = 123;
+    this.$.delMessage.delMessage(folderID,msgID);
+
+Para solicitar a confirmacao do usuario antes de realmente executar a acao:
+
+    var folderID = 'INBOX/Pessoal';
+    var msgID = 123;
+    this.$.delMessage.delMessageAndConfirm(folderID,msgID);
+
+Para excluir varias mensagens e solicitar a confirmacao do usuario antes de realmente executar a acao:
+
+    var messages = [ { folderID: 'INBOX' , msgID: 123 },{ folderID: 'INBOX' , msgID: 122 } ];
+    this.$.delMessage.delMessagesAndConfirm(messages);
+
+### EVENTOS
+
+Os eventos abaixo sao disparados quando o elemento termina de realizar a acao nas mensagens.
+
+Evento | Descricao
+----------------|-------------
+`ew-expresso-mail-del-message-error` | Ocorreu um erro ao executar a acao
+`ew-expresso-mail-del-message-success` | A acao foi executada com sucesso.
+
+-->
+<dom-module id="ew-expresso-mail-del-message">
+    <template>
+      <ew-api-ajax
+          id="ajax"
+          resource="Mail/DelMessage"
+          params="{{requestParams}}"
+          on-response="_handleResponse">        
+      </ew-api-ajax>
+    </template>
+  <script>
+    Polymer({
+        is: 'ew-expresso-mail-del-message',
+        behaviors: [EWBehaviorWidgetBehavior],
+        properties: {
+            flagParams: { notify: true, value: {} },
+            // response: { type: Object, value: {}, computed: '_computeResponse(data)' },
+            messagesSelected: { type: Array, value: [] },
+            showMessages: { type: Boolean, value: true },
+            multipleAction: { type: Boolean, value: false },
+            messagesCompleted: { type: Array, value: [] },
+            messagesWithError: { type: Array, value: [] },
+        },
+/**
+Para excluir mensagens sem solicitar a confirmacao do usuario: 
+
+    var folderID = 'INBOX/Pessoal';
+    var msgID = 123;
+    this.$.delMessage.delMessage(folderID,msgID);
+        */
+        delMessage: function(_folderid,_msgid) {
+          var requestParams = {};
+          requestParams.msgID = _msgid;
+          requestParams.folderID = _folderid;
+          this.set('requestParams',requestParams);
+
+          this.$.ajax.generateRequest();
+        },
+        /**
+Para excluir varias mensagens e solicitar a confirmacao do usuario antes de realmente executar a acao:
+
+  var messages = [ { folderID: 'INBOX' , msgID: 123 },{ folderID: 'INBOX' , msgID: 122 } ];
+  this.$.delMessage.delMessagesAndConfirm(messages);
+        */
+        delMessagesAndConfirm: function(messages) {
+          this.messagesSelected = messages;
+          this.messagesCompleted = [];
+          this.messagesWithError = [];
+          this.multipleAction = true;
+          var that = this;
+          var deleteFunction = function(event) {
+            if (event.confirmed) {
+              for (var i in messages) {
+                var message = messages[i];
+                that.delMessage(message.folderID, message.msgID);
+              }
+            }
+          }
+          var qtdMessages = messages.length;
+          this.ew_showDialog('Excluir mensagens','Deseja realmente excluir esta(s) ' + qtdMessages + ' mensagen(s)?',deleteFunction,'Confirmar','Cancelar');
+        },
+/**
+Para solicitar a confirmacao do usuario antes de realmente executar a acao:
+
+    var folderID = 'INBOX/Pessoal';
+    var msgID = 123;
+    this.$.delMessage.delMessageAndConfirm(folderID,msgID);
+*/
+        delMessageAndConfirm: function(_folderid,_msgid) {
+          this.multipleAction = false;
+          var that = this;
+          var deleteFunction = function(event) {
+            if (event.confirmed) {
+              that.delMessage(_folderid,_msgid);
+            }
+          }
+          this.ew_showDialog('Excluir mensagem','Deseja realmente excluir esta mensagem?',deleteFunction,'Confirmar','Cancelar');
+        },
+
+        _handleResponse: function(event) {
+          var response = event.detail.response;
+          var data = null;
+          if (response != undefined) {
+            if (response.result != undefined) {
+              data = response.result;
+            } 
+          } else {
+            data = event.detail;
+          }
+
+          if (this.multipleAction) {
+
+            if (data.error != undefined) {
+              this.messagesWithError.push(this.requestParams);
+            } else {
+              this.messagesCompleted.push(this.requestParams);
+            }
+
+            if ((this.messagesCompleted.length + this.messagesWithError.length) == this.messagesSelected.length) {
+              var msg = '';
+              if (this.messagesCompleted.length == this.messagesSelected.length) {
+                msg = this.messagesCompleted.length + " mensagens foram excluídas com sucesso.";
+                if (this.showMessages) {
+                  this.ew_showMessage(msg);
+                }
+                this.fire('ew-expresso-mail-del-message-success',data);
+
+                this.ew_signal('ew-expresso-mail-del-message',this.messagesCompleted);
+              }
+              if (this.messagesWithError.length != 0) {
+                if (this.messagesCompleted.length == 0) {
+                  msg = "Não foi possível excluir " + this.messagesWithError.length + " mensagens.";
+                } else {
+                  msg = this.messagesCompleted.length + " mensagens foram excluída(s), porém não foi possível excluir " + this.messagesWithError.length + " mensagen(s).";
+                }
+                if (this.showMessages) {
+                  this.ew_showMessage(msg);
+                }
+                this.fire('ew-expresso-mail-del-message-error',data);
+                this.ew_signal('ew-expresso-mail-del-message',this.messagesCompleted);
+              }
+
+            }
+
+          } else {
+
+            var msgSuccess = "Mensagem excluída com sucesso.";
+            var msgFail = "Não foi possível excluir a mensagem.";
+
+            if (data.error != undefined) {
+              if (this.showMessages) {
+                this.ew_showMessage(msgFail);
+              }
+              this.fire('ew-expresso-mail-del-message-error',data);
+            } else {
+              if (this.showMessages) {
+                this.ew_showMessage(msgSuccess);
+              }
+              var messagesCompleted = [];
+              messagesCompleted.push(this.requestParams);
+              this.ew_signal('ew-expresso-mail-del-message',messagesCompleted);
+              this.fire('ew-expresso-mail-del-message-success',data);
+            }
+
+          }
+
+        },
+
+    });
+  </script>
+</dom-module>

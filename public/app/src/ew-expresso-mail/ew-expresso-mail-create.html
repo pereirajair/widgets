@@ -1,0 +1,1414 @@
+<!--
+### WIDGET 
+
+`ew-expresso-mail-create`
+
+Widget utilizado para compor uma mensagem de email.
+
+Utiliza os metodos: Mail/Send, Preferences/UserPreferences, Catalog/Contacts, Mail/Messages da [API DO EXPRESSO](https://api.expresso.pr.gov.br/docs/)
+
+### JAVASCRIPT
+
+Para escrever uma mensagem de email: 
+
+    var action = 'create';
+    var sendMessageTo = [ {'name': 'Nome 1', 'email': 'Email@email.com'},{'name': 'Nome 2', 'email': 'Email2@email.com'} ];
+    this.ew_openWidget('ew-expresso-mail-create',{ 'action' : 'create', 'msgTo': sendMessageTo });
+
+Para responder uma mensagem de email: 
+    
+    var action = 'reply';
+    var folderID = 'INBOX';
+    var msgID = 123;
+    this.ew_openWidget('ew-expresso-mail-create',{ 'action': action, 'folderID': folderID, 'msgID': msgID });
+
+
+Para encaminhar uma mensagem de email: 
+    
+    var action = 'forward';
+    var folderID = 'INBOX';
+    var msgID = 123;
+    this.ew_openWidget('ew-expresso-mail-create',{ 'action': action, 'folderID': folderID, 'msgID': msgID });
+
+Para responder para todos uma mensagem de email: 
+  
+    var action = 'reply-all';
+    var folderID = 'INBOX';
+    var msgID = 123;
+    this.ew_openWidget('ew-expresso-mail-create',{ 'action': action, 'folderID': folderID, 'msgID': msgID });
+
+
+Sera aberto o widget, e e o usuario ira escrever o conteudo do email.
+
+-->
+<dom-module id="ew-expresso-mail-create">
+    <template>
+    <style>
+      :host {
+        background-color: #FFF;
+        color: #000;
+        height:100%;
+      }
+      paper-toolbar {
+        background-color: var(--paper-toolbar-background);
+        color: var(--paper-toolbar-color);
+      }
+      paper-card {
+  
+        background: var(--paper-menu-background-color);
+        color: var(--paper-menu-color);
+        width: 100%;
+        box-sizing: border-box;
+        --paper-card-header: {
+          max-height: 200px;
+        }
+      }
+  
+  
+      #uploadFiles {
+        padding: 8px;
+        border-radius: 10px;
+      }
+
+      #formSend {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+      }
+  
+      .recipient-item {
+        margin: 0px 0;
+        @apply(--layout-horizontal);
+      }
+      .recipient-title {
+        width: 60px;
+        padding-right: 20px;
+        padding-top: 14px;
+        text-align: right;
+      }
+      .recipient-name {
+        @apply(--layout-flex);
+      }
+  
+      paper-fab.fabButton {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        z-index: 1000;
+      }
+  
+      ew-fab {
+        z-index: 1000;
+      }
+  
+      .msgBodyContent {
+        background-color: #FFF !important;
+        color: #000 !important;
+        padding: 16px;
+        overflow-y: auto;
+        overflow-x: auto;
+      }
+      .messageBodyInput {
+        width: 100%; 
+        background-color: #fff !important;
+        color: #000 !important;
+      }
+      
+      table {
+        color: #000 !important;
+      }
+  
+      .content {
+        height: 100%;
+      }
+  
+      .cafe-light { color: #F60; margin: 5px; }
+  
+      .news {
+        color: var(--paper-toolbar-color);
+        background-color: var(--paper-toolbar-background);
+        font-size: 12px;
+        margin: 2px;
+      }
+  
+      .reset-this {
+      animation : none;
+      animation-delay : 0;
+      animation-direction : normal;
+      animation-duration : 0;
+      animation-fill-mode : none;
+      animation-iteration-count : 1;
+      animation-name : none;
+      animation-play-state : running;
+      animation-timing-function : ease;
+      backface-visibility : visible;
+      background : 0;
+      background-attachment : scroll;
+      background-clip : border-box;
+      background-color : transparent;
+      background-image : none;
+      background-origin : padding-box;
+      background-position : 0 0;
+      background-position-x : 0;
+      background-position-y : 0;
+      background-repeat : repeat;
+      background-size : auto auto;
+      border : 0;
+      border-style : none;
+      border-width : medium;
+      border-color : inherit;
+      border-bottom : 0;
+      border-bottom-color : inherit;
+      border-bottom-left-radius : 0;
+      border-bottom-right-radius : 0;
+      border-bottom-style : none;
+      border-bottom-width : medium;
+      border-collapse : separate;
+      border-image : none;
+      border-left : 0;
+      border-left-color : inherit;
+      border-left-style : none;
+      border-left-width : medium;
+      border-radius : 0;
+      border-right : 0;
+      border-right-color : inherit;
+      border-right-style : none;
+      border-right-width : medium;
+      border-spacing : 0;
+      border-top : 0;
+      border-top-color : inherit;
+      border-top-left-radius : 0;
+      border-top-right-radius : 0;
+      border-top-style : none;
+      border-top-width : medium;
+      bottom : auto;
+      box-shadow : none;
+      box-sizing : content-box;
+      caption-side : top;
+      clear : none;
+      clip : auto;
+      color : inherit;
+      columns : auto;
+      column-count : auto;
+      column-fill : balance;
+      column-gap : normal;
+      column-rule : medium none currentColor;
+      column-rule-color : currentColor;
+      column-rule-style : none;
+      column-rule-width : none;
+      column-span : 1;
+      column-width : auto;
+      content : normal;
+      counter-increment : none;
+      counter-reset : none;
+      cursor : auto;
+      direction : ltr;
+      display : inline;
+      empty-cells : show;
+      float : none;
+      font : normal;
+      font-family : inherit;
+      font-size : medium;
+      font-style : normal;
+      font-variant : normal;
+      font-weight : normal;
+      height : auto;
+      hyphens : none;
+      left : auto;
+      letter-spacing : normal;
+      line-height : normal;
+      list-style : none;
+      list-style-image : none;
+      list-style-position : outside;
+      list-style-type : disc;
+      margin : 0;
+      margin-bottom : 0;
+      margin-left : 0;
+      margin-right : 0;
+      margin-top : 0;
+      max-height : none;
+      max-width : none;
+      min-height : 0;
+      min-width : 0;
+      opacity : 1;
+      orphans : 0;
+      outline : 0;
+      outline-color : invert;
+      outline-style : none;
+      outline-width : medium;
+      overflow : visible;
+      overflow-x : visible;
+      overflow-y : visible;
+      padding : 0;
+      padding-bottom : 0;
+      padding-left : 0;
+      padding-right : 0;
+      padding-top : 0;
+      page-break-after : auto;
+      page-break-before : auto;
+      page-break-inside : auto;
+      perspective : none;
+      perspective-origin : 50% 50%;
+      position : static;
+      /* May need to alter quotes for different locales (e.g fr) */
+      quotes : '\201C' '\201D' '\2018' '\2019';
+      right : auto;
+      tab-size : 8;
+      table-layout : auto;
+      text-align : inherit;
+      text-align-last : auto;
+      text-decoration : none;
+      text-decoration-color : inherit;
+      text-decoration-line : none;
+      text-decoration-style : solid;
+      text-indent : 0;
+      text-shadow : none;
+      text-transform : none;
+      top : auto;
+      transform : none;
+      transform-style : flat;
+      transition : none;
+      transition-delay : 0s;
+      transition-duration : 0s;
+      transition-property : none;
+      transition-timing-function : ease;
+      unicode-bidi : normal;
+      vertical-align : baseline;
+      visibility : visible;
+      white-space : normal;
+      widows : 0;
+      width : auto;
+      word-spacing : normal;
+      z-index : auto;
+      /* basic modern patch */
+      all: initial;
+      all: unset;
+  }
+
+  iron-form {
+    height: 100%;
+  }
+
+    #pageContent {
+      @apply(--layout-flex);
+      @apply(--layout-vertical);
+      height: calc(100%);
+    }
+  
+  /* basic modern patch */
+  
+  #reset-this-root {
+      all: initial;
+      * {
+          all: unset;
+      }
+  }
+  
+    </style>
+  
+      <iron-localstorage id="expressoLocalStorage" name="expresso" value="{{expresso}}" on-iron-localstorage-load-empty="initializeDefaultExpresso"></iron-localstorage>
+      <iron-localstorage id="userPreferences" name="userPreferences" value="{{preferences}}" on-iron-localstorage-load-empty="initializeDefaultUserPreferences"></iron-localstorage>
+      <iron-localstorage id="CatalogContacts" name="CatalogContacts" value="{{contacts}}" on-iron-localstorage-load-empty="initializeDefaultContacts"></iron-localstorage>
+  
+      <ew-api-ajax
+        id="ajax"
+        resource="Preferences/UserPreferences"
+        params="{{prefParams}}"
+        loading="{{isLoading}}"
+        on-response="ew_handleResponseToPreferences">        
+      </ew-api-ajax>
+  
+      <ew-api-ajax
+        id="ajaxContacts"
+        resource="Catalog/Contacts"
+        params="{{requestParams}}"
+        loading="{{isLoading}}"
+        on-response="ew_handleResponseToContacts">        
+      </ew-api-ajax>
+  
+      <ew-api-ajax
+        id="ajaxSendMessage"
+        resource="Mail/Send"
+        params="{{paramsSend}}"
+        files="{{files}}"
+        on-response="ew_handleResponseSendMessage">        
+      </ew-api-ajax>
+  
+      <ew-api-ajax
+        id="ajaxMessage"
+        resource="Mail/Messages"
+        params="{{params}}"
+        on-response="ew_handleResponseToMessage">        
+      </ew-api-ajax>
+  
+      <ew-expresso-mail-flag-message id="flagMessage"></ew-expresso-mail-flag-message>
+      <ew-expresso-mail-del-message id="delMessage"></ew-expresso-mail-del-message>
+  
+      <iron-form id="ironFormSend">
+        <form is="iron-form" id="formSend" method="post">
+            <!-- <ew-expresso-email-custom-validator id="validMsgSubject" validator-name="validateMsgSubject"></ew-expresso-email-custom-validator> -->
+            <input type="hidden" name="id" value="1">
+            <input type="hidden" name="params[resource]" value="Mail/Send">
+            <input type="hidden" name="params[msgTo]" value="{{paramsSend.msgTo}}"> 
+            <input type="hidden" name="params[msgCc]" value="{{paramsSend.msgCc}}"> 
+            <input type="hidden" name="params[msgBcc]" value="{{paramsSend.msgBcc}}"> 
+            <input type="hidden" name="params[msgSubject]" value="{{paramsSend.msgSubject}}"> 
+            <input type="hidden" name="params[msgBody]" value="{{paramsSend.msgBody}}"> 
+            <input type="hidden" name="params[msgType]" value="html"> 
+            <input type="hidden" name="params[auth]" value="{{paramsSend.auth}}"> 
+  
+          <ew-header title="{{pageTitle}}" background-color="indigo">
+            <div slot='toolbar-buttons' class='toolbar-buttons' hidden="{{isLoading}}">
+
+                <paper-icon-button id="saveDraftIcon" icon="drafts" on-tap="saveDraft"></paper-icon-button>
+                <paper-tooltip for="saveDraftIcon" position="bottom">Salvar como Rascunho</paper-tooltip>
+  
+                <template is="dom-if" if="{{!usingSignature}}">
+                  <paper-icon-button id="addSignature" icon="fingerprint" on-tap="addSignature"></paper-icon-button>
+                  <paper-tooltip for="addSignature" position="bottom">Adicionar Assinatura</paper-tooltip>
+                </template>
+                <template is="dom-if" if="{{!ccVisible}}">
+                  <paper-icon-button id="addCcBcc" icon="social:person-outline" on-tap="toggleCc"></paper-icon-button>
+                  <paper-tooltip for="addCcBcc" position="bottom">Adicionar Cc/CCo</paper-tooltip>
+                </template>
+                <template is="dom-if" if="{{!attachmentsVisible}}">
+                  <paper-icon-button id="addAttachments" icon="icons:attachment" on-tap="showAttachments"></paper-icon-button>
+                  <paper-tooltip for="addAttachments" position="bottom">Adicionar Anexos</paper-tooltip>
+                </template>
+            </div>
+            <div id="pageContent" slot='content' class='content layout vertical' style="overflow: auto;" hidden="{{isLoading}}">
+                <ew-loading-spinner loading="{{isLoading}}"></ew-loading-spinner>
+                <paper-card>
+                  <div id="card-content" class='card-content'>
+
+                      <ew-expresso-catalog-contact-input 
+                        id="msgTo"
+                        label="Para:" source="{{formatedContacts}}" is-mobile="{{isMobile}}" selected-items="{{msgTo}}" on-ew-search-global-contacts="_searchGlobalContacts" always-float-label>
+                      </ew-expresso-catalog-contact-input>
+
+                      <div style="{{_computeStyleCCVisible(ccVisible)}}">
+                      <ew-expresso-catalog-contact-input 
+                        id="msgCc"
+                        label="Cc:" source="{{formatedContacts}}" is-mobile="{{isMobile}}" selected-items="{{msgCc}}" on-ew-search-global-contacts="_searchGlobalContacts" always-float-label hidden="{{!ccVisible}}">
+                      </ew-expresso-catalog-contact-input>
+                      
+                      <ew-expresso-catalog-contact-input 
+                        id="msgBcc"
+                        label="CCo:" source="{{formatedContacts}}" is-mobile="{{isMobile}}" selected-items="{{msgBcc}}" on-ew-search-global-contacts="_searchGlobalContacts" always-float-label hidden="{{!ccVisible}}">
+                      </ew-expresso-catalog-contact-input>
+                      </div>
+                  
+                      <div class="recipient-item">
+                        <!-- <div class="recipient-title">Assunto:</div> -->
+                        <div class="recipient-name">
+                          <paper-input id="subjectField" label="Assunto:" class="flex" value="{{msgSubject}}"  always-float-label></paper-input>
+                        </div>
+                      </div>
+  
+                      <template is="dom-repeat" items="[[msgAttachments]]">
+                        <ew-expresso-mail-attachment id="msgAttachment_{{item.attachmentID}}_{{item.attachmentIndex}}" folder-id="{{message.folderID}}" msg-id="{{message.msgID}}" attachment="{{item}}" is-loading="{{isLoading}}" is-creating-email="true"></ew-expresso-mail-attachment>
+                      </template>
+
+                      <div style="{{_computeStyleCCVisible(attachmentsVisible)}}">
+                        <vaadin-upload id="uploadFiles" class="animated bounceInDown" form-data-name="upload0" target="/api/rest/External" max-file-size="16000000" hidden="{{!attachmentsVisible}}">
+                          <div slot="drop-label">
+                            <iron-icon icon="description"></iron-icon>
+                            Arraste e solte os arquivos aqui... (16 Mb máximo)
+                          </div>
+                        </vaadin-upload>
+                      </div>
+                  </div>
+                </paper-card>
+                <div class="msgBodyContent reset-this">
+                    <adamantium-editor id="msgBodyInput" class="messageBodyInput">
+                      <div slot='sufix' hidden="{{isMobile}}">
+                          <paper-button on-tap="saveDraft"><iron-icon icon="drafts"></iron-icon> Salvar Rascunho</paper-button>
+                          <paper-button on-tap="toggleCc" hidden="{{ccVisible}}"><iron-icon icon="social:person-outline"></iron-icon>Adicionar CC/Cco</paper-button>
+                          <paper-button on-tap="showAttachments" hidden="{{attachmentsVisible}}"><iron-icon icon="icons:attachment"></iron-icon> Adicionar Anexos</paper-button>
+                          <paper-button on-tap="addSignature" hidden="{{usingSignature}}"><iron-icon icon="fingerprint"></iron-icon>Adicionar Assinatura</paper-button>
+                      </div>
+                    </adamantium-editor>
+                </div>
+                
+            </div>
+          </ew-header>
+          
+        </form>
+
+        </iron-form>
+  
+        <iron-a11y-keys id="a11y" target="[[target]]" keys="f9" on-keys-pressed="searchContact"></iron-a11y-keys>
+  
+        <ew-fab id="fabButton" icon='icons:send' tooltip="Enviar Email" on-tap='confirmAndSendEmail' hidden="{{isLoading}}"></ew-fab>
+  
+
+    </template>
+    <script>
+  
+      Polymer({
+          is: 'ew-expresso-mail-create',
+  
+          behaviors: [EWBehaviorWidgetBehavior,Polymer.IronResizableBehavior, window.Columns.EWColumn],
+  
+          listeners: {
+            'ew-expresso-mail-flag-message-error': 'whenMessageFlagged',
+            'ew-expresso-mail-flag-message-success': 'whenMessageFlagged',
+            'ew-remove-attachment': '_removeAttachment',
+          }, 
+   
+          properties: {
+
+            formatedContacts: { 
+              type: Array, 
+              value:  [],
+            },
+
+            personalContacts: { 
+              type: Array, 
+              value:  [],
+            },
+  
+            widgetTitle: { type: String, value: "Email - Nova Mensagem" },
+            description: { type: String, value: "Escreva e envie emails de forma rápida e prática." },
+            width: { type: Number, value: 4 },
+            height: { type: Number, value: 7  },
+            link: { type: String, value: "https://expresso.pr.gov.br/" },
+            // element: { type: String, value: "ew-expresso-mail-create" },
+            import: { type: String, value: "./bower_components/ew-expresso-mail/import.html" },
+            params: {
+              type: Object,
+              value: { "action" : "create", "folderID" : "", "msgID": "" },
+            },
+  
+            auth: {
+              type: String,
+              value: '',
+            },
+  
+            pageTitle: {
+              type: String,
+              value: 'Nova Mensagem',
+              notify: true,
+            },
+  
+            autoContacts: {
+              type: Boolean,
+              value: false,
+            },
+  
+            prefParams: {
+              type: Object,
+              value: { 'module' : 'mail' },
+            },
+  
+            requestParams: {
+              type: Object,
+              value: { 'contactType': '1', 'search': '', 'forceRefresh' : true },
+            },
+  
+            preferences: {
+              type: Object,
+              value: { },
+            },
+  
+            action: {
+              type: String,
+              value: 'create',
+              computed: '_computeaction(params)',
+            },
+            folderId: {
+              type: String,
+              value: '',
+              computed: '_computefolderid(params)',
+            },
+            msgId: {
+              type: String,
+              value: '',
+              computed: '_computemsgid(params)',
+            },
+            // attachments: {
+            //   type: Array,
+            //   value: [],
+            //   computed: '_computeattachments(params)',
+            // },
+            emails: {
+              type: Array,
+              value: [],
+            },
+  
+            msgTo: {
+              type: Array,
+              value: [],
+            },
+
+            msgAttachments: {
+              type: Array,
+              value: [],
+            },
+  
+            msgCc: {
+              type: Array,
+              value: [],
+            },
+  
+            isDraft: {
+              type: Boolean,
+              value: true,
+              notify: true,
+              reflectToAttribute: true, 
+            },
+  
+            msgIdDraft: {
+              type: String,
+              value: '',
+            },
+  
+            folderIdDraft: {
+              type: String,
+              value: '',
+            },
+  
+            usingSignature: {
+              type: Boolean,
+              value: false,
+              notify: true,
+              reflectToAttribute: true, 
+            },
+  
+            useDefaultSignature: {
+              type: Boolean,
+              value: true,
+              notify: true,
+              reflectToAttribute: true, 
+            },
+  
+            defaultSignature: {
+              type: String,
+              value: '',
+              notify: true,
+              reflectToAttribute: true, 
+            },
+  
+            ccVisible: {
+              type: Boolean,
+              value: false,
+              notify: true,
+              reflectToAttribute: true, 
+            },
+  
+            attachmentsVisible : {
+              type: Number,
+              value: false,
+              notify: true,
+              reflectToAttribute: true, 
+            },
+  
+            msgBcc: {
+              type: Array,
+              value: [],
+            },
+  
+            msgBody: {
+              type: String,
+              value: '',
+              notify: true,
+              reflectToAttribute: true,
+            },
+  
+            formData: {
+              type: Object,
+              value: {},
+            },
+  
+            files: {
+              type: Array,
+              value: [],
+              notify: true,
+              reflectToAttribute: true,
+            },
+  
+          },
+          load: function() {
+
+            this.$.ajax.generateRequest(true);
+            this.$.ajaxContacts.generateRequest(true);
+
+              //TODO  - VALIDATE NOT WORKING.
+              // this.$.validMsgSubject.validate = this._validateMsgSubject.bind(this);
+              this.$.uploadFiles.set('i18n.addFiles.many', 'Enviar Arquivos');
+              this.$.uploadFiles.set('i18n.dropFiles.many', 'Arraste e solte os arquivos aqui... (limite 16 Mb)');
+
+              // this.$.expressoLocalStorage.reload();
+              // this.$.CatalogContacts.reload();
+  
+              // var that = this;
+  
+              // this.$.uploadFiles.addEventListener('upload-request', function(event) {
+                 // event.preventDefault();
+                // var file = event.detail.file;
+                // var fileID = that.files.length;
+                // that.addBinaryFile(fileID, escape(file.name), file);
+  
+              // });
+          },
+
+          _removeAttachment: function(e) {
+            e.stopPropagation();
+            var _newAttachments = [];
+            for (var i = 0; i < this.msgAttachments.length; i++) {
+              if ((this.msgAttachments[i].attachmentID != e.detail.attachmentID) && (this.msgAttachments[i].attachmentIndex != e.detail.attachmentIndex)) {
+                _newAttachments.push(this.msgAttachments[i]);
+              }
+            }
+            this.set('msgAttachments',[]);
+            Polymer.RenderStatus.afterNextRender(this, function() {
+              this.set('msgAttachments',_newAttachments);
+            });
+          },
+          searchContact: function() {
+            // this.$.msgTo.searchContact();
+          },
+  
+          initializeDefaultContacts: function() {
+            this.log('ew-expresso-mail-create.initializeDefaultContacts');
+            this.contacts = []; 
+          },
+          initializeDefaultUserPreferences: function() {
+            this.preferences = {};
+          },
+          initializeDefaultExpresso: function() {
+            this.expresso = { auth: "" };
+          },
+            showAttachments: function() {
+            this.attachmentsVisible = true;
+          },
+          _computeStyleCCVisible: function(ccVisible) {
+            var retVal = '';
+            if (!ccVisible) {
+              retVal = 'display: none';
+            }
+            return retVal;
+          },
+          confirmAndSendEmail: function(){
+            var that = this;
+
+            console.log(this.$.autoComplete);
+            // var msgBody = this.$.msgBodyInput.innerHTML;       
+            var msgBody = this.$.msgBodyInput.get();     
+            //var arrBlockedContent = ["base64","&lt;script&gt;"];
+            var arrBlockedContent = [];
+            var found = false;
+            for (i = 0; i < arrBlockedContent.length; i++) { 
+              if (msgBody.indexOf(arrBlockedContent[i]) != -1) {
+                found = true;
+              }
+            }
+            if (found) {
+              this.ew_showMessage('Não é possível enviar email, conteúdo inválido!');
+            }  
+            else {
+              this.isDraft = false;
+              that.sendEmail();
+            }            
+          },
+  
+          saveDraft: function() {
+            this.isDraft = true;
+            this.sendEmail();
+          },
+  
+  
+          sendEmail: function() {
+  
+            this.deleteOldDraft();
+  
+            this.$.expressoLocalStorage.reload();
+  
+            var msgTo = this.$.msgTo.getEmails();
+            var msgCc = this.$.msgCc.getEmails();
+            var msgBcc = this.$.msgBcc.getEmails();
+            var msgSubject = this.msgSubject;
+  
+            var qtdRecipients = this.$.msgTo.getQtdRecipients();
+  
+            if (qtdRecipients == 0) {
+              this.ew_showMessage("Campo 'Para' Não informado/Inválido!");
+            } else {
+  
+              var msgBody = this.$.msgBodyInput.get();
+              msgBody = this.nl2br(msgBody,'');
+              msgBody = this.removeTabs(msgBody,'');
+  
+
+  
+              this.paramsSend = { 
+                'msgTo': msgTo,
+                'msgCcTo': msgCc,
+                'msgBccTo': msgBcc, 
+                'msgBody' : msgBody, 
+                'msgSubject' : msgSubject , 
+                'msgSaveDraft' : this.isDraft,
+                'msgType' : 'html',
+                'resource': 'Mail/Send',
+              };
+  
+              if (this.$.ironFormSend.validate()) {
+  
+                if (this.message != undefined) {
+  
+                  if (this.message.msgAttachments != undefined) {
+  
+                    for (var i = 0; i < this.message.msgAttachments.length; i++) {
+  
+                      var elName = 'msgAttachment_' + this.message.msgAttachments[i].attachmentID + '_' +  this.message.msgAttachments[i].attachmentIndex;
+
+                      var elemFileAttachment = Polymer.dom(this.$.pageContent).querySelectorAll('#' + elName)[0];
+  
+                      if (elemFileAttachment != undefined) {
+                        var newFile = elemFileAttachment.getFile();
+  
+                        newFile.complete = true;
+                        newFile.progress = 100;
+  
+                        this.$.uploadFiles.files.push(newFile);
+  
+                      } 
+  
+                    }
+  
+                  }
+  
+                }
+  
+                this.files = this.$.uploadFiles.files;
+  
+                if (this.files.length != 0) {
+                  this.showAttachments();
+                }
+  
+                //console.log(this.files);
+  
+                this.$.ajaxSendMessage.generateRequest();
+  
+              }
+  
+            }
+  
+          },
+  
+          deleteOldDraft: function(event) {
+            if (this.folderIdDraft != "") {
+              if (this.msgIdDraft != "") {
+                var flagType = 4;
+                this.$.delMessage.showMessages = false;
+                this.$.delMessage.delMessage(this.folderIdDraft,this.msgIdDraft);
+              }
+            } 
+           
+          },
+  
+          flagDraftMessageMessageUnread: function() {
+            if (this.folderIdDraft != "") {
+              if (this.msgIdDraft != "") {
+                var flagType = 4;
+                this.$.flagMessage.showMessages = false;
+                this.$.flagMessage.flagMessage(this.folderIdDraft,this.msgIdDraft,flagType);
+              }
+            } 
+           
+          },
+  
+          flagOriginalMessageReply: function() {
+            var flagType = 5;
+            this.$.flagMessage.showMessages = true;
+            this.$.flagMessage.flagMessage(this.folderId,this.msgId,flagType);
+          },
+          flagOriginalMessageForwarded: function() {
+            var flagType = 6;
+            this.$.flagMessage.showMessages = true;
+            this.$.flagMessage.flagMessage(this.folderId,this.msgId,flagType);
+          },
+          
+          whenMessageFlagged: function() {
+            this.set('selectedItems',[]);
+            this.ew_refresh();
+          },
+  
+          _validateMsgSubject: function(value) {
+            this.log("ew-expresso-mail-create._validateMsgSubject");
+            return value.length >= 1;
+          },
+
+          _searchGlobalContacts: function(event) {
+            event.stopPropagation();
+            // console.warn('_searchGlobalContacts');
+            // console.warn(event.detail);
+            if (!this.isLoading) {
+              this.requestParams = { 'contactType': '2', 'search': event.detail.email };
+              this.$.ajaxContacts.generateRequest(true);
+            }
+          },
+  
+          _computefolderid: function(params) {
+            if (params != undefined) {
+              return params.folderID;
+            } else {
+              return '';
+            }
+          },
+  
+          _computemsgid: function(params) {
+            if (params != undefined) {
+              return params.msgID;
+            } else {
+              return '';
+            }
+          },
+  
+          _computeaction: function(params) {
+            if (params != undefined) {
+              return params.action;
+            } else {
+              return 'create';
+            }
+          },
+  
+          _computeattachments: function(attachments) {
+            var retVal = [];
+   
+            if (attachments != undefined) {
+              for (var i= 0; i < attachments.length; i++) {
+                var newAttachment = attachments[i];
+                newAttachment.name = attachments[i].attachmentName;
+                newAttachment.progress = 100;
+                newAttachment.complete = true;
+                newAttachment.formDataName = 'upload0';
+                // newAttachment.file = true;
+                retVal.push(newAttachment);
+              }
+            }
+            return retVal;
+          },
+  
+          _translateError: function(response) {
+            var message = "Não foi possível enviar este email.";
+            if (response.error) {
+              switch(response.error.code) {
+                  case "1002":
+                      message = "Não foi possível enviar este email.";
+                      break;
+                  default:
+                      message = "Não foi possível enviar este email.";
+              }
+  
+            }
+            return message;
+          },
+  
+          ew_handleResponseSendMessage: function(event) {
+            this.log('ew-expresso-mail-create.ew_handleResponseSendMessage');
+            this.log(event.detail.response);
+            var response = event.detail.response;
+            if (response != undefined) {
+              if (response.result != undefined) {
+  
+                if (this.action == 'forward') {
+                  this.flagOriginalMessageForwarded();
+                }
+                if (this.action == 'reply') {
+                  this.flagOriginalMessageReply();
+                }
+                if (this.action == 'reply-all') {
+                  this.flagOriginalMessageReply();
+                }
+                console.warn(response.result);
+                if (response.result.saveDraft == true) {
+                  this.msgIdDraft = response.result.msgId;
+                  this.folderIdDraft = response.result.folderID;
+                  
+                  // console.log(this.msgIdDraft);
+                  // console.log(this.folderIdDraft);
+                  this.flagDraftMessageMessageUnread();
+                  this.ew_showMessage("Rascunho salvo com sucesso!");
+                  this.ew_signal('ew-expresso-mail-refresh-folders');
+                } else {
+                  this.ew_showMessage('Email enviado com sucesso!');
+                  this.ew_closeWidget();
+                  this.ew_refresh();
+                }
+                
+                
+              } else {
+                this.ew_showMessage(this._translateError(response));
+              }
+            } else {
+              this.ew_showMessage(this._translateError(event.detail));
+            }
+            
+          },
+  
+          ew_handleResponseToMessage: function(event) {
+            this.log("ew-expresso-mail-create.ew_handleResponseToMessage");
+            var response = event.detail.response;
+            if (response != undefined) {
+              if (response.result != undefined) {
+                this.message = response.result;
+              } 
+            } else {
+              this.message = event.detail;
+            }
+  
+            if (this.message.messages != undefined) {
+              this.message = this.message.messages[0];
+            }
+            
+            if (this.action == 'forward') {
+              this.setPageTitle('Encaminhar Mensagem','');
+              this.msgTo = [];
+              this.msgCc = [];
+              this.msgBcc = [];
+              this.msgSubject = 'Fwd: ' + this._decodeHTMLEntities(this.message.msgSubject);
+              this.msgBody = this.getMessageBody(true,this.action,this.message);
+  
+              if (this.message.msgAttachments != undefined) {
+                if (this.message.msgAttachments.length != 0) {
+                  this.set('msgAttachments',this.message.msgAttachments);
+                  this.showAttachments();
+                }
+              }
+              // this.bodyText = this.msgBody;
+              this.$.msgBodyInput.setHTML(this.msgBody);
+              // this.$.msgBodyInput.innerHTML = this.msgBody;
+            }
+  
+            if (this.action == 'draft') {
+              this.setPageTitle('Editar Rascunho','');
+  
+              this.msgTo = [];
+              this.msgCc = [];
+              this.msgBcc = [];
+              for (var i in this.message.msgTo) { 
+                if (this.message.msgTo[i].mailAddress != userEmail) {
+                  this.push('msgTo',{ name: "" + this.message.msgTo[i].fullName, email: this.message.msgTo[i].mailAddress});
+                }
+              }
+              if (this.message.msgCC != undefined) {
+                for (var i in this.message.msgCC) { 
+                  if (this.message.msgCC[i].mailAddress != userEmail) {
+                    this.push('msgCc',{ name: "" + this.message.msgCC[i].fullName, email: this.message.msgCC[i].mailAddress});
+                  }
+                }
+                this.ccVisible = true;
+              }
+  
+              this.msgIdDraft = this.message.msgID;
+              this.folderIdDraft = this.message.folderID;
+  
+              this.msgSubject = '' + this.message.msgSubject;
+              this.msgBody = this.getMessageBody(true,this.action,this.message);
+  
+              this.$.msgBodyInput.setHTML(this.msgBody);
+            }
+  
+            if (this.action == 'reply') {
+              this.setPageTitle('Responder Mensagem','');
+  
+              if (this.message.msgFrom.fullName) {
+                this.msgTo = [ {name: this.message.msgFrom.fullName , email: this.message.msgFrom.mailAddress }];
+              } else {
+                this.msgTo = [ {name: '' , email: this.message.msgFrom.mailAddress }];
+              }
+              this.msgCc = [];
+              this.msgBcc = [];
+              this.msgSubject = 'Re: ' + this._decodeHTMLEntities(this.message.msgSubject);
+              this.msgBody = this.getMessageBody(true,this.action,this.message);
+              
+              if (this.message.msgAttachments != undefined) {
+                if (this.message.msgAttachments.length != 0) {
+                  this.set('msgAttachments',this.message.msgAttachments);
+                  this.showAttachments();
+                }
+              }
+  
+              this.$.msgBodyInput.setHTML(this.msgBody);
+            }
+  
+            if (this.action == 'reply-all') {
+              this.setPageTitle('Responder Mensagem p/ todos','');
+  
+              var userEmail = this.getUserEmail();
+  
+              this.msgCc = [];
+              this.msgBcc = [];
+  
+              if (this.message.msgFrom.fullName) {
+                this.msgTo = [ {name: this.message.msgFrom.fullName , email: this.message.msgFrom.mailAddress }];
+              } else {
+                this.msgTo = [ {name: '' , email: this.message.msgFrom.mailAddress }];
+              }
+              for (var i in this.message.msgTo) { 
+                if (this.message.msgTo[i].mailAddress != userEmail) {
+                  this.push('msgTo',{ name: "" + this.message.msgTo[i].fullName, email: this.message.msgTo[i].mailAddress});
+                }
+              }
+              if (this.message.msgCC != undefined) {
+                for (var i in this.message.msgCC) { 
+                  if (this.message.msgCC[i].mailAddress != userEmail) {
+                    this.push('msgCc',{ name: "" + this.message.msgCC[i].fullName, email: this.message.msgCC[i].mailAddress});
+                  }
+                }
+                this.ccVisible = true;
+              }
+              
+              this.msgSubject = 'Re: ' + this._decodeHTMLEntities(this.message.msgSubject);
+              this.msgBody = this.getMessageBody(true,'reply',this.message);
+  
+              this.$.msgBodyInput.setHTML(this.msgBody);
+
+              if (this.message.msgAttachments != undefined) {
+                if (this.message.msgAttachments.length != 0) {
+                  this.set('msgAttachments',this.message.msgAttachments);
+                  this.showAttachments();
+                }
+              }
+  
+              // this.$.msgBodyInput.innerHTML = this.msgBody;
+            }
+  
+            this.notifyResize();
+  
+          },
+  
+          ew_handleResponseToContacts: function(event) {
+            this.log("ew-expresso-mail-create.ew_handleResponseToContacts");
+            var response = event.detail.response;
+            if (response != undefined) {
+              if (response.result != undefined) {
+                if (response.result.contacts != undefined) {
+                  this.contacts = response.result.contacts;
+                } else {
+                  this.contacts = [];
+                }
+              } 
+            } else {
+              this.contacts = event.detail;
+            }
+            var _newContacts = [];
+            for (var i in this.contacts) {
+              if (this.contacts[i].contactMails != undefined) { 
+                var contact =  {};
+                // console.log(this.contacts[i]);
+                contact.text = this.contacts[i].contactFullName + " - " +  this.contacts[i].contactMails[0] + "";
+                contact.email = this.contacts[i].contactMails[0];
+                contact.name = this.contacts[i].contactFullName;
+                contact.id = this.contacts[i].contactMails[0];
+                if (this.requestParams.contactType == '2') {
+                  contact.showPhoto = false;
+                } else {
+                  contact.showPhoto = true;
+                }
+                
+                _newContacts.push(contact);
+              }
+            }
+            
+
+            if (this.requestParams.forceRefresh == true) {
+              this.formatedContacts = _newContacts;
+              this.personalContacts = _newContacts;
+              this.refresh();
+            } else {
+              this.formatedContacts = this.personalContacts.concat(_newContacts);
+              // console.warn(this.formatedContacts);
+              // this.personalContacts = _newContacts;
+            }
+          },
+  
+          ew_handleResponseToPreferences: function(event) {
+            this.log("ew-expresso-mail-create.ew_handleResponseToPreferences");
+            var response = event.detail.response;
+            if (response != undefined) {
+              if (response.result != undefined) {
+                this.preferences = response.result;
+              } 
+            } else {
+              this.preferences = event.detail;
+            }
+  
+            // this.refresh();
+          },
+  
+          toggleCc: function() {
+            this.log("ew-expresso-mail-create.toggleCc");
+            this.ccVisible = !this.ccVisible;
+          },
+  
+          // hideCc: function() {
+          //   this.log("ew-expresso-mail-create.hideCc");
+          //   this.ccVisible = false;
+          // },
+  
+          setPageTitle: function(title) {
+            this.log("ew-expresso-mail-create.setPageTitle");
+            this.pageTitle = title;
+          },
+  
+          refresh: function() {
+            this.log("ew-expresso-mail-create.refresh");
+  
+            if (this.action == 'create' || this.action == undefined) {
+  
+              this.setPageTitle('Nova Mensagem','');
+  
+              if (this.params.msgTo != undefined) {
+                if (this.params.msgTo.length) {
+                  this.msgTo = this.params.msgTo;
+                } else {
+                  this.msgTo = [];
+                }
+              } else {
+                this.msgTo = [];
+              }
+               
+               this.msgCc = [];
+               this.msgBcc = [];
+               this.msgSubject = '';
+               if (this.params.msgSubject != undefined) {
+                  this.msgSubject = this.params.msgSubject;
+               }
+               var tempMsgBody = '';
+               if (this.params.msgBody != undefined) {
+                  tempMsgBody = this.params.msgBody;
+               }
+               
+               this.msgBody = tempMsgBody + this.getMessageBody(true,'new',null);
+  
+               this.$.msgBodyInput.setHTML(this.msgBody);
+  
+              //  this.$.msgBodyInput.innerHTML = this.msgBody;
+  
+               this.notifyResize();
+            }
+  
+            if ((this.action =='forward') || (this.action =='reply') || (this.action =='draft') || (this.action =='reply-all') ) {
+              this.$.ajaxMessage.generateRequest();
+            }
+  
+          },
+  
+          addSignature: function() {
+            var body = this.msgBody;
+  
+            var signature = "<br><br>" + this.getUserSignature(true) + "";
+            //console.log(signature);
+            //input type=\"hidden\" name=\"signature\">
+            body = body.replace("<ew-user-signature></ew-user-signature>",signature);
+  
+            this.$.msgBodyInput.setHTML(body);
+  
+            // this.$.msgBodyInput.innerHTML = body;
+            //console.log(this.$.msgBodyInput.innerHTML );
+          },
+  
+          replaceAll: function(string, search, replacement) {
+              // var target = this;
+              return string.replace(new RegExp(search, 'g'), replacement);
+          },
+  
+          htmlEntities: function(str) {
+            //console.log('htmlEntities');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+          },
+  
+          getMessageBody: function(signature, msgType, msgOriginal) {
+            this.log("ew-expresso-mail-create.getMessageBody");
+  
+              var msgBody = "";
+              if (msgOriginal != undefined) {
+                  msgBody = msgOriginal.msgBody;
+              } else {
+                  msgBody = this.msgBody;
+              }
+  
+              //msgBody = this.htmlEntities(msgBody); // = this.replaceAll('&','&amp;');
+              //msgBody = this.replaceAll(msgBody,'&','&amp;');
+              // console.log(msgBody);
+  
+              this.log(msgOriginal);
+  
+              var retString = "<br><ew-user-signature></ew-user-signature>";
+              
+              if (signature == true) {
+  
+                  retString = retString + "<br><br>" + this.getUserSignature() + "";
+  
+                  if (msgType == 'forward') {
+  
+                    retString = retString + '<br><br>';
+  
+                      retString = retString + this.getForwardMessageString(msgOriginal);
+                      // retString = this.nl2br(retString, '<br>');
+                    
+                      if (msgBody.indexOf('<pre>') != -1) {
+                        retString = retString + this.nl2br(msgBody);
+                      } else {
+                        retString = retString + msgBody;
+                      }
+  
+                  } else {
+                      if (msgType == 'reply') {
+                          retString = retString + '<br><br>';
+                          retString = retString + this.getReplyMessageString(msgOriginal);
+                          // retString = this.nl2br(retString, '<br>');
+                          retString = retString + '<blockquote style="margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex; border-left-color: rgb(204, 204, 204); border-left-width: 1px; border-left-style: solid;">' + msgBody + '</blockquote>';
+                      }
+                      if (msgType == 'draft') {
+                          retString = msgBody;
+                      }
+                  }
+  
+  
+              } else {
+                  retString = msgBody;
+              }
+  
+              return retString;
+          },
+  
+          getReplyMessageString: function(message) {
+            this.log("ew-expresso-mail-create.getReplyMessageString");
+              var date = message.msgDate;
+              var retString = "Em " + date + ", " + this.getEmailStringForMessageRecipient(message.msgFrom, true) + " escreveu: \n\n";
+              retString = this.nl2br(retString, '<br>');
+              return retString;
+          },
+  
+          getForwardMessageString: function(message) {
+            this.log("ew-expresso-mail-create.getForwardMessageString");
+  
+              var retString = "---------- Mensagem encaminhada ----------\n";
+              retString = retString + "Remetente: " + message.msgFrom.mailAddress + "\n";
+              retString = retString + "Data: " + message.msgDate + "\n";
+              retString = retString + "Assunto: " + message.msgSubject + "\n";
+              retString = retString + "Para: ";
+  
+              for (var i in message.msgTo) {
+                retString = retString + this.getEmailStringForMessageRecipient(message.msgTo[i], true) + ", ";
+              }
+  
+              if (message.msgCC != undefined) {
+                if (message.msgCC.length) {
+                    retString = retString + "\nCc: ";
+  
+                    for (var i in message.msgCC) {
+                      retString = retString + this.getEmailStringForMessageRecipient(message.msgCC[i], true) + ", ";
+                    }
+  
+                }
+              } 
+  
+              retString = retString + "\n";
+  
+              retString = this.nl2br(retString, '<br>');
+  
+              return retString;
+          },
+  
+          getUserSignature: function(forceSignature) {
+            this.log("ew-expresso-mail-create.getUserSignature");
+            var signature = "";
+  
+            this.useDefaultSignature = false;
+            
+            if (this.preferences.mail != undefined) {
+              if (this.preferences.mail.auto_signature != undefined) {
+                if (this.preferences.mail.auto_signature == "1") {
+                  this.useDefaultSignature = true;
+                }
+              } 
+            }
+    
+            if (this.useDefaultSignature == false) {
+              if (this.preferences.mail != undefined) {
+  
+                if ((this.preferences.mail.use_signature == "1") || (forceSignature != undefined)) {
+                  signature = 'Mensagem enviada pelo Expresso.';
+                  
+                  if (this.preferences.mail.type_signature != "html") {
+                      signature = this.nl2br(this.preferences.mail.signature, '<br>');
+                      this.usingSignature = true;
+                  } else {
+                      signature = this.preferences.mail.signature;
+                      this.usingSignature = true;
+                  }
+                }
+              }
+            } else {
+              // this.defaultSignature = this.preferences.mail.signature;
+              signature = this.nl2br(this.preferences.mail.signature, '<br>');
+              signature = '<span contenteditable="false">' + signature + '</span>';
+              this.usingSignature = true;
+            }
+            return signature;
+          },
+  
+          nl2br: function(str, breakTag) {
+            this.log("ew-expresso-mail-create.nl2br");
+              if (breakTag == undefined) {
+                  breakTag = '<br>';
+              }
+              //var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br ' + '/>' : '<br>'; // Adjust comment to avoid issue on phpjs.org display
+  
+              return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '');
+          },
+  
+          getUserEmail: function() {
+            var userEmail = '';
+            if (this.expresso != undefined) {
+              userEmail = this.expresso.profile[0].contactMails[0];  
+            }          
+            return userEmail;
+          },
+  
+          removeTabs: function(str, breakTag) {
+            this.log("ew-expresso-mail-create.removeTabs");
+              if (breakTag == undefined) {
+                  breakTag = '';
+              }
+              return (str + '').replace(/([^>\t]?)(\t)/g, '$1' + breakTag + '');
+          },
+  
+          _mailSignature: function() {
+            this.ew_showColumnDialog('ew-list-view',{ 'route' : './api/rest/ew-expresso-mail/MailSignature' });
+          },
+  
+          getEmailStringForMessageRecipient: function(emailRecipient, htmlEntities) {
+            this.log("ew-expresso-mail-create.getEmailStringForMessageRecipient");
+              var resultString = '';
+              if (($.trim(emailRecipient.fullName) != '') && ($.trim(emailRecipient.fullName) != 'undefined')) {
+                  if (htmlEntities == undefined) {
+                      resultString += '"' + $.trim(emailRecipient.fullName) + '" <' + emailRecipient.mailAddress + ">";
+                  } else {
+                      resultString += '"' + $.trim(emailRecipient.fullName) + '" &lt;' + emailRecipient.mailAddress + "&gt;";
+                  }
+  
+              } else {
+                  resultString += emailRecipient.mailAddress + "";
+              }
+              return resultString;
+          },
+  
+          _decodeHTMLEntities: function(val) {
+            var t = document.createElement('textarea');
+            if (val != undefined) {
+              t.innerHTML = val;
+              return t.textContent;
+            } else {
+              return '';
+            }
+          }, 
+  
+        });
+    
+    </script>
+  </dom-module>

@@ -16,8 +16,17 @@ use Psy\Exception\FatalErrorException;
 Route::get('/api/upload', 'HomeController@uploadFile');
 Route::post('/api/upload', 'HomeController@uploadFile');
 
+Route::get('/p3', 'HomeController@indexpolymer3');
+Route::redirect('/node_modules', '/app/node_modules', 301);
+// Route::permanentRedirect('/node_modules', '/app/node_modules');
 
-Route::group(['middleware' => 'auth'], function () {
+// Auth::routes();
+
+Route::get('/Login', 'HomeController@loginIndex');
+Route::post('/api/Login', 'HomeController@loginForm');
+
+
+//Route::group(['middleware' => 'auth'], function () {
 
    //Route::get('/', ['middleware'=> 'central-seguranca:widgets-adm', "uses" => 'HomeController@index']);
 
@@ -70,8 +79,7 @@ Route::group(['middleware' => 'auth'], function () {
         }
     
     }
-
-});
+//});
 
 
 

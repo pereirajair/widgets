@@ -358,8 +358,11 @@ class WidgetController extends Controller {
 	public function getRouteForClass($routeClass) {
 
 		$route = DB::table('routes')->where('class_method','=',$routeClass)->get()->first();
-		return $route->url;
-
+		if (isset($route)) {
+			return $route->url;
+		} else {
+			return "";
+		}
 	}
 
 	public function getUserData(){
@@ -431,6 +434,15 @@ class WidgetController extends Controller {
 		$result['globalParams']['wallpaper'] = $this->getDashboardSetting("wallpaper");
 		
 		return $result;
+	}
+
+	public function isDarkMode() {
+		$currentTheme = $this->getDashboardSetting("theme");
+		if (($currentTheme == "dark-side") || ($currentTheme == "denim") || ($currentTheme == "golden-goose") || ($currentTheme == "melon")) {
+			return true;
+		} else  {
+			return false;
+		}
 	}
 
 	public function getDashboardSetting($name) {

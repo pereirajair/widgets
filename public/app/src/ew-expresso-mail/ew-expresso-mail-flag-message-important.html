@@ -1,0 +1,89 @@
+<!--
+### ELEMENTO 
+
+`ew-expresso-mail-flag-message-important`
+
+Elemento utilizado para setar flags nas mensagens de email.
+
+Utiliza o metodo: Mail/FlagMessage da [API DO EXPRESSO](https://api.expresso.pr.gov.br/docs/)
+
+Exemplo:
+    
+### HTML
+
+    <ew-expresso-mail-flag-message-important starred="{{starred}}" item="{{item}}"></ew-expresso-mail-flag-message-important>
+
+
+-->
+<dom-module id="ew-expresso-mail-flag-message-important">
+    <template>
+      <style>
+        #star {
+          cursor: pointer;
+          color: #9e9e9e;
+        }
+        #star[starred] {
+          cursor: pointer;
+          color: var(--paper-yellow-700);
+        }
+      </style>
+      <ew-expresso-mail-flag-message id="flagMessage"></ew-expresso-mail-flag-message>
+      <iron-icon id="star" icon="[[starredIcon]]" on-tap="_onHighlightStar" starred$="{{starred}}"></iron-icon>
+      <paper-tooltip for="star" position="left">Marcar/Desmarcar como importante.</paper-tooltip>
+    </template>
+  <script>
+    Polymer({
+        is: 'ew-expresso-mail-flag-message-important',
+        behaviors: [EWBehaviorWidgetBehavior],
+        properties: {
+            item: { type: Object, value: {} },
+            starred: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+            },
+            starredIcon: {
+                type: String,
+                value: '',
+                computed: '_computeStarredIcon(starred)'
+            },
+            hasAttachments: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+                computed: '_computeHasAttachments(item)'
+            },
+        },
+        _computeHasAttachments: function(item) {
+            if (item) {
+                var starred = false;
+                if (item.msgFlagged == "1") {
+                    starred = true;
+                }
+                this.set('starred',starred);
+            }
+            if (item) {
+                var retVal = false;
+                if (item.msgHasAttachments == "1") {
+                    retVal = true;
+                } 
+                return retVal;
+            }
+        },
+        _computeStarredIcon: function(starred) {
+          return 'icons:star' + (starred ? '' : '-border');
+        },
+        _onHighlightStar: function(e) {
+          this.log('ew-expresso-mail-messages-item._onHighlightStar');
+          e.stopPropagation();
+          this.set("starred",!this.starred);
+          var flagType = 2;
+          if (this.starred) {
+            flagType = 1;
+          }
+          this.$.flagMessage.flagMessage(this.item.folderID,this.item.msgID,flagType);
+        },
+
+    });
+  </script>
+</dom-module>

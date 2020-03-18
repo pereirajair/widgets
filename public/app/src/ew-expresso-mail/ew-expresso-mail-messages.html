@@ -1,0 +1,1426 @@
+<!--
+### WIDGET 
+
+`ew-expresso-mail-messages`
+
+Exibe as mensagens de uma pasta de email do usuario.
+
+
+### JAVASCRIPT:
+    
+    var params = {
+      'currentFolder' : { folderID: 'INBOX/Teste', folderName: 'Teste', folderType: 5 },
+      'folderID': 'INBOX/Teste',
+      'viewType' : 0
+    };
+    this.ew_openWidget('ew-expresso-mail-messages',params);
+ 
+Parametro | Descricao
+----------------|-------------
+`currentFolder` | Objeto com as propriedades da pasta 
+`folderID` | ID da pasta
+`viewType` | Tipo de visualizacao (Mobile ou Desktop)
+
+-->
+<dom-module id="ew-expresso-mail-messages">
+  <template>
+    <style>
+
+        :host {
+
+        }
+ 
+        ew-expresso-mail-folders-dropdown {
+          color: var(--paper-toolbar-color);
+        }
+
+        #scrollList {
+          @apply(--layout-flex);
+          @apply(--layout-vertical);
+          height: calc(100%);
+        }
+
+        paper-fab.fabButton {
+          position: absolute;
+          bottom: 16px;
+          right: 16px;
+        }
+ 
+        #hasMoreMessagesArea {
+          margin-top: 20px;
+          margin-bottom: 20px;
+          width: 100%;
+          text-align: center;
+          max-height: 20px;
+        }
+
+        #listContainer {
+          height: 100%;
+          @apply --layout-flex;
+          @apply --layout-vertical;
+          overflow-y: hidden;
+        }
+
+        #itemsListContainer {
+          height: 100%;
+          @apply(--layout-flex);
+          @apply(--layout-vertical);
+          overflow-y: hidden;
+        }
+
+        #quotaUsed {
+          width: 100%;
+          left: 0px;
+          height: 10px;
+          float: right;
+          --paper-progress-height : 30px;
+        }
+
+        .twoColumns {
+          @apply(--layout-flex);
+          @apply(--layout-horizontal);
+          overflow: hidden;
+        }
+        #starredView {
+          @apply(--layout-vertical);
+          width: 220px;
+          /* border-left: 1px solid #ddd; */
+          overflow-x: hidden;
+        }
+
+        #selectedItemsList {
+          overflow-x: hidden;
+        }
+
+        .pad {
+          @apply(--layout-flex);
+          @apply(--layout-vertical);
+          padding: 0 16px;
+          width: 90%;
+        }
+        .pad.small {
+          padding: 0px;
+        }
+        .primary {
+          font-size: 12px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          width: 100%;
+          max-width: 100%;
+        }
+        .secondary {
+          font-size: 10px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          width: 100%;
+          max-width: 100%;
+          margin-top: -10px;
+        }
+
+        .folderIcon {
+          width: 40px;
+          float: left;
+        }
+
+        .folderMessages {
+            font-size: 12px;
+        }
+
+        ew-search {
+          float: left;
+          /* margin-top: 9px; */
+        }
+
+        ew-expresso-mail-messages-item {
+          overflow-x: hidden;
+          overflow-y: hidden;
+        }
+
+
+        .content {
+          height: 100%;
+        }
+
+
+        .subject {
+          cursor: pointer;
+        }
+
+        .unread {
+          font-weight: 500;
+          color: var(--paper-light-blue-500);
+          cursor: pointer;
+        }
+        .menu_folders {
+          float: right;
+        }
+
+        ew-search {
+          float: right;
+        }
+
+        #dataTableMessages {
+          height: 100%;
+          overflow-y: auto;
+        }
+
+        tr, td, th {
+          padding: 0px !important;
+        }
+
+        paper-datatable {
+              --paper-datatable-row-hover-color: inherit;
+              --paper-datatable-row-selection-color: inherit;
+
+              --paper-datatable-column-header: {
+                color: inherit;
+                padding-left: 0px;
+                padding-right: 0px;
+                min-width: 24px;
+                border-bottom: 0px;
+              };
+              --paper-datatable-column-header-sorted: {
+                color: inherit;
+              };
+              --paper-datatable-column-header-sort-icon-hover: {
+                color: rgba(255, 255, 255, .5)
+              };
+              --paper-datatable-column-header-last: {
+                padding-right: 0px;
+              };
+              --paper-datatable-cell-last: {
+                padding-right: 0px;
+              };
+
+              --paper-datatable-header-checkbox-border-color: rgba(255, 255, 255, var(--dark-primary-opacity));
+
+              --paper-datatable-cell: {
+                color: #212121; 
+                padding: 0px; 
+              };
+
+              --paper-datatable-edit-dialog-color: #303030;
+
+              --paper-datatable-edit-dialog: {
+                border: 1px solid rgba(255, 255, 255, .2);
+                box-sizing: border-box;
+              }
+
+            } 
+
+            @media screen and (max-width: 900px) { 
+              .HideOnSmallResolutions {
+                display: none;
+              }
+
+              .ShowOnSmallResolutions {
+                display: block;
+              }
+            }
+ 
+            .actionicons
+            {
+              color: #9e9e9e;
+              white-space: nowrap;
+            }
+
+            #topBlock{
+              height:56px;
+              padding:0px 6px;
+              border-bottom: 1px solid var(--paper-datatable-divider-color, var(--divider-color));
+              color: var(--paper-datatable-navigation-bar-text-color, rgba(0,0,0,.54));
+              align-items: center;
+              font-size: 12px;
+              text-align: center;
+              font-weight: 500;
+              @apply --paper-datatable-navigation-bar;
+            }
+
+            .subjectHeader {
+              width: 50%;
+              text-align: left;
+              margin-left: 30px;
+            }
+
+            .iconHeader {
+              min-width: 90px; 
+            }
+
+            .fromHeader {
+              width: 35%;
+              text-align: left;
+            }
+
+            .dateHeader {
+              width: 10%;
+              text-align: right;
+            }
+
+            .sizeHeader {
+              width: 15%;
+              text-align: right;
+            }
+
+            .actionHeader {
+              width: 140px;
+              min-width: 140px;
+            }
+
+             .flex {
+              @apply(--layout-flex);
+            }
+            .fit {
+              @apply(--layout-fit);
+            }
+            .horizontal {
+              @apply(--layout-horizontal);
+            }
+            .center {
+              @apply(--layout-center);
+            }
+            .justified {
+              @apply(--layout-justified);
+            }
+
+    </style>
+
+        <ew-api-ajax
+            id="ajax" 
+            resource="Mail/Messages"
+            params="{{requestParams}}"
+            loading="{{isLoading}}"
+            on-response="ew_handleResponseToData">        
+        </ew-api-ajax>
+
+   <!--      <iron-a11y-keys target="[[target]]" keys="ctrl+shift+right" on-keys-pressed="nextMessage"></iron-a11y-keys>
+        <iron-a11y-keys target="[[target]]" keys="ctrl+shift+left" on-keys-pressed="priorMessage"></iron-a11y-keys> -->
+        <iron-a11y-keys target="[[target]]" keys="ctrl+alt+n" on-keys-pressed="_composeMail"></iron-a11y-keys>
+
+        <iron-signals on-iron-signal-ew-expresso-mail-clean-trash-success="ew_refresh"></iron-signals> 
+        <iron-signals on-iron-signal-ew-expresso-mail-messages-refresh="forceRefresh"></iron-signals> 
+
+
+        <ew-expresso-mail-flag-message id="flagMessage"></ew-expresso-mail-flag-message>
+        <ew-expresso-mail-del-message id="delMessage"></ew-expresso-mail-del-message>
+        <!-- <ew-expresso-mail-clean-trash id="mailClean"></ew-expresso-mail-clean-trash> -->
+
+        <iron-localstorage id="MailFolders" name="MailFolders" value="{{dataFolders}}"></iron-localstorage>
+        <iron-localstorage id="LocalPhotos" name="LocalPhotos" value="{{localPhotos}}" on-iron-localstorage-load-empty="initializeDefaultPhotos"></iron-localstorage>
+        <iron-signals on-iron-signal-ew-expresso-mail-folders-update-folders="updateFolders"></iron-signals>
+
+        <iron-signals on-iron-signal-ew-expresso-mail-messages-update-messages="updateMessages"></iron-signals>
+
+        <ew-header title="{{pageTitle}}" background-color="{{backgroundHeaderColor}}">
+          <div slot='header-icon' class='header-icon' hidden="{{hideActionIcons}}">
+            <!-- <template is="dom-if" if="{{!params.hideFoldersDropdown}}"> -->
+<!--               <paper-menu-button id="foldersSelect" class="menu_folders" hidden="{{searchEnabled}}" horizontal-align="left">
+                <paper-icon-button icon="[[_computeFolderIcon(currentFolder.folderType)]]" id="iconMore" class="dropdown-trigger"></paper-icon-button>
+                <paper-listbox class="dropdown-content">
+                  <template is="dom-repeat" items="{{dataFolders.folders}}">
+                    <ew-expresso-mail-folder-item data="{{item}}"></ew-expresso-mail-folder-item>
+                  </template>
+                </paper-listbox>
+              </paper-menu-button>
+              <paper-tooltip for="foldersSelect" position="right">Selecionar outra pasta.</paper-tooltip>
+ -->
+
+            <!-- </template> -->
+            <!-- <iron-icon icon="[[_computeFolderIcon(currentFolder.folderType)]]" item-icon></iron-icon> -->
+          </div>
+          <div slot='header-icon' class='header-icon' hidden="{{!hideActionIcons}}">
+            <paper-icon-button id="cancelSelection" icon="icons:cancel" on-tap="cancelSelection"></paper-icon-button>
+            <paper-tooltip for="cancelSelection" position="right">Cancelar seleção de mensagens.</paper-tooltip>
+          </div>
+
+          
+
+          <div slot='toolbar-buttons' class='toolbar-buttons'>
+            <template is="dom-if" if="{{hideActionIcons}}">
+              <paper-icon-button id="deleteSelectedMessages" icon="icons:delete" on-tap="deleteSelectedMessages"></paper-icon-button>
+              <paper-icon-button id="flagSelectedMessagesNormal" icon="icons:star-border" on-tap="flagSelectedMessagesNormal"></paper-icon-button>
+              <paper-icon-button id="flagSelectedMessagesImportant" icon="icons:star" on-tap="flagSelectedMessagesImportant"></paper-icon-button>
+              <paper-icon-button id="flagSelectedMessagesUnread" icon="icons:markunread-mailbox" on-tap="flagSelectedMessagesUnread"></paper-icon-button>    
+              <paper-tooltip for="flagSelectedMessagesUnread" position="left">Marcar mensagens selecionadas como não lidas.</paper-tooltip>
+              <paper-tooltip for="flagSelectedMessagesNormal" position="left">Marcar mensagens selecionadas como normais.</paper-tooltip>
+              <paper-tooltip for="flagSelectedMessagesImportant" position="left">Marcar mensagens selecionadas como importantes.</paper-tooltip>
+              <paper-tooltip for="deleteSelectedMessages" position="left">Excluir Mensagens Selecionadas</paper-tooltip>
+            </template>
+
+            <template is="dom-if" if="{{!hideActionIcons}}">
+              <ew-search search-value="{{searchValue}}" search-enabled="{{searchEnabled}}" on-search="doSearch"></ew-search>
+              
+              <paper-icon-button id="refresh" icon="icons:refresh" on-tap="forceRefresh" hidden="{{searchEnabled}}"></paper-icon-button>
+
+              <!-- <paper-icon-button id="refresh" icon="create-new-folder" on-tap="addFolder" hidden="{{searchEnabled}}"></paper-icon-button>
+
+              <paper-icon-button id="refresh" icon="create" on-tap="renameFolder" hidden="{{searchEnabled}}"></paper-icon-button> -->
+
+              <template is="dom-if" if="{{_currentFolderIsTrash(params)}}">
+                  <paper-icon-button id="refresh" icon="delete" on-tap="cleanTrash" hidden="{{searchEnabled}}"></paper-icon-button>
+              </template>
+              <template is="dom-if" if="{{_currentFolderIsSpam(params)}}">
+                  <paper-icon-button id="refresh" icon="delete" on-tap="cleanSpam" hidden="{{searchEnabled}}"></paper-icon-button>
+              </template>
+
+              <!-- <paper-menu-button class="menu_folders" hidden="{{searchEnabled}}" horizontal-align="right">
+                <paper-icon-button icon="icons:more-vert" id="iconMore" class="dropdown-trigger" slot="dropdown-trigger"></paper-icon-button>
+                <paper-listbox class="dropdown-content" slot="dropdown-content">
+                  <paper-item on-tap="forceRefresh"><iron-icon icon="refresh" item-icon></iron-icon>Atualizar</paper-item>
+                  <paper-item on-tap="mailSettings"><iron-icon icon="settings" item-icon></iron-icon>Configurações</paper-item>
+                  <paper-item on-tap="addFolder"><iron-icon icon="create-new-folder" item-icon></iron-icon>Adicionar Pasta</paper-item>
+                  <paper-item on-tap="renameFolder" hidden="{{_cantRenameFolder(params)}}"><iron-icon icon="create" item-icon></iron-icon>Renomear Pasta</paper-item>
+                  <paper-item on-tap="delFolder" hidden="{{_cantDeleteFolder(params)}}"><iron-icon icon="folder-open" item-icon></iron-icon>Excluir Pasta</paper-item>
+                  <template is="dom-if" if="{{_currentFolderIsTrash(params)}}">
+                    <paper-item on-tap="cleanTrash"><iron-icon icon="delete" item-icon></iron-icon>Esvaziar a pasta 'Lixeira'</paper-item>
+                  </template>
+                  <template is="dom-if" if="{{_currentFolderIsSpam(params)}}">
+                    <paper-item on-tap="cleanSpam"><iron-icon icon="archive" item-icon></iron-icon>Esvaziar a pasta 'Spam'</paper-item>
+                  </template>
+                </paper-listbox>
+              </paper-menu-button> -->
+              
+                    <!-- <template is="dom-if" if="{{!isMobile}}">
+                    <template is="dom-if" if="{{params.viewType}}">
+                      <paper-item on-tap="viewTypeList"><iron-icon icon="view-stream" item-icon></iron-icon>Visualização em Lista</paper-item>
+                    </template>
+                    <template is="dom-if" if="{{!params.viewType}}">
+                      <paper-item on-tap="viewTypeTable"><iron-icon icon="view-list" item-icon></iron-icon>Visualização em Tabela</paper-item>
+                    </template>
+                  </template> -->
+                  <!-- <paper-item on-tap="openSignature"><iron-icon icon="fingerprint" item-icon></iron-icon>Assinatura</paper-item> -->
+                  <!-- <paper-item on-tap="openKeyboardShortcuts"><iron-icon icon="hardware:keyboard" item-icon></iron-icon>Teclas de Atalho</paper-item> -->
+                  <!-- <paper-item on-tap="openSugestions" hidden="{{!isMobile}}"><iron-icon icon="feedback" item-icon></iron-icon>Sugestões</paper-item> -->
+
+                  
+            </template>
+          </div>
+          <div id="itemsListContainer" class="content" slot='content'>
+              <ew-loading-spinner loading="{{isLoading}}"></ew-loading-spinner>
+              <paper-material elevation="1" style="height: 100%; ">
+                <template is="dom-if" if="{{!isMobile}}">
+                  <div class="horizontal center layout" id="topBlock" style="{{_computeShowHeader(params)}}">
+                    <div class="layout flex"></div>
+                    <span class="subjectHeader">Assunto</span>
+                    <span class="iconHeader"></span>
+                    <span class="fromHeader">Quem</span>
+                    <span class="dateHeader">Data</span>
+                    <span class="sizeHeader">Tamanho</span>
+                    <!-- <span class="actionHeader"></span> -->
+                  </div>
+                </template>
+                <div style="height: 100%;">
+                  <div id='hasNoMessages' class="layout flex center" style$="[[_computeShowNoMessagesStyle(hasNoMessages,isLoading,isLoadingNextPage,params)]]">
+                    <paper-card style="padding: 15px; width: 100%;">{{errorMessage}}</paper-card>
+                  </div>
+                  <iron-list id="scrollList" items="[[messages]]" as="item" on-scroll="onScroll"> 
+                    <template>
+                      <div>
+                          <ew-expresso-mail-messages-item item="[[item]]" data-thread-index$="{{item.index}}" selected="{{item.selected}}" archived="{{item.archived}}" desktop="{{params.viewType}}" messages="[[messages]]" local-photos="{{localPhotos}}" hide-action-icons="{{hideActionIcons}}"></ew-expresso-mail-messages-item>
+                      </div>
+                    </template> 
+                  </iron-list>
+                  <div id='hasMoreMessagesArea' class="layout flex center" style$="[[_computeShowMoreMessagesStyle(hasMoreMessages)]]">Esta pasta n&atilde;o cont&eacute;m mais mensagens...</div>
+                  <div>
+                </paper-material>
+    
+              </div>
+            </div>
+            
+            
+        </ew-header>
+
+        <template is="dom-if" if="{{!selectedItems.length}}">
+          <ew-fab id="composeMailButton" icon='icons:create' tooltip="Nova Mensagem" on-tap='_composeMail'></ew-fab>
+        </template>
+        <template is="dom-if" if="{{selectedItems.length}}">
+          <ew-fab id="moveMessagesButton" icon='icons:move-to-inbox' tooltip="Mover Mensagens" on-tap='_moveMessages'></ew-fab>
+        </template>
+    </template>
+  <script>
+ 
+    Polymer({
+        is: 'ew-expresso-mail-messages',
+        behaviors: [EWBehaviorWidgetBehavior, Polymer.IronResizableBehavior],
+        listeners: {
+          'ew-expresso-mail-folder-item-tap' : 'switchFolder', 
+          // 'ew-expresso-mail-folders-dropdown-select' : 'switchFolder',
+          'ew-expresso-mail-messages-item-unselect': '_onUnSelectItem',
+          'ew-expresso-mail-messages-item-select': '_onSelectItem',
+          'ew-expresso-mail-del-message-error': 'whenMailDelete',
+          'ew-expresso-mail-del-message-success': 'whenMailDelete',
+          'ew-expresso-mail-flag-message-error': 'whenMessageFlagged',
+          'ew-expresso-mail-flag-message-success': 'whenMessageFlagged',
+          // 'ew-expresso-mail-clean-trash-success' : 'ew_refresh',
+          'ew-paginator-change' : 'loadCurrentPage', 
+          'ew-search-closed' : 'doSearch',
+          // 'ew-expresso-mail-add-folder-success' : 'renameFolderSuccess',
+          'ew-expresso-mail-messages-splice-archived' : 'spliceArchivedMessageFromArray',
+        }, 
+        properties: { 
+            data: { notify: true, reflectToAttribute: false, observer: '_computeMessages' }, 
+            dataFolders: { notify: true, reflectToAttribute: false, observer: '_computeFolders' }, 
+            currentFolder: { type: Object, value: {}, notify: true, reflectToAttribute: false, computed: '_computeCurrentFolder(dataFolders,params)' },
+            params: { type: Object, value: { folderID: "", viewType: 0 }, notify: true, reflectToAttribute: true }, 
+            requestFoldersParams: { type: Object, value: { }, notify: true },
+            requestParams: { type: Object, value: { }, notify: true },
+
+
+            widgetTitle: { type: String, value: "Email - Mensagens" },
+            description: { type: String, value: "Exibe as suas mensagens de email." },
+            width: { type: Number, value: 7 },
+            height: { type: Number, value: 6 },
+            thumb: { type: String, value: "./bower_components/ew-expresso-mail-messages/img/icon.png" },
+            link: { type: String, value: "#" },
+            element: { type: String, value: "ew-expresso-mail-messages" },
+            import: { type: String, value: "./bower_components/ew-expresso-mail/import.html" },
+
+
+            _isScrolling: {
+              type: Boolean,
+              value: false,
+              notify: true,
+              observer: 'onScroll',
+            },
+            folders: {
+              type: Array,
+              value: function () {
+                return [];
+              },
+              notify: true,
+              reflectToAttribute: true,
+            },
+            messages: {
+              type: Array,
+              value: function () {
+                return [];
+              },
+              notify: true,
+              reflectToAttribute: true,
+            },
+            showSelection: {
+              type: Boolean,
+              value: false,
+              observer: '_showSelectionChanged'
+            },
+            selectedIndex: {
+              type: Number, 
+              value: 0,
+              notify: true,
+              reflectAttribute: true,
+            },
+            selectedItems: {
+              type: Array, 
+              value: [],
+              notify: true,
+              reflectAttribute: true,
+            },
+            resultsPerPage: {
+              type: Number, 
+              value: 25,
+              notify: true, 
+              reflectAttribute: true,
+            },
+            // isLoading: {
+            //   type: Boolean,
+            //   value: false,
+            //   notify: true, 
+            //   reflectAttribute: true,
+            // },
+            hasNoMessages: {
+              type: Boolean,
+              value: false,
+              notify: true, 
+              reflectAttribute: true,
+            },
+            isLoadingNextPage: {
+              type: Boolean,
+              value: false,
+              notify: true, 
+              reflectAttribute: true,
+            },
+            viewType: {
+              type: Number,
+              value: 0,
+              notify: true,
+              reflectAttribute: true,
+            },
+            target: {
+              type: Object,
+              value: function() {
+                return document.body;
+              }
+            },
+            desktop: {
+                type: Number,
+                value: 0,
+                notify: true,
+                reflectToAttribute: true
+            },
+            hasMoreMessages: {
+              type: Number,
+              value: true,
+              notify: true,
+              reflectAttribute: true,
+            },
+            lastSearchValue: {
+                type: String,
+                value: '',
+                reflectToAttribute: true,
+                notify: true,
+            },
+            searchValue: {
+                type: String,
+                value: '',
+                reflectToAttribute: true,
+                notify: true,
+            },
+            backgroundHeaderColor: {
+                type: String,
+                value: 'indigo',
+                reflectToAttribute: true,
+                notify: true, 
+                computed: '_computeBackgroundHeaderColor(selectedItems)'
+            },
+            hideActionIcons: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+                notify: true, 
+                computed: '_computeHideActionIcons(selectedItems)'
+            },
+            pageTitle: { type: String, value: '', notify: true, reflectToAttribute: true, computed: '_computeTitle(searchEnabled,currentFolder,selectedItems)' },
+            dataSize: {
+              type: Number,
+              value: 1000
+            },
+            dataChanged: { type: Object, value: {} , computed: '_dataChanged(data)' },
+            dataProvider: {
+                notify: true,
+                value: function() {
+                  var that = this; 
+                  return function(params, callback) {
+              
+                    console.log('dataProvider');
+                    console.log(params);
+
+                    if (!that.isLoading) {
+
+                      if (params.page == 0) {
+                        that.loadFirstPage(callback);
+                      } else {
+                        that.loadNextPage(callback);
+                      }
+
+                    } else {
+                      console.log('isLoading');
+                    }
+
+                  };
+                }
+              },
+
+        },
+
+        _dataChanged: function(_data) {
+          this.async(function() { 
+            this.notifyResize();
+          },2000);
+        },
+
+        load: function() {
+
+          this.debug = false;
+          this.log('ew-expresso-mail-messages.load');
+          if (this.isMobile) {
+            this.set('params.viewType', 0);
+          }
+          if (this.params.viewType == undefined) {
+            this.set('params.viewType', 0);
+          }
+          
+
+          this.log(this.params);
+          // this.$.gridMessages.size = 1000; 
+          
+          if (this.localPhotos == undefined) {
+            // if (this.localPhotos.length) {
+              this.$.LocalPhotos.reload();
+            // }
+          }
+          // this.viewType = this.params.viewType;
+          // this.loadFirstPage();
+          this.ew_registerBackgroundTask('ew-expresso-mail-messages-background',{  },300000);
+
+          this.ew_registerBackgroundTask('ew-expresso-catalog-contact-picture-background',{ },4000);
+          // this.ew_refreshBackgroundTask('ew-expresso-catalog-contact-picture-background');  
+
+        },
+        forceRefresh: function() {
+          this.loadFirstPage();
+        },
+        ready: function() {
+          this.loadFirstPage();
+        },
+        detached: function() {
+          this.log('ew-expresso-mail-messages.detached');
+          // this.ew_unregisterBackgroundTask('ew-expresso-mail-messages-background');
+        },
+        loadSubFolders: function() {
+          this.$.MailFolders.reload();
+        },
+        initializeDefaultPhotos: function() {
+          this.localPhotos = [];
+        },
+        _computeBackgroundHeaderColor: function(_selectedItems) {
+          var color = 'indigo';
+          if (_selectedItems.length) {
+            color = 'blue-grey';
+          }
+          this.log('ew-expresso-mail-messages._computeBackgroundHeaderColor:' + color);
+          return color;
+        },
+        _computeHideActionIcons: function(selectedItems) {
+          if (selectedItems.length) {
+            return true;
+          } else {
+            return false;
+          }
+        },
+        _computeTitle: function(_searchEnabled,_currentFolder,_selectedItems) {
+          if (_selectedItems.length) {
+            var qtdMessages = _selectedItems.length;
+            var title = qtdMessages + ' mensagens...';
+            if (qtdMessages == 1) {
+              title = '1 mensagem...';
+            }
+            return title;
+          } else {
+            if (_searchEnabled) {
+              return '';
+            } else {
+              if (_currentFolder != undefined) {
+                return _currentFolder.folderName;
+              }
+            }
+          }
+          
+        },
+        updateFolders: function(e,detail) {
+          this.log('ew-expresso-mail-messages.updateFolders:');
+          var _data = e.detail.data;
+          this.set('dataFolders',_data);
+        },
+        _computeShowHeader: function(_params) {
+          var retVal = "";
+          if (_params.viewType == "0") {
+            retVal = "display: none;";
+          }
+          return retVal;
+        },
+ 
+        loadCurrentPage: function() {
+          this.log('ew-expresso-mail-messages.loadCurrentPage');
+          // console.warn('loadCurrentPage');
+          if (this.params != undefined) {          
+            if (this.params.viewType == undefined) {
+              this.params.viewType = 0;
+            }
+          } else {
+            this.params = {};
+            this.params.viewType = 0;
+          }
+          this.params.page = this.page;
+          this.hasMoreMessages = true;
+          this.isLoadingNextPage = false; 
+          this.requestParams = this._computeRequestParams(this.params);
+          this.callbackFunction = undefined;
+          this.$.ajax.generateRequest();
+        },
+        
+        loadFirstPage: function(_callback) {
+          this.log('ew-expresso-mail-messages.loadFirstPage');
+          // console.warn('loadFirstPage');
+          if (this.params != undefined) {          
+            if (this.params.viewType == undefined) {
+              this.params.viewType = 0;
+            }
+          } else {
+            this.params = {};
+            this.params.viewType = 0;
+          }
+          this.log(this.params);
+          this.params.page = 1;
+          this.hasMoreMessages = true;
+          this.isLoadingNextPage = false;
+          this.requestParams = this._computeRequestParams(this.params);
+          this.callbackFunction = _callback;
+          this.$.ajax.generateRequest();
+        },
+        viewTypeList: function() {
+          var newParams = this.params;
+          newParams.viewType = 0;
+          this.set('params',newParams);
+          this.set('params.viewType',0);
+          ewidgets.lastMailViewType = 0;
+          // this.set('desktop',false);
+          this.set('messages',[]);
+          this.ew_save(newParams);
+          this.loadFirstPage();
+        },
+        viewTypeTable: function() {
+          var newParams = this.params;
+          newParams.viewType = 1;
+          this.set('params',newParams);
+          this.set('params.viewType',1);
+          ewidgets.lastMailViewType = 1;
+          // this.set('desktop',true);
+          this.set('messages',[]);
+          this.ew_save(newParams);
+          this.loadFirstPage();
+        },
+
+        cancelSelection: function() {
+          this.log('ew-expresso-mail-messages.cancelSelection');
+          this.set('selectedItems',[]);
+          this.loadFirstPage();
+        },
+        loadNextPage: function(callback) {
+          this.log('ew-expresso-mail-messages.loadNextPage');
+          // console.warn('loadNextPage');
+          this.isLoading = true;
+          this.isLoadingNextPage = true;
+          this.params.page = this.params.page + 1;
+          this.requestParams = this._computeRequestParams(this.params);
+          // console.warn(this.requestParams);
+          this.callbackFunction = callback;
+          this.$.ajax.generateRequest();
+          
+        },
+        _computeRequestParams: function(params) {
+          this.log('ew-expresso-mail-messages._computeRequestParams');
+          var retval = {};
+          if (params != undefined)  {
+            if (params.page == undefined) {
+              params.page = 0;
+            }
+            if (params.search == undefined) {
+              params.search = '';
+            }
+            if ((params.folderID == undefined) || ((params.folderID == ""))){
+              params.folderID = 'INBOX';
+            }
+            retval.page = params.page;
+            retval.folderID = params.folderID;
+            retval.resultsPerPage = this.resultsPerPage;
+            retval.search = params.search;
+          }
+          return retval;
+        },
+        _computeShowNoMessagesStyle: function(hasNoMessages,isLoading,isLoadingNextPage,params) {
+
+          if ((!isLoading) && (hasNoMessages)) {
+            if (params.search == '') {
+              this.errorMessage = 'Esta pasta não contém mensagens...';
+            } else {
+              this.errorMessage = 'Nenhuma mensagem encontrada...';
+            }
+            return 'margin: 15px;';
+          } else {
+            return 'display: none; margin: 15px;';
+          }
+        },
+        _computeShowMoreMessagesStyle: function(hasMoreMessages) {
+          if (!hasMoreMessages) {
+            return '';
+          } else {
+            return 'display: none;';
+          }
+        },
+        _computeFolderIcon: function(folderType) {
+            var folderIcon = "folder";
+            if (folderType == 0) { folderIcon = "inbox"; }
+            if (folderType == 4) { folderIcon = "drafts"; }
+            if (folderType == 1) { folderIcon = "send"; }
+            if (folderType == 2) { folderIcon = "archive"; }
+            if (folderType == 3) { folderIcon = "delete"; }
+            if (folderType == 5) { folderIcon = "folder"; }
+            if (folderType == 6) { folderIcon = "folder-shared"; }
+            return folderIcon;
+        },
+        _currentFolderIsSpam: function(params) {
+          if (params.currentFolder != undefined) {
+            if (params.currentFolder.folderType == 2) {
+              return true;
+            } else {
+              return false;
+            }
+          }
+        },
+        _currentFolderIsTrash: function(params) {
+          if (params.currentFolder != undefined) {
+            if (params.currentFolder.folderType == 3) {
+              return true;
+            } else {
+              return false;
+            }
+          }
+        },
+        _cantRenameFolder: function(params) {
+          var retVal = false;
+          if (params != undefined) {
+            if (params.currentFolder != undefined) {
+              if (params.currentFolder.folderType != 5) {
+                retVal = true;
+              }
+            } 
+          }
+          return retVal;
+        },
+        _cantDeleteFolder: function(params) {
+          var retVal = false;
+          if (params.currentFolder != undefined) {
+            if ((params.currentFolder.qtdMessages == 0) && (params.currentFolder.folderType == 5)) {
+              retVal = true;
+            }
+          } 
+          return !retVal;
+        },
+        spliceArchivedMessageFromArray: function() {
+          this.log('ew-expresso-mail-messages.spliceArchivedMessageFromArray');
+          for (var i in this.messages) {
+            if (this.messages[i].archived) {
+              this.splice('messages',i,1);
+            }
+          }
+        },
+        _computeCurrentFolder: function(dataFolders,_params) {
+          var _currentFolder = false;
+          if (_params != undefined) {
+            if (_params.currentFolder != undefined) {
+              _currentFolder = _params.currentFolder;
+            }
+          }
+          if (dataFolders!= undefined) {
+            if (dataFolders.folders != undefined) {
+              for (var i in this.dataFolders.folders) {
+                if (this.dataFolders.folders[i].folderID == this.params.folderID) {
+                  _currentFolder = this.dataFolders.folders[i];
+                }
+              }
+            }
+          }
+          return _currentFolder;
+        },
+        _computeFolders: function() {
+          this.log('ew-expresso-mail-messages._computeFolders');
+          // if (!this.isLoadingNextPage) { 
+          //   this.set('folders',[]);
+          // }
+
+          var lastIndex = this.messages.length;
+
+          var newMessages = [];
+
+          var _currentFolder = false;
+          // this.params.currentFolder = 
+
+          if (this.params.folderID == '') {
+            this.params.folderID = 'INBOX';
+          }
+
+          if (this.dataFolders != undefined) {
+
+            if (this.dataFolders.folders != undefined) {
+
+              for (var i in this.dataFolders.folders) {
+
+                var newMessage = this.dataFolders.folders[i];
+
+                if (this.dataFolders.folders[i].folderID == this.params.folderID) {
+                  _currentFolder = this.dataFolders.folders[i];
+                }
+                
+                var isParentFolder = this._computeIsParentFolder(newMessage,this.params);
+
+                if (isParentFolder) {
+                  newMessage.index = lastIndex + 1;
+                  newMessage.archived = false;
+                  newMessage.selected = false;
+                  newMessage.isFolder = true;
+
+                  var _folderID = newMessage.folderID;
+                  var folderIndex = -1;
+                  for (var x in this.messages) {
+                    if (this.messages[x].isFolder) {
+                      if (this.messages[x].folderID == _folderID) {
+                        folderIndex = x;
+                      }
+                    }
+                    
+                  }
+                  if (folderIndex != -1) {
+                    this.splice('messages',folderIndex,1);
+                  }
+
+                  newMessages.push(newMessage);
+                }
+                
+              }
+              if (_currentFolder != false) {
+
+                var newParams = this.params;
+                newParams.currentFolder = _currentFolder;
+                this.set('params',newParams);
+              }
+
+              newMessages.reverse();
+
+              for (var i in newMessages) {
+                this.unshift('messages',newMessages[i]);
+              } 
+            }
+          }
+
+        },
+        _computeIsParentFolder: function(item,params) {
+          var retVal = true;
+
+          if ((params.folderID != undefined) && (params.folderID != "")) {
+            if (params.folderID == "INBOX") {
+              retVal = false;
+            }
+            if (params.folderID != "INBOX") {
+              if (params.folderID != item.folderParentID) {
+                retVal = false;
+              } 
+            } else {
+              if (item.folderParentID != "") { 
+                retVal = false;
+              }
+            } 
+          } 
+          return retVal;
+        },
+        updateMessages: function(e,detail) {
+          this.debug = false;
+          this.log('ew-expresso-mail-messages.updateMessages:');
+          this.log(detail);
+
+
+          // if (detail.folderID = this.params.folderID) {
+            if (this.data != undefined) {
+              var newData = this.data;
+              if (this.messages != undefined) {
+
+                var newMessages = []; 
+                var lastIndex = this.messages.length;
+
+                
+                for (var i in detail.unreadMessages) {
+
+                  var message = detail.unreadMessages[i];
+
+                  if (message.folderID == this.params.folderID) {
+
+                    var found = false;
+                    for (var x in this.messages) {
+                      var thisMessage = this.messages[x];
+                      if (thisMessage.msgID == message.msgID) {
+                        found = true;
+                      }
+                    }
+
+                    if (!found) {
+                      message.index = lastIndex + 1;
+                      message.archived = false;
+                      message.msgSeen = "0";
+                      message.selected = false;
+                      message.isFolder = false;
+                      newMessages.push(message);
+                    }
+                  }
+                }
+
+                newMessages.reverse();
+
+                for (var i in newMessages) {
+                  this.unshift('messages',newMessages[i]);
+                } 
+
+                if (newMessages.length !=0) {
+                  this.ew_showMessage(detail.msgTitle);
+                }
+
+              }
+            }
+          // }
+        },
+        _computeMessages: function() {
+          this.log('ew-expresso-mail-messages._computeMessages');
+          if (!this.isLoadingNextPage) {
+            this.set('messages',[]);
+            this.hasNoMessages = true;
+          }
+
+          var lastIndex = this.messages.length;
+
+          if (this.data.error) {
+            if (this.isLoadingNextPage) {
+              this.params.page = this.params.page - 1;
+            }
+            this.ew_showMessage("Não foi possível carregar a próxima página, tente novamente.");
+          } else {
+
+            if (this.isLoadingNextPage) {
+              if (this.data.messages.length == 0) {
+                this.hasMoreMessages = false;
+              } 
+            }
+            if (this.data.messages.length < this.resultsPerPage) {
+              this.hasMoreMessages = false;
+            }
+            for (var i in this.data.messages) {
+
+              this.hasNoMessages = false;
+
+              var newMessage = this.data.messages[i];
+              newMessage.index = lastIndex + 1;
+              newMessage.archived = false;
+              newMessage.selected = false;
+              newMessage.isFolder = false;
+              newMessage.folderType = this.currentFolder.folderType;
+              newMessage.contactFullName = newMessage.from;
+              
+              this.push('messages',newMessage);
+            }
+
+ 
+            // this.$.gridMessages.size = this.messages.length; 
+
+            if (this.callbackFunction != undefined) {
+              // console.warn('callbackFunction');
+              // console.log(this.messages);
+              this.callbackFunction(this.messages);
+            }
+          }
+          if (!this.isLoadingNextPage) {
+            this.loadSubFolders();
+          } else {
+            this.isLoading = false;
+            this.isLoadingNextPage = false;
+          }
+          
+        },
+        _decodeHTMLEntities: function(val) {
+          if (val != undefined) {
+            var t = document.createElement('textarea');
+            t.innerHTML = val;
+            return t.textContent;
+          } else {
+            return '';
+          }
+        },
+        doSearch: function() {
+          // console.log('ew-expresso-mail-messages.doSearch:' + this.searchValue);
+          // if (this.searchValue != '') {
+            if (this.lastSearchValue != this.searchValue) {
+              this.lastSearchValue = this.searchValue;
+              this.params.search = this.searchValue;
+              this.loadFirstPage(); 
+            }
+          // } else {
+          //   this.loadFirstPage(); 
+          // }
+        },
+        _composeMail: function() {
+          var randTabID = Math.floor((Math.random() * 10000) + 1);
+          this.ew_openWidget('ew-expresso-mail-create',{ "action" : "create", "folderID" : "", "msgID": "", 'tabID': 'mail_create_' + randTabID ,'tabIcon' : 'create', 'tabTitle' : 'Nova Mensagem' });
+        },
+        _moveMessages: function() {
+          var that = this;
+          var onDialogClosed = function(event) {
+            if (!event.canceled) {
+              that.ew_refresh();
+            }
+          };
+          this.ew_showColumnDialog('ew-list-view',{ route: "./api/rest/ew-expresso-mail/MoveMessagesView","folderID": this.params.folderID, "selectedItems": this.selectedItems.map(e => e.msgID + ':' + e.folderID).join(',') },onDialogClosed); 
+        },
+        onScroll: function(e) {
+          this.log('ew-expresso-mail-messages.onScroll');
+          //console.log('onScroll');
+          //if (POLYMER != 2) {
+            if ((this.hasMoreMessages) && (!this.isLoading)) {
+              var _scrollTop = 0;
+              if (e.target != undefined) {
+                if (e.target.scrollTop + e.target.offsetHeight >= e.target.scrollHeight - 100) {
+                  this.loadNextPage();
+                }
+              }
+            }
+          //}
+        },
+        _isSelected: function(msgID) {
+          var found = false;
+
+          for (var i in this.selectedItems) {
+            if (this.selectedItems[i].msgID == msgID) {
+              found = true;
+            }
+          }
+          return found;
+        },
+        _onUnSelectItem: function(e) {
+          this.log('ew-expresso-mail-messages._onUnSelectItem');
+          var msgID = '';
+
+          if (e.model != undefined) {
+            msgID = e.model.item.msgID;
+          } else {
+            msgID = e.detail.eventData.msgID;
+          }
+
+          var newItems = [];
+          for (var i in this.selectedItems) {
+            if (this.selectedItems[i].msgID != msgID) {
+              newItems.push(this.selectedItems[i]);
+            }
+          }
+          this.set('selectedItems',newItems);
+          if (newItems.length == 0) {
+            this.set('showSelection',false);
+          }
+          this.refreshMenuItems();
+        },
+
+        _onSelectItem: function(e) {
+          this.log("ew-expresso-mail-messages._onSelectItem");
+          var item = e.detail.eventData;
+
+          var newItems = [];
+
+          var found = this._isSelected(item.msgID);
+
+          for (var i in this.selectedItems) {
+            newItems.push(this.selectedItems[i]);
+          }
+          if (!found) {
+            newItems.push(item);
+          }
+
+          this.set('showSelection',true);
+          this.set('selectedItems',newItems);
+          
+          this.refreshMenuItems();
+
+        },
+        _showSelectionChanged: function() {
+          // if (!this.isLoading) {
+            // this.$.selectedItemsList.fire('resize');
+            this.refreshMenuItems();
+          // }
+        },
+
+        deleteSelectedMessages: function() {
+          this.$.delMessage.delMessagesAndConfirm(this.selectedItems);
+        },
+        whenMailDelete: function() {
+          this.ew_refresh();
+        },
+
+
+        flagSelectedMessagesImportant: function() {
+          var flagType = 1;
+          this.$.flagMessage.flagMessages(this.selectedItems,flagType);
+        },
+        flagSelectedMessagesNormal: function() {
+          var flagType = 2;
+          this.$.flagMessage.flagMessages(this.selectedItems,flagType);
+        },
+        flagSelectedMessagesUnread: function() {
+          var flagType = 4;
+          this.$.flagMessage.flagMessages(this.selectedItems,flagType);
+        },
+        flagSelectedMessagesReply: function() {
+          var flagType = 5;
+          this.$.flagMessage.flagMessages(this.selectedItems,flagType);
+        },
+        flagSelectedMessagesForwarded: function() {
+          var flagType = 6;
+          this.$.flagMessage.flagMessages(this.selectedItems,flagType);
+        },
+        
+        whenMessageFlagged: function() {
+          console.warn('whenMessageFlagged');
+          this.set('selectedItems',[]);
+          this.ew_refresh();
+        },
+        
+
+        refreshMenuItems: function() {
+
+          var menuNormal = [
+            {iconClass: "create", type: 'route', route: "mail-create",title: "Escrever Email", data: ""}
+          ];
+          var menuSingleSelect = [ 
+            {iconClass: "create", type: 'route', route: "mail-create",title: "Escrever Email", data: ""},
+            {iconClass: "delete", type: 'signal', route: "mail-delete",title: "Apagar Mensagem", data: ""},
+            {iconClass: "forward", type: 'signal', route: "mail-forward",title: "Encaminhar Mensagem", data: ""},
+            {iconClass: "forward", type: 'signal', route: "mail-move",title: "Mover Mensagem", data: ""},
+            {iconClass: "reply", type: 'signal', route: "mail-reply",title: "Responder Email", data: ""},
+          ];
+          var menuMultiSelected = [
+            {iconClass: "create", type: 'route', route: "mail-create",title: "Escrever Email", data: ""},
+            {iconClass: "delete", type: 'signal', route: "mail-delete",title: "Apagar Mensagens", data: ""},
+            {iconClass: "forward", type: 'signal', route: "mail-forward",title: "Encaminhar Mensagens", data: ""},
+            {iconClass: "forward", type: 'signal', route: "mail-move",title: "Mover Mensagens", data: ""},
+          ];
+
+          var menuItems = [];
+
+          if (this.showSelection == false) {
+            menuItems = menuNormal;
+          } else {
+            if (this.selectedItems.length == 1) {
+              menuItems = menuSingleSelect;
+            } else {
+              menuItems = menuMultiSelected;
+            }
+            
+          }
+
+          // this.setMenuItems(menuItems);
+
+        },
+        switchFolder: function(e) {
+          if (!this.isMobile) {
+            var firstWidget = false;
+            var tabIcon = this._computeFolderIcon(e.detail.folderType);
+
+            var _params = { 
+              'currentFolder' : e.detail, 
+              'folderID' : e.detail.folderID, 
+              'hideFoldersDropdown': firstWidget, 
+              'viewType' : this.params.viewType, 
+              'tabID': 'mail_messages_' + e.detail.folderID, 
+              'tabTitle' : e.detail.folderName, 
+              'tabIcon' : tabIcon 
+            };
+            console.log(_params);
+            this.ew_openWidget('ew-expresso-mail-messages',_params,firstWidget);
+
+          } else {
+            this.params.currentFolder = e.detail;
+            this.params.folderID = e.detail.folderID;
+            this.log('ew-expresso-mail-messages.switchFolder:' + e.detail.folderID);
+            this.ew_refresh();
+          }
+        },
+        // openFolder: function(e) { 
+        //   this.log('ew-expresso-mail-messages.openFolder:' + e.detail.folderID);
+        //   var folderID = e.detail.folderID;
+        //   this.ew_openWidget('ew-expresso-mail-messages',{ 'currentFolder' : e.detail, 'folderID' : folderID });
+        // },
+        addFolder: function(e) {
+
+          var folderID = this.params.currentFolder.folderID;
+
+          var that = this;
+          var onDialogClosed = function(event) {
+            if (!event.canceled) {
+              console.log('onDialogClosed');
+              console.log(event.returnData);
+
+              that.ew_refresh();
+            }
+          };
+          this.ew_showColumnDialog('ew-list-view', { route: "./api/rest/ew-expresso-mail/AddFolder", editMode: false, folderID: this.params.currentFolder.folderID, folderName: this.params.currentFolder.folderName }, onDialogClosed);
+        },
+        renameFolder: function(e) {
+
+          var folderID = this.params.currentFolder.folderID;
+
+          var that = this;
+          var onDialogClosed = function(event) {
+            if (!event.canceled) {
+
+              var newParams = this.params;
+              newParams.tabID = 'mail_messages_' + event.returnData.params.currentFolder.folderID;
+              newParams.tabTitle = event.returnData.params.currentFolder.folderName;
+              newParams.folderID = event.returnData.params.currentFolder.folderID;
+
+              if (!this.isMobile) {
+                that.ew_updateTab(that.params.tabID,newParams);
+              } 
+
+              that.params.folderID = event.returnData.params.currentFolder.folderID;
+              that.ew_refresh();
+            }
+          };
+
+          this.ew_showColumnDialog('ew-list-view', { route: "./api/rest/ew-expresso-mail/AddFolder", editMode: true, folderID: this.params.currentFolder.folderID, folderName: this.params.currentFolder.folderName });
+        },
+        delFolder: function(e) {
+          var folderID = this.params.currentFolder.folderID;
+          this.ew_closeWidget();
+          this.ew_openWidget('ew-list-view',{ route: './api/rest/ew-expresso-mail/DelFolder', 'folderID' : folderID, folderName : this.params.currentFolder.folderName, tabID : this.params.tabID });
+        },
+        cleanTrash: function(e) {
+          this.ew_signal('ew-expresso-mail-clean-trash',{ });
+        },
+        cleanSpam: function(e) {
+          this.ew_signal('ew-expresso-mail-clean-spam',{ });
+        },
+        openSugestions: function(e) {
+          this.ew_showColumnDialog('ew-settings-sugestions',{ showHeader: true }); 
+        },
+        openKeyboardShortcuts: function(e) {
+          this.ew_openWidget("ew-list-view",{route: "./api/rest/ew-expresso-mail/KeyboardSettings", "tabID" : "ew-expresso-mail-keyboard", "tabIcon" : "hardware:keyboard", "tabTitle" : "Teclas de Atalho"});
+        },
+        openSignature: function(e) {
+
+        },
+        /**
+Abre as Configurações do e-mail.
+        */
+        mailSettings: function() {
+          this.ew_openWidget('ew-list-view',{ route: "./api/rest/ew-expresso-mail/SettingsEmail", tabID: "ew-expresso-mail-settings", tabIcon: "settings", tabTitle: "Configurações" });
+        },
+        nextMessage: function() {
+
+          this.selectedIndex = this.selectedIndex + 1;
+          
+          var newMessages = [];
+
+          for (var i in this.messages) {
+            newMessages.push(this.messages[i]);
+            newMessages[i].selected = false;
+            if (i == this.selectedIndex) {
+              newMessages[i].selected = true;
+            }
+          }
+          this.set('messages',newMessages);
+
+          var newItems = [];
+          newItems.push(this.messages[this.selectedIndex]);
+          this.set('selectedItems',newItems);
+          this.set('showSelection',false);
+          this.set('showSelection',true);
+          
+        }, 
+
+        priorMessage: function() {
+          if (this.selectedIndex != 0) {
+
+            this.selectedIndex = this.selectedIndex - 1;
+            var newItems = [];
+            newItems.push(this.messages[this.selectedIndex]);
+            this.set('selectedItems',newItems);
+            this.set('showSelection',true);
+          }
+        },
+
+    });
+  </script>
+</dom-module>

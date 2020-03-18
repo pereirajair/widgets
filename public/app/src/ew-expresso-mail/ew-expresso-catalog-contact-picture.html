@@ -1,0 +1,375 @@
+<dom-module id="ew-expresso-catalog-contact-picture">
+     <template> 
+
+    <style>
+
+    :host([selected]) .profile {
+      transform: rotate3d(0,1,0,180deg);
+    }
+    :host([selected]) img,
+    :host([selected]) .letter {
+      opacity: 0;
+    }
+    :host([selected]) iron-icon {
+      transform: rotate3d(0,1,0,-180deg) scale(1);
+      opacity: 1;
+    }
+    .profile {
+      border-radius: 50%;
+      width: 40px !important;
+      height: 40px;
+      transition: transform 350ms ease-in-out;
+      background-color: #9e9e9e;
+      color: white;
+      will-change: transform;
+      cursor: pointer;
+      width: var(--contact-picture-position, relative);
+    }
+
+    .normal {
+      width: 40px !important;
+      height: 40px !important;
+      max-width: 40px;
+      max-height: 40px;
+    }
+
+    .small {
+        width: 20px !important;
+        height: 20px !important;
+        max-width: 20px;
+        max-height: 20px;
+
+    }
+
+    .big {
+        width: 80px !important;
+        height: 80px !important;
+        max-width: 80px;
+        max-height: 80px;
+        /*top: 40px;*/
+    }
+
+    iron-image {
+      max-width: 40px;
+      max-height: 40px;
+      left: 0px;
+    }
+
+    iron-image,
+    .letter {
+      border-radius: inherit;
+      width: 100%;
+      height: 100%;
+      transition: opacity 200ms ease-in-out 100ms;
+      will-change: opacity;
+      text-transform: uppercase;
+      text-align: center;
+
+      /*position: absolute !important;*/
+    }
+
+    .letter.normal {
+      height: 100%;
+      top: calc(28%);
+      position: absolute;
+      left: calc(0%);
+    }
+   
+    @media only screen 
+    and (device-width : 375px) 
+    and (device-height : 812px) 
+    and (-webkit-device-pixel-ratio : 3) { 
+      .letter.normal {
+        height: 100%;
+        position: absolute;
+        left: 16px;
+        top: 30px;
+      }
+
+    }
+
+    @media only screen 
+    and (device-width : 375px) 
+    and (device-height : 667px) 
+    and (-webkit-device-pixel-ratio : 2) { 
+      .letter.normal {
+        height: 100%;
+        position: absolute;
+        left: 16px;
+        top: 30px;
+      }
+    }
+
+    @media only screen 
+    and (device-width : 414px) 
+    and (device-height : 736px) 
+    and (-webkit-device-pixel-ratio : 3) { 
+      .letter.normal {
+        height: 100%;
+        position: absolute;
+        left: 16px;
+        top: 30px;
+      }
+    }
+
+
+    .letter.small {
+      height: 100%;
+      position: absolute;
+      top: 4px;
+      font-size: 10px;
+    }
+    .letter.big {
+      height: 100%;
+      position: absolute;
+      top: 25px;
+      font-size: 24px;
+      left: 0px;
+    }
+    iron-icon {
+      transition: transform 300ms ease-in-out 100ms;
+      will-change: opacity;
+      transform: rotate3d(0,1,0,-180deg) scale(0);
+      position: absolute !important;
+      top: 20%;
+      left: 20%;
+      opacity: 0;
+    }
+
+    .grow:hover { transform: scale(1.5); }
+            
+    </style> 
+        <iron-signals on-iron-signal-ew-expresso-catalog-contact-picture-cancel-selection="_cancelSelection"></iron-signals>  
+        <iron-localstorage id="LocalPhotos" name="LocalPhotos" value="{{localPhotos}}" on-iron-localstorage-load-empty="initializeDefaultPhotos"></iron-localstorage>
+        <iron-signals on-iron-signal-ew-expresso-catalog-contact-picture-update-picture="_updatePicture"></iron-signals>
+        <div class$="{{cssClass}}">
+          <span class$="{{cssLetterClass}}" hidden$="{{hideLetter}}">{{letter}}</span>
+          <iron-image id="contactPicture" src$="[[src]]" sizing="cover" preload class$="{{cssImageClass}}" style$="{{styleImage}}"></iron-image>
+          <iron-icon icon="check"></iron-icon>
+        </div>
+    </template> 
+  <script> 
+ 
+    Polymer({
+        is: 'ew-expresso-catalog-contact-picture',
+        behaviors: [EWBehaviorWidgetBehavior],
+        listeners: {
+          'tap' : '_toggle',
+        },
+        properties: { 
+            item: {
+                type: Object,
+                value: null,
+                notify: true, 
+                reflectToAttribute: true,
+            },
+            letter: { type: String, value: '', notify: true, reflectToAttribute: true },
+            email: { type: String, value: '', notify: true, reflectToAttribute: true, observer: 'emailChanged', },
+            cssClass: { type: String, value: '', notify: true, reflectToAttribute: true, computed: '_computeCssClass(big,small,fixed)' },
+            cssImageClass: { type: String, value: '', notify: true, reflectToAttribute: true, computed: '_computeCssImageClass(big,small)' },
+            cssLetterClass: { type: String, value: '', notify: true, reflectToAttribute: true, computed: '_computeCssLetterClass(big,small)' },
+            styleImage: { type: String, value: '', notify: true, reflectToAttribute: true, computed: '_computeStyleImage(src)' },
+            contactType: { type: Number, value: 1 },
+            requestParams: { value: {} ,notify: true, reflectToAttribute: true },
+            tempIndex: {
+                type: Number,
+                value: -1,
+            },
+            localPhotos: { type: Array, value: [] ,notify: true, reflectToAttribute: false },
+            isLoading: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true,
+                notify: true,
+            },
+            hideLetter: {
+              type: Boolean,
+              value: false,
+              reflectToAttribute: true,
+              notify: true,
+              computed: '_computeHideLetter(src,isLoaded)',
+            },
+            selected: {
+                type: Boolean,
+                value: false,
+                reflectToAttribute: true
+            },
+            src: {
+                type: String,
+                value: null,
+                computed: '_computeSrc(data)'
+            },
+
+            isLoaded: {
+                type: Boolean,
+                value: false,
+                notify: true,
+                reflectToAttribute: true,
+            },
+            auto: {
+                type: Boolean,
+                value: true,
+            },
+            big: {
+                type: Boolean,
+                value: false,
+            },
+            fixed: {
+                type: Boolean,
+                value: false,
+            },
+            small: {
+                type: Boolean,
+                value: false,
+            }
+        },
+        _updatePicture: function(e) {
+          var _photo = e.detail;
+          if (_photo != undefined) {
+            if (this.email == _photo.email) {
+              // console.log('_updatePicture:' + _photo.email);
+              // this.isLoaded = true;
+              this.set('isLoaded',true);
+              this.set('data',_photo);
+            }
+          }
+        },
+        _toggle: function() {
+          this.selected = !this.selected;
+        },
+        _cancelSelection: function() {
+          this.selected = false;
+        },
+        attached: function() {
+          this.log('ew-expresso-catalog-contact-picture.attached');
+
+          
+          if (this.localPhotos.length == 0) {
+            this.$.LocalPhotos.reload();
+          }
+          // var that = this;
+          // this.$.contactPicture._setError = function(value) {
+          //   that.isLoaded = !value;
+          // };
+          this.set('data',{});
+          this.requestPhoto(this.email);
+          
+        },
+        requestPhoto: function(_email) {
+          // var _index = -1;
+          // this.log('requestPhoto:' + _email);
+          
+          // _index = this.getEmailIndexInArray(_email,this.localPhotos);
+
+          // if (_index != -1) {
+          //   this.set('isLoaded',true);
+          //   this.set('data',this.localPhotos[_index]);
+          // } else {
+          //   this.ew_signal('ew-expresso-catalog-contact-picture-request-photo',{ email: _email });
+          // }
+        },
+        _computeHideLetter: function(_src,isLoaded) {
+          this.log('ew-expresso-catalog-contact-picture._computeHideLetter');
+          if (_src != undefined) {
+            if (_src != '') {
+              return true;
+            } else {
+              return false;
+            }
+          } else {
+            if (_src == '') {
+              return false;
+            } else {
+              return false;
+            }
+          }
+        },
+
+        initializeDefaultPhotos: function() {
+          this.localPhotos = [];
+        },
+        getEmailIndexInArray: function(_email,_array) {
+          var _index = -1;
+          for (key in _array) {
+            var photo = _array[key];
+            if (photo.email == _email) {
+              _index = key;
+            }
+          }
+          return _index;
+        },
+
+        emailChanged: function() {
+          // console.log('_emailChanged');
+          // console.log(this.email);
+          
+          if (this.email != undefined) {
+            if (this.email != null) {
+              this.set('data',{});
+              this.requestPhoto(this.email);
+            }
+          }
+          
+          // this.set('isLoaded',false);
+          // this.ew_signal('ew-expresso-catalog-contact-picture-request-photo',{ email: this.email });
+        }, 
+        _computeCssImageClass: function(big,small) {
+            if (big) {
+                return ' big';
+            } else {
+              if (small) {
+                return ' small';
+              } else {
+                return ' normal';
+              }
+            }
+        },
+       
+        _computeCssClass: function(big,small,fixed) {
+          var _grow = ' grow';
+          if (fixed == true) {
+            _grow = '';
+          }
+            if (big) {
+                return 'profile big' + _grow;
+            } else {
+              if (small) {
+                return 'profile small' + _grow;
+              } else {
+                return 'flipInX profile' + _grow;
+              }
+            }
+        },
+        _computeCssLetterClass: function(big,small) {
+            if (big) {
+                return 'big letter layout horizontal center-center ';
+            } else {
+              if (small) {
+                return 'small letter layout horizontal center-center ';
+              } else {
+                return 'normal letter layout horizontal center-center ';
+              }
+            }
+        },
+        _computeStyleImage: function(src) {
+          var styleImage = "display: none;";
+          if (src) {
+            return "";
+          } else {
+            return styleImage;
+          }
+        },
+        _computeSrc: function(data) {
+            var picSource = '';
+            if (data.picture != undefined) {
+              if (data.picture != '') {
+                picSource = 'data:image/gif;base64,' + data.picture;
+              } 
+            }
+            return picSource;
+        },
+
+      
+    });
+  </script>
+</dom-module>
