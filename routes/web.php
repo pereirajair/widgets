@@ -26,7 +26,7 @@ Route::get('/Login', 'HomeController@loginIndex');
 Route::post('/api/Login', 'HomeController@loginForm');
 
 
-//Route::group(['middleware' => 'auth'], function () {
+Route::group(['middleware' => 'auth'], function () {
 
    //Route::get('/', ['middleware'=> 'central-seguranca:widgets-adm', "uses" => 'HomeController@index']);
 
@@ -77,9 +77,10 @@ Route::post('/api/Login', 'HomeController@loginForm');
         } else {
             
         }
+        
     
     }
-//});
+});
 
 
 
